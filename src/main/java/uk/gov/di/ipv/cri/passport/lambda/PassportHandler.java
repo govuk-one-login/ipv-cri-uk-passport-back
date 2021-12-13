@@ -4,8 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import org.apache.http.HttpStatus;
+import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 
 public class PassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
