@@ -1,4 +1,4 @@
-package di.ipv.cri.passport.helpers;
+package uk.gov.di.ipv.cri.passport.helpers;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
