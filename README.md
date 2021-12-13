@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-# di-ipv-cri-uk-passport-back
 # Digital Identity IPV UK Passport CRI Backend
 
 `di-ipv-cri-uk-passport-back`
