@@ -8,6 +8,7 @@ plugins {
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
 }
 
@@ -23,7 +24,9 @@ dependencies {
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0",
 			"org.slf4j:slf4j-simple:1.7.32",
 			"software.amazon.awssdk:kms:2.17.100",
-			"com.nimbusds:nimbus-jose-jwt:9.15.2"
+			"com.nimbusds:nimbus-jose-jwt:9.15.2",
+			"software.amazon.awssdk:kms-jce-provider:1.0.0",
+			"software.amazon.awssdk:kms-jce-util:1.0.0"
 
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2',
 			"org.mockito:mockito-core:4.1.0",
