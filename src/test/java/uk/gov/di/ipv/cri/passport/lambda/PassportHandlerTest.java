@@ -18,7 +18,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class PassportHandlerTest {
+class PassportHandlerTest {
 
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
@@ -28,8 +28,8 @@ public class PassportHandlerTest {
                     "passportNumber", "1234567890",
                     "surname", "Tattsyrup",
                     "forenames", "[Tubbs]",
-                    "dateOfBirth", "1984-09-28T10:15:30",
-                    "expiryDate", "2024-09-03T10:15:30");
+                    "dateOfBirth", "1984-09-28",
+                    "expiryDate", "2024-09-03");
 
     @Mock private Context context;
 
@@ -68,7 +68,7 @@ public class PassportHandlerTest {
     @Test
     void shouldReturn400IfDateStringsAreWrongFormat() throws JsonProcessingException {
         var mangledDateInput = new HashMap<>(validPassportFormData);
-        mangledDateInput.put("dateOfBirth", "1984-09-28T10:15:30.00Z");
+        mangledDateInput.put("dateOfBirth", "28-09-1984");
 
         var event = new APIGatewayProxyRequestEvent();
         event.setBody(objectMapper.writeValueAsString(mangledDateInput));
