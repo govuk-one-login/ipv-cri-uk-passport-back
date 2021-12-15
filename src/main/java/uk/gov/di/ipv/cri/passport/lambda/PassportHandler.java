@@ -62,6 +62,9 @@ public class PassportHandler
         DcsCheckRequestDto dcsCheckRequestDto;
         try {
             dcsCheckRequestDto = objectMapper.readValue(input.getBody(), DcsCheckRequestDto.class);
+
+            //todo hook -- add call to proxy (DSC values to be sent to passportservice.postValidPassportRequest
+
         } catch (JsonProcessingException e) {
             LOGGER.error("Passport form data could not be parsed", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
