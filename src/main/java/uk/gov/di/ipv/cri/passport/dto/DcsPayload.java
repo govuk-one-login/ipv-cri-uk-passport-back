@@ -1,23 +1,24 @@
 package uk.gov.di.ipv.cri.passport.dto;
 
-import java.time.Instant;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.UUID;
 
 public class DcsPayload {
     private final UUID correlationId;
     private final UUID requestId;
-    private final Instant timestamp;
+    private final Timestamp timestamp;
     private final String passportNumber;
     private final String surname;
     private final String[] forenames;
 
     //@JsonAdapter(InstantShortDateAdapter.class)
-    private final Instant dateOfBirth;
+    private final Date dateOfBirth;
 
     //@JsonAdapter(InstantShortDateAdapter.class)
-    private final Instant expiryDate;
+    private final Date expiryDate;
 
-    public DcsPayload(UUID correlationId, UUID requestId, Instant timestamp, String passportNumber, String surname, String[] forenames, Instant dateOfBirth, Instant expiryDate) {
+    public DcsPayload(UUID correlationId, UUID requestId, Timestamp timestamp, String passportNumber, String surname, String[] forenames, Date dateOfBirth, Date expiryDate) {
         this.correlationId = correlationId;
         this.requestId = requestId;
         this.timestamp = timestamp;
@@ -36,7 +37,7 @@ public class DcsPayload {
         return requestId;
     }
 
-    public Instant getTimestamp() {
+    public Timestamp getTimestamp() {
         return timestamp;
     }
 
@@ -52,11 +53,11 @@ public class DcsPayload {
         return forenames;
     }
 
-    public Instant getDateOfBirth() {
+    public Date getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public Instant getExpiryDate() {
+    public Date getExpiryDate() {
         return expiryDate;
     }
 

@@ -1,5 +1,9 @@
 package uk.gov.di.ipv.cri.passport.service;
 
+import com.amazonaws.services.kms.AWSKMS;
+import com.amazonaws.services.kms.AWSKMSClientBuilder;
+import com.amazonaws.services.kms.model.GetPublicKeyRequest;
+import com.amazonaws.services.kms.model.GetPublicKeyResult;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
@@ -22,8 +26,10 @@ public class ConfigurationService {
     public static final int LOCALHOST_PORT = 4569;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final String IS_LOCAL = "IS_LOCAL";
+    public static final String KEY_ID = "5b32227e-b835-4b4a-a15d-4c050ca01af4";
 
     private final SSMProvider ssmProvider;
+    private final AWSKMS kmsClient = AWSKMSClientBuilder.defaultClient();
 
     public ConfigurationService(SSMProvider ssmProvider) {
         this.ssmProvider = ssmProvider;
@@ -86,8 +92,8 @@ public class ConfigurationService {
         return getCertificateUsingEnv("DCS_SIGNING_CERT_PARAM");
     }
 
-    public Key getDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return getKeyUsingEnv("DCS_SIGNING_KEY_PARAM");
+    public GetPublicKeyResult getDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        return kmsClient.getPublicKey(new GetPublicKeyRequest().withKeyId(KEY_ID));
     }
 
     public Certificate getDcsTlsCert() throws CertificateException {
@@ -112,5 +118,9 @@ public class ConfigurationService {
         md.update(der);
         byte[] digest = md.digest();
         return Base64.getUrlEncoder().encodeToString(digest).replaceAll("=", "");
+    }
+
+    public String getDcsSigningKeyId() {
+        return ssmProvider.get(System.getenv("DCS_SIGNING_KEY_ID"));
     }
 }

@@ -1,39 +1,70 @@
 package uk.gov.di.ipv.cri.passport.service;
 
+import com.amazonaws.services.kms.model.GetPublicKeyResult;
 import com.google.gson.Gson;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSHeader.Builder;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
-import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
-
-import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Map;
+import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
+import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
+import uk.gov.di.ipv.cri.passport.signing.KmsSigner;
 
 public class SigningService {
 
-    public String signData(String data, Thumbprints clientSigningThumbprints, Key clientSigningKey) {
+    private final ConfigurationService configurationService;
+    private final KmsSigner kmsSigner;
+    private final Gson gson = new Gson();
 
-        Gson gson = new Gson();
+    public SigningService() {
+        this.configurationService = new ConfigurationService();
+        this.kmsSigner = new KmsSigner(configurationService.getDcsSigningKeyId());
+    }
+
+    public SigningService(
+        ConfigurationService configurationService,
+        KmsSigner kmsSigner) {
+        this.configurationService = configurationService;
+        this.kmsSigner = kmsSigner;
+    }
+
+    public String signData(String payload)
+        throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+
+        Thumbprints clientSigningThumbprints = configurationService.makeThumbprints();
+        GetPublicKeyResult clientSigningKey = configurationService.getDcsSigningKey();
+
         var protectedHeader = new ProtectedHeader(
-                SignatureAlgorithm.RS256.toString(),
-                clientSigningThumbprints.getSha1Thumbprint(),
-                clientSigningThumbprints.getSha256Thumbprint());
+            SignatureAlgorithm.RS256.toString(),
+            clientSigningThumbprints.getSha1Thumbprint(),
+            clientSigningThumbprints.getSha256Thumbprint());
 
         var jsonHeaders = gson.toJson(protectedHeader);
-        var jws = Jwts
-                .builder()
-                .setPayload(data)
-                .signWith(clientSigningKey, SignatureAlgorithm.RS256)
-                .setHeaderParams(gson.fromJson(jsonHeaders, Map.class))
-                .compact();
 
-        return jws;
+        JWSHeader jwsHeader = new Builder(JWSAlgorithm.RS256)
+            .customParams(gson.fromJson(jsonHeaders, Map.class))
+            .keyID(clientSigningKey.getKeyId())
+            .build();
+
+        JWSObject jwsObject =
+            new JWSObject(
+                jwsHeader,
+                new Payload(payload));
+
+        jwsObject.sign(kmsSigner);
+
+        return jwsObject.serialize();
     }
 
     public String unwrapSignature(String data, Certificate serverSigningCert) {

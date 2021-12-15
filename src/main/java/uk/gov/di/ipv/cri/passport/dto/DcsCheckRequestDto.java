@@ -1,14 +1,14 @@
 package uk.gov.di.ipv.cri.passport.dto;
 
-import java.time.Instant;
+import java.util.Date;
 
 public class DcsCheckRequestDto {
 
     private String passportNumber;
     private String surname;
     private String forenames;
-    private Instant dateOfBirth;
-    private Instant expiryDate;
+    private Date dateOfBirth;
+    private Date expiryDate;
 
     public DcsCheckRequestDto() {};
 
@@ -16,8 +16,8 @@ public class DcsCheckRequestDto {
             String passportNumber,
             String surname,
             String forenames,
-            Instant dateOfBirth,
-            Instant expiryDate) {
+            Date dateOfBirth,
+            Date expiryDate) {
         this.passportNumber = passportNumber;
         this.surname = surname;
         this.forenames = forenames;
@@ -35,11 +35,11 @@ public class DcsCheckRequestDto {
         return forenames;
     }
 
-    public Instant getDateOfBirth() {
+    public Date getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public Instant getExpiryDate() {
+    public Date getExpiryDate() {
         return expiryDate;
     }
 }
