@@ -19,6 +19,19 @@ resource "aws_lambda_function" "lambda_function" {
   timeout          = 30
   memory_size      = 2048
 
+
+  environment {
+    variables = {
+      DCS_INTEGRATION_ENCRYPTION_CERT_PARAM = var.dcs_integration_encryption_cert_param
+      DCS_ENCRYPTION_CERT_PARAM             = var.dcs_encryption_cert_param
+      DCS_ENCRYPTION_KEY_PARAM              = var.dcs_encryption_key_param
+      DCS_SIGNING_CERT_PARAM                = var.dcs_signing_cert_param
+      DCS_SIGNING_KEY_PARAM                 = var.dcs_signing_key_param
+      DCS_TLS_CERT_PARAM                    = var.dcs_tls_cert_param
+      DCS_TLS_KEY_PARAM                     = var.dcs_tls_key_param
+    }
+  }
+
   # There is an outstanding bug in terraform (Issue #3630) that means it always tries to update the
   # last modified date, even if no other attributes in the lambda need changing
   lifecycle {
