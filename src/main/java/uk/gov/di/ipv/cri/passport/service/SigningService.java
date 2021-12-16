@@ -4,7 +4,6 @@ import com.amazonaws.services.kms.model.GetPublicKeyResult;
 import com.google.gson.Gson;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSHeader.Builder;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
@@ -52,14 +51,12 @@ public class SigningService {
 
         var jsonHeaders = gson.toJson(protectedHeader);
 
-        JWSHeader jwsHeader = new Builder(JWSAlgorithm.RS256)
-            .customParams(gson.fromJson(jsonHeaders, Map.class))
-            .keyID(clientSigningKey.getKeyId())
-            .build();
-
         JWSObject jwsObject =
             new JWSObject(
-                jwsHeader,
+                new Builder(JWSAlgorithm.RS256)
+                    .customParams(gson.fromJson(jsonHeaders, Map.class))
+                    .keyID(clientSigningKey.getKeyId())
+                    .build(),
                 new Payload(payload));
 
         jwsObject.sign(kmsSigner);

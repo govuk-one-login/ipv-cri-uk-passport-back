@@ -38,11 +38,11 @@ public class ConfigurationService {
     public ConfigurationService() {
         if (isRunningLocally()) {
             this.ssmProvider =
-                    ParamManager.getSsmProvider(
-                            SsmClient.builder()
-                                    .endpointOverride(URI.create(LOCALHOST_URI))
-                                    .region(Region.EU_WEST_2)
-                                    .build());
+                ParamManager.getSsmProvider(
+                    SsmClient.builder()
+                        .endpointOverride(URI.create(LOCALHOST_URI))
+                        .region(Region.EU_WEST_2)
+                        .build());
         } else {
             this.ssmProvider = ParamManager.getSsmProvider();
         }
@@ -52,14 +52,16 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv(environmentVariable));
     }
 
-    private Certificate getCertificateUsingEnv(String environmentVariable) throws CertificateException {
+    private Certificate getCertificateUsingEnv(String environmentVariable)
+        throws CertificateException {
         var value = ssmProvider.get(System.getenv(environmentVariable));
         var decoded = Base64.getDecoder().decode(value);
         var factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(decoded));
     }
 
-    private Key getKeyUsingEnv(String environmentVariable) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    private Key getKeyUsingEnv(String environmentVariable)
+        throws NoSuchAlgorithmException, InvalidKeySpecException {
         var factory = KeyFactory.getInstance("RSA");
         var value = ssmProvider.get(System.getenv(environmentVariable));
         var decoded = Base64.getDecoder().decode(value);
@@ -92,7 +94,8 @@ public class ConfigurationService {
         return getCertificateUsingEnv("DCS_SIGNING_CERT_PARAM");
     }
 
-    public GetPublicKeyResult getDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public GetPublicKeyResult getDcsSigningKey()
+        throws NoSuchAlgorithmException, InvalidKeySpecException {
         return kmsClient.getPublicKey(new GetPublicKeyRequest().withKeyId(KEY_ID));
     }
 
@@ -104,15 +107,16 @@ public class ConfigurationService {
         return getParameterFromStoreUsingEnv("DCS_TLS_KEY_PARAM");
     }
 
-   public Thumbprints makeThumbprints() throws CertificateException, NoSuchAlgorithmException {
+    public Thumbprints makeThumbprints() throws CertificateException, NoSuchAlgorithmException {
         var cert = getDcsSigningCert();
         return new Thumbprints(
-                getThumbprint((X509Certificate) cert, "SHA-1"),
-                getThumbprint((X509Certificate) cert, "SHA-256")
+            getThumbprint((X509Certificate) cert, "SHA-1"),
+            getThumbprint((X509Certificate) cert, "SHA-256")
         );
     }
-    public  String getThumbprint(X509Certificate cert, String hashAlg)
-            throws NoSuchAlgorithmException, CertificateEncodingException {
+
+    public String getThumbprint(X509Certificate cert, String hashAlg)
+        throws NoSuchAlgorithmException, CertificateEncodingException {
         MessageDigest md = MessageDigest.getInstance(hashAlg);
         byte[] der = cert.getEncoded();
         md.update(der);
