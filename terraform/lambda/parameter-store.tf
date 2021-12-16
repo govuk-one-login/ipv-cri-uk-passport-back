@@ -42,7 +42,9 @@ resource "aws_iam_role_policy" "get-parameters" {
         Resource = [
           "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/tls-key",
           aws_ssm_parameter.passport_tls_cert.arn,
+          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/signing-key",
           aws_ssm_parameter.passport_signing_cert.arn,
+          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/encryption-key",
           aws_ssm_parameter.passport_encryption_cert.arn,
           aws_ssm_parameter.dcs_encryption_cert.arn
         ]
