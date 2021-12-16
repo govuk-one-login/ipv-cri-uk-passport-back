@@ -1,28 +1,42 @@
 package uk.gov.di.ipv.cri.passport.service;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.EncryptionMethod;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWEAlgorithm;
+import com.nimbusds.jose.JWEHeader;
+import com.nimbusds.jose.JWEObject;
+import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSADecrypter;
-import com.nimbusds.jose.crypto.RSAEncrypter;
-
 import java.security.Key;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import uk.gov.di.ipv.cri.passport.kms.KmsEncrypt;
 
 public class EncryptionService {
 
+    private final KmsEncrypt kmsEncrypt;
+    private final ConfigurationService configurationService;
 
-    public String encrypt(String data, Certificate serverEncryptionCert) {
+    public EncryptionService() {
+        this.configurationService = new ConfigurationService();
+        this.kmsEncrypt = new KmsEncrypt(configurationService.getDcsEncryptionKey());
+    }
+
+    public EncryptionService(ConfigurationService configurationService, KmsEncrypt kmsEncrypt) {
+        this.configurationService = configurationService;
+        this.kmsEncrypt = kmsEncrypt;
+    }
+
+    public String encrypt(String data) {
         try {
             var header = new JWEHeader
-                    .Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A128CBC_HS256)
-                    .type(new JOSEObjectType("JWE"))
-                    .build();
+                .Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A128CBC_HS256)
+                .type(new JOSEObjectType("JWE"))
+                .build();
             var jwe = new JWEObject(header, new Payload(data));
-            var encrypter = new RSAEncrypter((RSAPublicKey) serverEncryptionCert.getPublicKey());
 
-            jwe.encrypt(encrypter);
+            jwe.encrypt(kmsEncrypt);
 
             if (!jwe.getState().equals(JWEObject.State.ENCRYPTED)) {
                 throw new RuntimeException("Something went wrong, couldn't encrypt JWE");

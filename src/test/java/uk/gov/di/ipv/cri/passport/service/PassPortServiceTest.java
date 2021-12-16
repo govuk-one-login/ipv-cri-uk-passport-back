@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.dto.DcsCheckRequestDto;
 import uk.gov.di.ipv.cri.passport.dto.DcsResponse;
-import uk.gov.di.ipv.cri.passport.signing.KmsSigner;
+import uk.gov.di.ipv.cri.passport.kms.KmsSigner;
 
 @ExtendWith(MockitoExtension.class)
 class PassPortServiceTest {

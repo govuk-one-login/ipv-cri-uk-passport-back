@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.signing;
+package uk.gov.di.ipv.cri.passport.kms;
 
 import static com.nimbusds.jose.JWSAlgorithm.RS256;
 

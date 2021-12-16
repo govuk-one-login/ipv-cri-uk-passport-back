@@ -18,7 +18,7 @@ import java.text.ParseException;
 import java.util.Map;
 import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
-import uk.gov.di.ipv.cri.passport.signing.KmsSigner;
+import uk.gov.di.ipv.cri.passport.kms.KmsSigner;
 
 public class SigningService {
 

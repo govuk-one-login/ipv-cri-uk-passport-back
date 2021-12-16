@@ -22,7 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
-import uk.gov.di.ipv.cri.passport.signing.KmsSigner;
+import uk.gov.di.ipv.cri.passport.kms.KmsSigner;
 
 @ExtendWith(MockitoExtension.class)
 class SigningServiceTest {
