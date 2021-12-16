@@ -13,17 +13,11 @@ module "passport" {
 
   env_vars = {
     "DCS_ENCRYPTION_CERT_PARAM"                = aws_ssm_parameter.dcs_encryption_cert.name
-    "PASSPORT_CRI_ENCRYPTION_CERT_PARAM"       = "/${var.environment}/cri/passport/alpha-dcs-encryption-cert"
-    "PASSPORT_CRI_ENCRYPTION_KEY_PARAM"        = "/${var.environment}/cri/passport/alpha-dcs-encryption-key"
-    "PASSPORT_CRI_SIGNING_CERT_PARAM"          = "/${var.environment}/cri/passport/alpha-dcs-signing-cert"
-    "PASSPORT_CRI_SIGNING_KEY_PARAM"           = "/${var.environment}/cri/passport/alpha-dcs-signing-key"
-    "PASSPORT_CRI_TLS_CERT_PARAM"              = "/${var.environment}/cri/passport/alpha-dcs-tls-cert"
-    "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/alpha-dcs-tls-key"
-    "PASSPORT_CRI_KMS_SIGNING_KEY_ID_PARAM"    = aws_kms_key.signing.id,
-    "PASSPORT_CRI_KMS_ENCRYPTION_KEY_ID_PARAM" = aws_kms_key.encryption.id,
+    "PASSPORT_CRI_SIGNING_KEY_PARAM"           = "/${var.environment}/cri/passport/signing-key"
+    "PASSPORT_CRI_ENCRYPTION_KEY_PARAM"        = "/${var.environment}/cri/passport/encryption-key"
     "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/tls-key"
-    "PASSPORT_CRI_KMS_SIGNING_CERT_PARAM"      = aws_ssm_parameter.passport_signing_cert.name
-    "PASSPORT_CRI_KMS_ENCRYPTION_CERT_PARAM"   = aws_ssm_parameter.passport_encryption_cert.name
+    "PASSPORT_CRI_SIGNING_CERT_PARAM"          = aws_ssm_parameter.passport_signing_cert.name
+    "PASSPORT_CRI_ENCRYPTION_CERT_PARAM"       = aws_ssm_parameter.passport_encryption_cert.name
     "PASSPORT_CRI_TLS_CERT_PARAM"              = aws_ssm_parameter.passport_tls_cert.name
   }
 }
