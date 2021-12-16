@@ -8,8 +8,8 @@ import java.time.LocalDate;
 
 public class DcsCheckRequestDto {
 
-    private static final String dateFormat = "yyyy-MM-dd";
-    private static final String timeZone = "UTC";
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
+    private static final String TIME_ZONE = "UTC";
 
     @JsonProperty private final String passportNumber;
 
@@ -18,10 +18,10 @@ public class DcsCheckRequestDto {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     private final String[] forenames;
 
-    @JsonFormat(pattern = dateFormat, timezone = timeZone)
+    @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
     private final LocalDate dateOfBirth;
 
-    @JsonFormat(pattern = dateFormat, timezone = timeZone)
+    @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
     private final LocalDate expiryDate;
 
     @JsonCreator
