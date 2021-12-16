@@ -21,9 +21,9 @@ module "passport" {
     "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/alpha-dcs-tls-key"
     "PASSPORT_CRI_KMS_SIGNING_KEY_ID_PARAM"    = aws_kms_key.signing.id,
     "PASSPORT_CRI_KMS_ENCRYPTION_KEY_ID_PARAM" = aws_kms_key.encryption.id,
+    "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/tls-key"
     "PASSPORT_CRI_KMS_SIGNING_CERT_PARAM"      = aws_ssm_parameter.passport_signing_cert.name
     "PASSPORT_CRI_KMS_ENCRYPTION_CERT_PARAM"   = aws_ssm_parameter.passport_encryption_cert.name
-    "PASSPORT_CRI_TLS_KEY_PARAM"               = aws_ssm_parameter.passport_tls_key.name
     "PASSPORT_CRI_TLS_CERT_PARAM"              = aws_ssm_parameter.passport_tls_cert.name
   }
 }
