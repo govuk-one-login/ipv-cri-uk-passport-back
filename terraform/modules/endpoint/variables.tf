@@ -42,39 +42,10 @@ variable "role_name" {
   description = "Lambda iam role name"
 }
 
-variable "dcs_integration_encryption_cert_param" {
-  type        = string
-  description = "DCS Integration Encryption Certificate Parameter Name"
-}
-
-variable "dcs_encryption_cert_param" {
-  type        = string
-  description = "DCS Encryption Certificate Parameter Name"
-}
-
-variable "dcs_encryption_key_param" {
-  type        = string
-  description = "DCS Encryption Key Parameter Name"
-}
-
-variable "dcs_signing_cert_param" {
-  type        = string
-  description = "DCS Signing Certificate Parameter Name"
-}
-
-variable "dcs_signing_key_param" {
-  type        = string
-  description = "DCS Signing Key Parameter Name"
-}
-
-variable "dcs_tls_cert_param" {
-  type        = string
-  description = "DCS TLS Certificate Parameter Name"
-}
-
-variable "dcs_tls_key_param" {
-  type        = string
-  description = "DCS TLS Key Parameter Name"
+variable "env_vars" {
+  type        = map
+  description = "env vars for the lambda"
+  default     = {}
 }
 
 locals {
