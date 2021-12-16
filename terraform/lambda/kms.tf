@@ -4,6 +4,10 @@ resource "aws_kms_key" "signing" {
   customer_master_key_spec = "RSA_2048"
   policy                   = data.aws_iam_policy_document.kms_key_access.json
   tags                     = local.default_tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_kms_alias" "signing" {
@@ -17,6 +21,10 @@ resource "aws_kms_key" "encryption" {
   customer_master_key_spec = "RSA_2048"
   policy                   = data.aws_iam_policy_document.kms_key_access.json
   tags                     = local.default_tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_kms_alias" "encryption" {
