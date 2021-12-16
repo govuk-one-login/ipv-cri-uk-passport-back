@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 public class DcsCheckRequestDto {
 
-    private static final String dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    private static final String dateFormat = "yyyy-MM-dd";
     private static final String timeZone = "UTC";
 
     private final String passportNumber;
@@ -18,18 +18,18 @@ public class DcsCheckRequestDto {
     private final String[] forenames;
 
     @JsonFormat(pattern = dateFormat, timezone = timeZone)
-    private final Instant dateOfBirth;
+    private final LocalDate dateOfBirth;
 
     @JsonFormat(pattern = dateFormat, timezone = timeZone)
-    private final Instant expiryDate;
+    private final LocalDate expiryDate;
 
     @JsonCreator
     public DcsCheckRequestDto(
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "surname", required = true) String surname,
             @JsonProperty(value = "forenames", required = true) String[] forenames,
-            @JsonProperty(value = "dateOfBirth", required = true) Instant dateOfBirth,
-            @JsonProperty(value = "expiryDate", required = true) Instant expiryDate) {
+            @JsonProperty(value = "dateOfBirth", required = true) LocalDate dateOfBirth,
+            @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate) {
         this.passportNumber = passportNumber;
         this.surname = surname;
         this.forenames = forenames;
