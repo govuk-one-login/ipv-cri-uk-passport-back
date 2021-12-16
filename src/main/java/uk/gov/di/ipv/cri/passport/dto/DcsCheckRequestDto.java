@@ -11,8 +11,9 @@ public class DcsCheckRequestDto {
     private static final String dateFormat = "yyyy-MM-dd";
     private static final String timeZone = "UTC";
 
-    private final String passportNumber;
-    private final String surname;
+    @JsonProperty private final String passportNumber;
+
+    @JsonProperty private final String surname;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     private final String[] forenames;
