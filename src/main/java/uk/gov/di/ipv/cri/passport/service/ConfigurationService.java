@@ -27,6 +27,7 @@ public class ConfigurationService {
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final String IS_LOCAL = "IS_LOCAL";
     public static final String KEY_ID = "5b32227e-b835-4b4a-a15d-4c050ca01af4";
+    public static final String PASSPORT_POST_URI = "/checks/passport";
 
     private final SSMProvider ssmProvider;
     private final AWSKMS kmsClient = AWSKMSClientBuilder.defaultClient();
@@ -101,6 +102,10 @@ public class ConfigurationService {
 
     public Certificate getDcsTlsCert() throws CertificateException {
         return getCertificateUsingEnv("DCS_TLS_CERT_PARAM");
+    }
+
+    public String GetPassportPostUri() {
+        return PASSPORT_POST_URI;
     }
 
     public String getDcsTlsKey() {

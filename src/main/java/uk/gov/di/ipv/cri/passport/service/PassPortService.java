@@ -2,7 +2,12 @@ package uk.gov.di.ipv.cri.passport.service;
 
 import com.google.gson.Gson;
 import com.nimbusds.jose.JOSEException;
+
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Timestamp;
@@ -16,21 +21,24 @@ public class PassPortService {
 
     private final EncryptionService encryptionService;
     private final SigningService signingService;
+    private final PostService postService;
     private final Gson gson = new Gson();
 
 
-    public PassPortService(EncryptionService encryptionService, SigningService signingService) {
+    public PassPortService(EncryptionService encryptionService, SigningService signingService, PostService postService) {
         this.encryptionService = encryptionService;
         this.signingService = signingService;
+        this.postService = postService;
     }
 
     public PassPortService() {
         this.encryptionService = new EncryptionService();
         this.signingService = new SigningService();
+        this.postService = new PostService();
     }
 
     public DcsResponse postValidPassportRequest(DcsCheckRequestDto dto)
-        throws JOSEException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException {
+            throws JOSEException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, UnrecoverableKeyException, KeyStoreException, IOException, KeyManagementException {
 
         var dcsPayload = createValidPassportRequestPayload(dto);
 
@@ -40,6 +48,8 @@ public class PassPortService {
 
         // Send to DCS
         // send payload
+        postService.postToDcs(signed);
+
 
         // unwrap response - other ticket
 
@@ -47,6 +57,7 @@ public class PassPortService {
         return null;
 
     }
+
 
     private DcsPayload createValidPassportRequestPayload(DcsCheckRequestDto dto) {
         var correlationId = UUID.randomUUID();
