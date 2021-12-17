@@ -8,12 +8,10 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.util.Base64;
 
 public class PostService {
 
@@ -38,6 +36,7 @@ public class PostService {
         HttpPost request = new HttpPost(configurationService.GetPassportPostUri());
         request.addHeader("content-type", "application/jose");
         request.setEntity(new StringEntity(signed));
+
         HttpResponse response = httpClient.execute(request);
 
     }
