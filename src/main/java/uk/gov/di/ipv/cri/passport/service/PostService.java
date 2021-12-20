@@ -1,17 +1,20 @@
 package uk.gov.di.ipv.cri.passport.service;
 
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import javax.net.ssl.SSLContext;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-
-import javax.net.ssl.SSLContext;
-import java.io.IOException;
-import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 
 public class PostService {
 
@@ -33,12 +36,11 @@ public class PostService {
                 .build();
 
         HttpClient httpClient = HttpClients.custom().setSSLContext(sslContext).build();
-        HttpPost request = new HttpPost(configurationService.GetPassportPostUri());
+        HttpPost request = new HttpPost(configurationService.getPassportPostUri());
         request.addHeader("content-type", "application/jose");
         request.setEntity(new StringEntity(signed));
 
         HttpResponse response = httpClient.execute(request);
-
     }
 
 

@@ -104,7 +104,7 @@ public class ConfigurationService {
         return getCertificateUsingEnv("DCS_TLS_CERT_PARAM");
     }
 
-    public String GetPassportPostUri() {
+    public String getPassportPostUri() {
         return PASSPORT_POST_URI;
     }
 
