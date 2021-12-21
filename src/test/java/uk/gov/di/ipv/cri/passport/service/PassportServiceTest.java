@@ -4,11 +4,18 @@ import com.amazonaws.services.kms.AWSKMS;
 import com.nimbusds.jose.JOSEException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -26,14 +33,18 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
-class PassPortServiceTest {
+class PassportServiceTest {
 
     public static final String PASSPORT_NUMBER = "Test";
     public static final String SURNAME = "Hello";
@@ -53,13 +64,38 @@ class PassPortServiceTest {
     PostService postService;
     @Mock
     AWSKMS kmsClient;
+    @Mock
+    HttpClient httpClient;
+    @Mock
+    HttpResponse httpResponse;
+
+    private PassportService passportService;
+
+    @BeforeEach
+    void setUp() {
+        passportService = new PassportService(signingService,httpClient,configurationService);
+    }
+
+
+    @Test
+    void shouldReturn200() throws IOException {
+        HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK,"Success"));
+
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        DcsCheckRequestDto dcsCheckRequestDto = new DcsCheckRequestDto("123","any","any",
+                new GregorianCalendar(1999,9,9).getTime(),
+                new GregorianCalendar(2023,9,9).getTime());
+
+        DcsResponse dcsResponse = passportService.postValidPassportRequest(dcsCheckRequestDto);
+        assert
+    }
 
     @Test
     void postValidPassportRequest()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, UnrecoverableKeyException, KeyStoreException, IOException, KeyManagementException {
         KmsSigner kmsSigner = new KmsSigner("test", kmsClient);
 
-        PassPortService passPortService = new PassPortService(encryptionService, signingService, postService);
+        PassportService passPortService = new PassportService(signingService, httpClient,configurationService);
 
         DcsResponse dcsResponse = passPortService.postValidPassportRequest(new DcsCheckRequestDto(PASSPORT_NUMBER, SURNAME, FORENAMES, DATE_OF_BIRTH, EXPIRY_DATE));
 

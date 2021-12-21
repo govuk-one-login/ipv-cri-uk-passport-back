@@ -13,8 +13,11 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.domain.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportException;
 import uk.gov.di.ipv.cri.passport.dto.DcsCheckRequestDto;
+import uk.gov.di.ipv.cri.passport.dto.DcsResponse;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.service.PassportService;
 import uk.gov.di.ipv.cri.passport.validation.ValidationResult;
 
 import java.util.Collections;
@@ -31,6 +34,15 @@ public class PassportHandler
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportHandler.class);
     private static final ObjectMapper objectMapper = createObjectMapper();
     private final Set<String> oauthQueryParamKeySet = Set.of("response_type", "client_id", "redirect_uri", "scope");
+    private final PassportService passPortService;
+
+    public PassportHandler(PassportService passPortService) {
+        this.passPortService = passPortService;
+    }
+
+    public PassportHandler() {
+        this.passPortService = new PassportService();
+    }
 
     private static ObjectMapper createObjectMapper() {
         var objectMapper = new ObjectMapper();
@@ -60,12 +72,14 @@ public class PassportHandler
         }
 
         DcsCheckRequestDto dcsCheckRequestDto;
+        DcsResponse dcsResponse;
         try {
             dcsCheckRequestDto = objectMapper.readValue(input.getBody(), DcsCheckRequestDto.class);
 
-            //todo hook -- add call to proxy (DSC values to be sent to passportservice.postValidPassportRequest
+            dcsResponse = passPortService.postValidPassportRequest(dcsCheckRequestDto);
 
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException | PassportException e) {
+            //TODO - catch our custom exception being thrown in the service call also
             LOGGER.error("Passport form data could not be parsed", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,

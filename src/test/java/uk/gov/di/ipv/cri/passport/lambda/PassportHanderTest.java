@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.service.PassportService;
 
-import java.time.Instant;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 public class PassportHanderTest {
     @Mock private Context context;
+    @Mock private PassportService passPortService;
 
     @Test
     void shouldReturn200() throws JsonProcessingException {
@@ -44,7 +45,8 @@ public class PassportHanderTest {
 
         event.setBody(s);
 
-        PassportHandler passportHandler = new PassportHandler();
+
+        PassportHandler passportHandler = new PassportHandler(passPortService);
         var response = passportHandler.handleRequest(event, context);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
