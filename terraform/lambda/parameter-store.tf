@@ -26,6 +26,13 @@ resource "aws_ssm_parameter" "dcs_encryption_cert" {
   value       = var.dcs_encryption_cert
 }
 
+resource "aws_ssm_parameter" "dcs_post_url" {
+  name        = "/${var.environment}/dcs/post-url"
+  description = "The DCS's endpoint URL"
+  type        = "String"
+  value       = var.dcs_post_url
+}
+
 resource "aws_iam_role_policy" "get-parameters" {
   name = "get-parameters"
   role = module.passport.iam_role_id
