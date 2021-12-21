@@ -15,6 +15,16 @@ variable "passport_encryption_cert" { type = string }
 
 variable "dcs_encryption_cert" { type = string }
 
+variable "attributes" {
+  default = [
+    {
+      name = "authCode",
+      type = "S",
+    },
+  ]
+  type = list(object({ name = string, type = string }))
+}
+
 locals {
   default_tags = var.use_localstack ? null : {
     Environment = var.environment
@@ -22,5 +32,5 @@ locals {
   }
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" { }
 

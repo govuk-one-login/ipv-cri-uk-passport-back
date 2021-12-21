@@ -48,6 +48,18 @@ variable "env_vars" {
   default     = {}
 }
 
+variable "allow_access_to_cri_passport_auth_codes_table" {
+  type        = bool
+  default     = false
+  description = "Should the lambda be given access to the cri-passport-auth-codes DynamoDB table"
+}
+
+variable "cri_passport_auth_codes_table_policy_arn" {
+  type        = string
+  default     = null
+  description = "ARN of the policy to allow read write to the auth-codes DynamoDB table"
+}
+
 locals {
   default_tags = {
     Environment = var.environment
