@@ -84,8 +84,7 @@ public class ConfigurationService {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
     }
 
-    public Key getPassportCRIOSigningKey()
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key getPassportCRISigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
     }
 
