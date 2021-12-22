@@ -43,7 +43,7 @@ variable "role_name" {
 }
 
 variable "env_vars" {
-  type        = map
+  type        = map(any)
   description = "env vars for the lambda"
   default     = {}
 }

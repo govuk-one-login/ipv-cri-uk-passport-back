@@ -33,29 +33,31 @@ resource "aws_ssm_parameter" "dcs_post_url" {
   value       = var.dcs_post_url
 }
 
-resource "aws_iam_role_policy" "get-parameters" {
-  name = "get-parameters"
-  role = module.passport.iam_role_id
+resource "aws_iam_role_policy" "get_parameters" {
+  name   = "get-parameters"
+  role   = module.passport.iam_role_id
+  policy = data.aws_iam_policy_document.get_parameters_policy.json
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid = "GetParameters"
-        Action = [
-          "ssm:GetParameter"
-        ]
-        Effect = "Allow"
-        Resource = [
-          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/tls-key",
-          aws_ssm_parameter.passport_tls_cert.arn,
-          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/signing-key",
-          aws_ssm_parameter.passport_signing_cert.arn,
-          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/encryption-key",
-          aws_ssm_parameter.passport_encryption_cert.arn,
-          aws_ssm_parameter.dcs_encryption_cert.arn
-        ]
-      }
+data "aws_iam_policy_document" "get_parameters_policy" {
+  version = "2012-10-17"
+
+  statement {
+    sid    = "AllowGetParameters"
+    effect = "Allow"
+
+    actions = [
+      "sts:AssumeRole"
     ]
-  })
+
+    resources = [
+      "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/tls-key",
+      aws_ssm_parameter.passport_tls_cert.arn,
+      "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/signing-key",
+      aws_ssm_parameter.passport_signing_cert.arn,
+      "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/encryption-key",
+      aws_ssm_parameter.passport_encryption_cert.arn,
+      aws_ssm_parameter.dcs_encryption_cert.arn
+    ]
+  }
 }
