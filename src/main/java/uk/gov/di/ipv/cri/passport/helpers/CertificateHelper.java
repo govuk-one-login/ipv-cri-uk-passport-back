@@ -9,7 +9,7 @@ public class CertificateHelper {
     public static String removeHeaderAndFooterFromKey(byte[] bytes) {
         return new String(bytes, StandardCharsets.UTF_8)
                 .replaceAll("-----[A-Z ]*-----", "")
-                .replaceAll("\"", "")
+                .replaceAll("/[\"]/", "")
                 .replaceAll("\\s+", "");
     }
 }
