@@ -1,5 +1,8 @@
 package uk.gov.di.ipv.cri.passport.service;
 
+import java.security.MessageDigest;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
@@ -16,6 +19,7 @@ import java.security.cert.CertificateFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 public class ConfigurationService {
 
@@ -102,5 +106,21 @@ public class ConfigurationService {
 
     public String getDCSPostUrl() {
         return getParameterFromStoreUsingEnv("DCS_POST_URL_PARAM");
+    }
+
+    public Thumbprints makeThumbprints() throws CertificateException, NoSuchAlgorithmException {
+        var cert = getPassportCriSigningCert();
+        return new Thumbprints(
+            getThumbprint((X509Certificate) cert, "SHA-1"),
+            getThumbprint((X509Certificate) cert, "SHA-256"));
+    }
+
+    public String getThumbprint(X509Certificate cert, String hashAlg)
+        throws NoSuchAlgorithmException, CertificateEncodingException {
+        MessageDigest md = MessageDigest.getInstance(hashAlg);
+        byte[] der = cert.getEncoded();
+        md.update(der);
+        byte[] digest = md.digest();
+        return Base64.getUrlEncoder().encodeToString(digest).replaceAll("=", "");
     }
 }
