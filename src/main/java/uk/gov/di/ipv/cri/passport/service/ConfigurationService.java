@@ -4,7 +4,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
-import uk.gov.di.ipv.cri.passport.helpers.CertificateHelper;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -57,21 +56,18 @@ public class ConfigurationService {
 
     private Certificate getCertificateFromStoreUsingEnv(String environmentVariable)
             throws CertificateException {
-        String value = getParameterFromStoreUsingEnv(environmentVariable);
-        byte[] decoded = Base64.getDecoder().decode(value);
+        byte[] binaryCertificate =
+                Base64.getDecoder().decode(getParameterFromStoreUsingEnv(environmentVariable));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
-        return factory.generateCertificate(new ByteArrayInputStream(decoded));
+        return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
     private Key getKeyFromStoreUsingEnv(String environmentVariable)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] bytes =
+        byte[] binaryKey =
                 Base64.getDecoder().decode(getParameterFromStoreUsingEnv(environmentVariable));
         KeyFactory factory = KeyFactory.getInstance("RSA");
-        PKCS8EncodedKeySpec privateKeySpec =
-                new PKCS8EncodedKeySpec(
-                        Base64.getDecoder()
-                                .decode(CertificateHelper.removeHeaderAndFooterFromKey(bytes)));
+        PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(binaryKey);
         return factory.generatePrivate(privateKeySpec);
     }
 
@@ -79,28 +75,28 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("DCS_ENCRYPTION_CERT_PARAM");
     }
 
-    public Key getPassportCRIEncryptionKey()
+    public Key getPassportCriEncryptionKey()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
     }
 
-    public Key getPassportCRISigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key getPassportCriSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
     }
 
-    public Key getPassportCRITlsKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Key getPassportCriTlsKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_TLS_KEY_PARAM");
     }
 
-    public Certificate getPassportCRISigningCert() throws CertificateException {
+    public Certificate getPassportCriSigningCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
     }
 
-    public Certificate getPassportCRIEncryptionCert() throws CertificateException {
+    public Certificate getPassportCriEncryptionCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
     }
 
-    public Certificate getPassportCRITlsCert() throws CertificateException {
+    public Certificate getPassportCriTlsCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_TLS_CERT_PARAM");
     }
 
