@@ -44,7 +44,6 @@ public class PassportService {
         this.configurationService = configurationService;
     }
 
-
     public PassportService() {
         this.signingService = new SigningService();
         this.httpClient = Postpassport.generateHttpClient();
@@ -117,7 +116,7 @@ public class PassportService {
             );
             dcsResponse = setResponse(dcsPayload, true, false, new String[]{"DCS responded with an exception"});
         }
-        // are we using our own exception
+
         return dcsResponse;
     }
 

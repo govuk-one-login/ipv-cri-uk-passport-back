@@ -22,7 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.domain.PassportException;
 import uk.gov.di.ipv.cri.passport.dto.DcsCheckRequestDto;
+import uk.gov.di.ipv.cri.passport.dto.DcsPayload;
 import uk.gov.di.ipv.cri.passport.dto.DcsResponse;
 import uk.gov.di.ipv.cri.passport.kms.KmsSigner;
 
@@ -34,15 +36,13 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.time.Instant;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 
@@ -78,6 +78,7 @@ class PassportServiceTest {
     JWSObject jwsObject;
 
     private PassportService passportService;
+    private final Gson gson = new Gson();
 
     @BeforeEach
     void setUp() {
@@ -87,8 +88,12 @@ class PassportServiceTest {
     @Test
     void shouldReturnValidResponse() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
         HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK,"Success"));
+        var correlationId = UUID.randomUUID();
 
-        when(signingService.signData("any")).thenReturn("{}");
+        DcsPayload dcsPayload = new DcsPayload( correlationId, UUID.randomUUID(), java.sql.Timestamp.from(Instant.now()), "1234",
+                "Any", new String[]{"Any"}, java.sql.Date.valueOf("1999-12-12"), java.sql.Date.valueOf("2010-10-10"));
+
+        when(signingService.signData(anyString())).thenReturn(dcsPayload.toString());
 
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
 
@@ -98,8 +103,58 @@ class PassportServiceTest {
                 new GregorianCalendar(2023,9,9).getTime());
 
         DcsResponse dcsResponse = passportService.postValidPassportRequest(dcsCheckRequestDto);
-        assertEquals(123,dcsResponse.getCorrelationId());
+        assertEquals(true,dcsResponse.isValid());
 
+    }
+
+    @Test
+    void shouldReturnInValidResponse() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST,"Error"));
+        var correlationId = UUID.randomUUID();
+
+        DcsPayload dcsPayload = new DcsPayload( correlationId, UUID.randomUUID(), java.sql.Timestamp.from(Instant.now()), "1234",
+                "Any", new String[]{"Any"}, java.sql.Date.valueOf("1999-12-12"), java.sql.Date.valueOf("2010-10-10"));
+
+        when(signingService.signData(anyString())).thenReturn(dcsPayload.toString());
+
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+
+        when(configurationService.getPassportPostUri()).thenReturn("/process");
+        DcsCheckRequestDto dcsCheckRequestDto = new DcsCheckRequestDto("123","any","any",
+                new GregorianCalendar(1999,9,9).getTime(),
+                new GregorianCalendar(2023,9,9).getTime());
+
+        DcsResponse dcsResponse = passportService.postValidPassportRequest(dcsCheckRequestDto);
+
+        assertEquals("DCS responded with a 4xx error",dcsResponse.getErrorMessage()[0]);
+
+    }
+
+    @Test()
+    void shouldThrowAnException() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR,"Error"));
+        var correlationId = UUID.randomUUID();
+
+        DcsPayload dcsPayload = new DcsPayload( correlationId, UUID.randomUUID(), java.sql.Timestamp.from(Instant.now()), "1234",
+                "Any", new String[]{"Any"}, java.sql.Date.valueOf("1999-12-12"), java.sql.Date.valueOf("2010-10-10"));
+
+        when(signingService.signData(anyString())).thenReturn(dcsPayload.toString());
+
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+
+        when(configurationService.getPassportPostUri()).thenReturn("/process");
+        DcsCheckRequestDto dcsCheckRequestDto = new DcsCheckRequestDto("123","any","any",
+                new GregorianCalendar(1999,9,9).getTime(),
+                new GregorianCalendar(2023,9,9).getTime());
+
+        PassportException exception = assertThrows(PassportException.class, () -> {
+            passportService.postValidPassportRequest(dcsCheckRequestDto);
+        });
+
+        String expectedMessage = "DCS responded with an exception";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     @Test

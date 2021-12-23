@@ -36,10 +36,10 @@ import java.util.stream.Collectors;
 public class PassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-   /* static HttpClient httpClient;
+    static HttpClient httpClient;
     static ConfigurationService configurationService;
     static EncryptionService encryptionService;
-    static SigningService signingService;*/
+    static SigningService signingService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportHandler.class);
     private static final ObjectMapper objectMapper = createObjectMapper();
@@ -55,11 +55,11 @@ public class PassportHandler
     }
 
 
-    /*static {
+    static {
         httpClient = Postpassport.generateHttpClient();
 
 
-    }*/
+    }
 
     private static ObjectMapper createObjectMapper() {
         var objectMapper = new ObjectMapper();
