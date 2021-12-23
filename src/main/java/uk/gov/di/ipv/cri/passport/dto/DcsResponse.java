@@ -17,6 +17,24 @@ public class DcsResponse {
         this.errorMessage = errorMessage;
     }
 
+    public UUID getCorrelationId() {
+        return correlationId;
+    }
 
+    public UUID getRequestId() {
+        return requestId;
+    }
+
+    public boolean isError() {
+        return error;
+    }
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    public String[] getErrorMessage() {
+        return errorMessage;
+    }
 }
 

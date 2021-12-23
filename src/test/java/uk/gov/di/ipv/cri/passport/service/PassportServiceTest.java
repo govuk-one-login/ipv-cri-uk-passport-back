@@ -1,7 +1,9 @@
 package uk.gov.di.ipv.cri.passport.service;
 
 import com.amazonaws.services.kms.AWSKMS;
+import com.google.gson.Gson;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -40,6 +42,7 @@ import java.util.GregorianCalendar;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 
@@ -51,6 +54,8 @@ class PassportServiceTest {
     public static final String FORENAMES = "World";
     public static final Date DATE_OF_BIRTH = new Date();
     public static final Date EXPIRY_DATE = new Date();
+
+
     @Mock
     EncryptionService encryptionService;
 
@@ -69,6 +74,9 @@ class PassportServiceTest {
     @Mock
     HttpResponse httpResponse;
 
+    @Mock
+    JWSObject jwsObject;
+
     private PassportService passportService;
 
     @BeforeEach
@@ -76,18 +84,22 @@ class PassportServiceTest {
         passportService = new PassportService(signingService,httpClient,configurationService);
     }
 
-
     @Test
-    void shouldReturn200() throws IOException {
+    void shouldReturnValidResponse() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
         HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK,"Success"));
 
+        when(signingService.signData("any")).thenReturn("{}");
+
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+
+        when(configurationService.getPassportPostUri()).thenReturn("/process");
         DcsCheckRequestDto dcsCheckRequestDto = new DcsCheckRequestDto("123","any","any",
                 new GregorianCalendar(1999,9,9).getTime(),
                 new GregorianCalendar(2023,9,9).getTime());
 
         DcsResponse dcsResponse = passportService.postValidPassportRequest(dcsCheckRequestDto);
-        assert
+        assertEquals(123,dcsResponse.getCorrelationId());
+
     }
 
     @Test

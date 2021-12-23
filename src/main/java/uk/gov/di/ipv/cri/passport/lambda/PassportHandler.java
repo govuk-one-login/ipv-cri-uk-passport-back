@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.domain.ErrorResponse;
@@ -17,7 +18,11 @@ import uk.gov.di.ipv.cri.passport.domain.PassportException;
 import uk.gov.di.ipv.cri.passport.dto.DcsCheckRequestDto;
 import uk.gov.di.ipv.cri.passport.dto.DcsResponse;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.helpers.Postpassport;
+import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.service.EncryptionService;
 import uk.gov.di.ipv.cri.passport.service.PassportService;
+import uk.gov.di.ipv.cri.passport.service.SigningService;
 import uk.gov.di.ipv.cri.passport.validation.ValidationResult;
 
 import java.util.Collections;
@@ -31,6 +36,11 @@ import java.util.stream.Collectors;
 public class PassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
+   /* static HttpClient httpClient;
+    static ConfigurationService configurationService;
+    static EncryptionService encryptionService;
+    static SigningService signingService;*/
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportHandler.class);
     private static final ObjectMapper objectMapper = createObjectMapper();
     private final Set<String> oauthQueryParamKeySet = Set.of("response_type", "client_id", "redirect_uri", "scope");
@@ -43,6 +53,13 @@ public class PassportHandler
     public PassportHandler() {
         this.passPortService = new PassportService();
     }
+
+
+    /*static {
+        httpClient = Postpassport.generateHttpClient();
+
+
+    }*/
 
     private static ObjectMapper createObjectMapper() {
         var objectMapper = new ObjectMapper();
