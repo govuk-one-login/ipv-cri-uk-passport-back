@@ -1,25 +1,25 @@
 package uk.gov.di.ipv.cri.passport.service;
 
-import java.security.MessageDigest;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
+import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 public class ConfigurationService {
 
@@ -96,7 +96,7 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
     }
 
-    public Certificate getPassportCriEncryptionCert() throws CertificateException {
+    public Certificate getDcsEncryptionForClientsCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
     }
 
@@ -111,12 +111,12 @@ public class ConfigurationService {
     public Thumbprints makeThumbprints() throws CertificateException, NoSuchAlgorithmException {
         var cert = getPassportCriSigningCert();
         return new Thumbprints(
-            getThumbprint((X509Certificate) cert, "SHA-1"),
-            getThumbprint((X509Certificate) cert, "SHA-256"));
+                getThumbprint((X509Certificate) cert, "SHA-1"),
+                getThumbprint((X509Certificate) cert, "SHA-256"));
     }
 
     public String getThumbprint(X509Certificate cert, String hashAlg)
-        throws NoSuchAlgorithmException, CertificateEncodingException {
+            throws NoSuchAlgorithmException, CertificateEncodingException {
         MessageDigest md = MessageDigest.getInstance(hashAlg);
         byte[] der = cert.getEncoded();
         md.update(der);
