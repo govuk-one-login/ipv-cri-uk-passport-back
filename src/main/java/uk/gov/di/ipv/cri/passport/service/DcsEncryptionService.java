@@ -8,6 +8,7 @@ import com.nimbusds.jose.JWEHeader;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSAEncrypter;
+import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
 
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
@@ -40,7 +41,7 @@ public class DcsEncryptionService {
                                         .getPublicKey()));
 
         if (!jwe.getState().equals(JWEObject.State.ENCRYPTED)) {
-            throw new RuntimeException("Something went wrong, couldn't encrypt JWE");
+            throw new IpvCryptoException("Something went wrong, couldn't encrypt JWE");
         }
 
         return jwe.serialize();
