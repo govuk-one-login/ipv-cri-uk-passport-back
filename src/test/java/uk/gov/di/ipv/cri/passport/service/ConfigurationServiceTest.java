@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
+import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -97,5 +98,16 @@ class ConfigurationServiceTest {
 
         assertEquals("any-old-thing", requestBody.get("Name"));
         assertEquals(false, requestBody.get("WithDecryption"));
+    }
+
+    @Test
+    void shouldCreateThumbprintsFromCertificate()
+            throws CertificateException, NoSuchAlgorithmException {
+        environmentVariables.set("PASSPORT_CRI_SIGNING_CERT_PARAM", "/dev/dcs/signing-cert");
+        when(ssmProvider.get("/dev/dcs/signing-cert")).thenReturn(TEST_CERT);
+        Thumbprints underTest = configurationService.makeThumbprints();
+        assertEquals("vtBFFZdadqFdSVgScfLruzPoS14", underTest.getSha1Thumbprint());
+        assertEquals(
+                "7JNbR3kjTHvbDkYt9F_RKwjmYgFaG3dORZqRmnMB-wY", underTest.getSha256Thumbprint());
     }
 }
