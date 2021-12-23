@@ -121,6 +121,6 @@ public class ConfigurationService {
         byte[] der = cert.getEncoded();
         md.update(der);
         byte[] digest = md.digest();
-        return Base64.getUrlEncoder().encodeToString(digest).replaceAll("=", "");
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
     }
 }

@@ -38,7 +38,7 @@ class DcsSigningServiceTest {
     @Mock ConfigurationService configurationService;
 
     @Test
-    public void shouldSignProvidedStringWithKeyAndProtectedHeaders()
+    void shouldSignProvidedStringWithKeyAndProtectedHeaders()
             throws ParseException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     CertificateException {
         when(configurationService.getPassportCriSigningKey()).thenReturn(getSigningPrivateKey());

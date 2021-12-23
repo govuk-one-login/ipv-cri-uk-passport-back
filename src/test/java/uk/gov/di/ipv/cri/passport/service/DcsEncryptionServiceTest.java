@@ -3,7 +3,6 @@ package uk.gov.di.ipv.cri.passport.service;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.RSADecrypter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,11 +33,8 @@ class DcsEncryptionServiceTest {
 
     @Mock ConfigurationService configurationService;
 
-    @BeforeEach
-    void setUp() {}
-
     @Test
-    public void shouldEncryptStringWithCertificate()
+    void shouldEncryptStringWithCertificate()
             throws CertificateException, JOSEException, NoSuchAlgorithmException,
                     InvalidKeySpecException, ParseException {
         when(configurationService.getDcsEncryptionForClientsCert()).thenReturn(getCertificate());
@@ -55,8 +51,7 @@ class DcsEncryptionServiceTest {
 
         JWEObject jweObject = JWEObject.parse(encrypt);
         jweObject.decrypt(rsaDecrypter);
-        String decryptedResult = jweObject.getPayload().toString();
-        return decryptedResult;
+        return jweObject.getPayload().toString();
     }
 
     private PrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {

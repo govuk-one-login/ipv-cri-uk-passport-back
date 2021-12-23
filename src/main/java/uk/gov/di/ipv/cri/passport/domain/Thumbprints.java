@@ -2,8 +2,8 @@ package uk.gov.di.ipv.cri.passport.domain;
 
 public class Thumbprints {
 
-    private String sha1Thumbprint;
-    private String sha256Thumbprint;
+    private final String sha1Thumbprint;
+    private final String sha256Thumbprint;
 
     public Thumbprints(String sha1Thumbprint, String sha256Thumbprint) {
         this.sha1Thumbprint = sha1Thumbprint;
