@@ -47,6 +47,8 @@ class ConfigurationServiceTest {
 
     @Mock SSMProvider ssmProvider;
 
+    @Mock SSMProvider ssmProviderWithDecryption;
+
     private ConfigurationService configurationService;
 
     @BeforeEach
@@ -75,7 +77,9 @@ class ConfigurationServiceTest {
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         environmentVariables.set(
                 "PASSPORT_CRI_ENCRYPTION_KEY_PARAM", "/dev/cri/passport/encryption-key");
-        when(ssmProvider.get("/dev/cri/passport/encryption-key")).thenReturn(TEST_KEY);
+        when(ssmProvider.withDecryption()).thenReturn(ssmProviderWithDecryption);
+        when(ssmProviderWithDecryption.get("/dev/cri/passport/encryption-key"))
+                .thenReturn(TEST_KEY);
 
         Key underTest = configurationService.getPassportCriEncryptionKey();
         assertEquals("PKCS#8", underTest.getFormat());

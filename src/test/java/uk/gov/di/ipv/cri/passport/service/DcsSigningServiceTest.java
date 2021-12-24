@@ -37,6 +37,7 @@ class DcsSigningServiceTest {
 
     @Mock ConfigurationService configurationService;
 
+    @SuppressWarnings("deprecation")
     @Test
     void shouldSignProvidedStringWithKeyAndProtectedHeaders()
             throws ParseException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
@@ -55,11 +56,12 @@ class DcsSigningServiceTest {
                 new RSASSAVerifier((RSAPublicKey) getPublicKey(getSigningPrivateKey()));
 
         assertTrue(parsedJWSObject.verify(verifier));
-        assertEquals("RS256", parsedJWSObject.getHeader().getCustomParam("algorithm"));
+        assertEquals("RS256", parsedJWSObject.getHeader().getAlgorithm().toString());
         assertEquals(
-                SHA_1_THUMBPRINT, parsedJWSObject.getHeader().getCustomParam("sha1Thumbprint"));
+                SHA_1_THUMBPRINT, parsedJWSObject.getHeader().getX509CertThumbprint().toString());
         assertEquals(
-                SHA_256_THUMBPRINT, parsedJWSObject.getHeader().getCustomParam("sha256Thumbprint"));
+                SHA_256_THUMBPRINT,
+                parsedJWSObject.getHeader().getX509CertSHA256Thumbprint().toString());
     }
 
     private PublicKey getPublicKey(RSAPrivateKey signingPrivateKey)

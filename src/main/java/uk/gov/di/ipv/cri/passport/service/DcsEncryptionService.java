@@ -35,10 +35,7 @@ public class DcsEncryptionService {
 
         jwe.encrypt(
                 new RSAEncrypter(
-                        (RSAPublicKey)
-                                configurationService
-                                        .getDcsEncryptionForClientsCert()
-                                        .getPublicKey()));
+                        (RSAPublicKey) configurationService.getDcsEncryptionCert().getPublicKey()));
 
         if (!jwe.getState().equals(JWEObject.State.ENCRYPTED)) {
             throw new IpvCryptoException("Something went wrong, couldn't encrypt JWE");
