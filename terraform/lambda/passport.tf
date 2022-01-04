@@ -25,9 +25,10 @@ module "passport" {
     "PASSPORT_CRI_SIGNING_CERT_PARAM"          = aws_ssm_parameter.passport_signing_cert.name
     "PASSPORT_CRI_ENCRYPTION_CERT_PARAM"       = aws_ssm_parameter.passport_encryption_cert.name
     "PASSPORT_CRI_TLS_CERT_PARAM"              = aws_ssm_parameter.passport_tls_cert.name
-    CRI_PASSPORT_CREDENTIALS_TABLE_NAME        = aws_dynamodb_table.cri-passport-credentials.name
-    AUTH_CODES_TABLE_NAME                      = aws_dynamodb_table.cri-passport-auth-codes.name
-    ACCESS_TOKENS_TABLE_NAME                   = aws_dynamodb_table.cri-passport-access-tokens.name
+    "CRI_PASSPORT_CREDENTIALS_TABLE_NAME"      = aws_dynamodb_table.cri-passport-credentials.name
+    "AUTH_CODES_TABLE_NAME"                    = aws_dynamodb_table.cri-passport-auth-codes.name
+    "ACCESS_TOKENS_TABLE_NAME"                 = aws_dynamodb_table.cri-passport-access-tokens.name
+    "DCS_POST_URL_PARAM"                       = aws_ssm_parameter.dcs_post_url.name
   }
 }
 

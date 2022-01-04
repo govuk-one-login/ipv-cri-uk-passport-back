@@ -21,12 +21,16 @@ dependencies {
 			"com.fasterxml.jackson.core:jackson-databind:2.13.0",
 			"com.fasterxml.jackson.core:jackson-annotations:2.13.0",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0",
-			"org.slf4j:slf4j-simple:1.7.32"
+			"org.slf4j:slf4j-simple:1.7.32",
+			"software.amazon.lambda:powertools-parameters:1.8.0",
+			"com.google.code.gson:gson:2.8.9",
+			"com.nimbusds:nimbus-jose-jwt:9.15.2"
 
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2',
 			"org.mockito:mockito-core:4.1.0",
 			"org.mockito:mockito-junit-jupiter:4.1.0",
-			"com.github.tomakehurst:wiremock-jre8:2.31.0"
+			"com.github.tomakehurst:wiremock-jre8:2.31.0",
+			"uk.org.webcompere:system-stubs-jupiter:1.1.0"
 }
 
 java {
