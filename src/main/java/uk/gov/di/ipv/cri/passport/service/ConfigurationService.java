@@ -23,7 +23,7 @@ import java.util.Base64;
 
 public class ConfigurationService {
 
-    public static final int LOCALHOST_PORT = 4569;
+    public static final int LOCALHOST_PORT = 4567;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final String IS_LOCAL = "IS_LOCAL";
 
@@ -58,6 +58,10 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv(environmentVariable));
     }
 
+    private String getDecryptedParameterFromStoreUsingEnv(String environmentVariable) {
+        return ssmProvider.withDecryption().get(System.getenv(environmentVariable));
+    }
+
     private Certificate getCertificateFromStoreUsingEnv(String environmentVariable)
             throws CertificateException {
         byte[] binaryCertificate =
@@ -69,7 +73,8 @@ public class ConfigurationService {
     private Key getKeyFromStoreUsingEnv(String environmentVariable)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] binaryKey =
-                Base64.getDecoder().decode(getParameterFromStoreUsingEnv(environmentVariable));
+                Base64.getDecoder()
+                        .decode(getDecryptedParameterFromStoreUsingEnv(environmentVariable));
         KeyFactory factory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(binaryKey);
         return factory.generatePrivate(privateKeySpec);
@@ -96,12 +101,15 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
     }
 
-    public Certificate getDcsEncryptionForClientsCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
-    }
-
     public Certificate getPassportCriTlsCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_TLS_CERT_PARAM");
+    }
+
+    public Certificate[] getDcsTlsCertChain() throws CertificateException {
+        return new Certificate[] {
+            getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
+            getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
+        };
     }
 
     public String getDCSPostUrl() {

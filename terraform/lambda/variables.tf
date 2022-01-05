@@ -15,7 +15,11 @@ variable "passport_encryption_cert" { type = string }
 
 variable "dcs_encryption_cert" { type = string }
 
-variable "dcs_post_url" { type = string }
+variable "dcs_tls_intermediate_cert" { type = string }
+
+variable "dcs_tls_root_cert" { type = string }
+
+variable "dcs_passport_url" { type = string }
 
 locals {
   default_tags = var.use_localstack ? null : {

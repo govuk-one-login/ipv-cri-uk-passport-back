@@ -18,17 +18,19 @@ module "passport" {
   cri_passport_credentials_table_policy_arn      = aws_iam_policy.policy-cri-passport-credentials-table.arn
 
   env_vars = {
-    "DCS_ENCRYPTION_CERT_PARAM"                = aws_ssm_parameter.dcs_encryption_cert.name
+    "DCS_ENCRYPTION_CERT_PARAM"                = "/${var.environment}/dcs/encryption-cert"
     "PASSPORT_CRI_SIGNING_KEY_PARAM"           = "/${var.environment}/cri/passport/signing-key"
     "PASSPORT_CRI_ENCRYPTION_KEY_PARAM"        = "/${var.environment}/cri/passport/encryption-key"
     "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/tls-key"
-    "PASSPORT_CRI_SIGNING_CERT_PARAM"          = aws_ssm_parameter.passport_signing_cert.name
-    "PASSPORT_CRI_ENCRYPTION_CERT_PARAM"       = aws_ssm_parameter.passport_encryption_cert.name
-    "PASSPORT_CRI_TLS_CERT_PARAM"              = aws_ssm_parameter.passport_tls_cert.name
+    "PASSPORT_CRI_SIGNING_CERT_PARAM"          = "/${var.environment}/cri/passport/signing-cert"
+    "PASSPORT_CRI_ENCRYPTION_CERT_PARAM"       = "/${var.environment}/cri/passport/encryption-cert"
+    "PASSPORT_CRI_TLS_CERT_PARAM"              = "/${var.environment}/cri/passport/tls-cert"
+    "DCS_POST_URL_PARAM"                       = "/${var.environment}/dcs/post-url"
+    "DCS_TLS_ROOT_CERT_PARAM"                  = "/${var.environment}/dcs/tls-root-certificate"
+    "DCS_TLS_INTERMEDIATE_CERT_PARAM"          = "/${var.environment}/dcs/tls-intermediate-certificate"
     "CRI_PASSPORT_CREDENTIALS_TABLE_NAME"      = aws_dynamodb_table.cri-passport-credentials.name
     "AUTH_CODES_TABLE_NAME"                    = aws_dynamodb_table.cri-passport-auth-codes.name
     "ACCESS_TOKENS_TABLE_NAME"                 = aws_dynamodb_table.cri-passport-access-tokens.name
-    "DCS_POST_URL_PARAM"                       = aws_ssm_parameter.dcs_post_url.name
   }
 }
 

@@ -37,7 +37,7 @@ class DcsEncryptionServiceTest {
     void shouldEncryptStringWithCertificate()
             throws CertificateException, JOSEException, NoSuchAlgorithmException,
                     InvalidKeySpecException, ParseException {
-        when(configurationService.getDcsEncryptionForClientsCert()).thenReturn(getCertificate());
+        when(configurationService.getDcsEncryptionCert()).thenReturn(getCertificate());
         DcsEncryptionService underTest = new DcsEncryptionService(configurationService);
         String payload = "test";
         String encryptPayload = underTest.encrypt(payload);

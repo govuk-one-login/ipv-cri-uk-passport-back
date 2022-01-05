@@ -1,10 +1,16 @@
 package uk.gov.di.ipv.cri.passport.domain;
 
+import com.google.gson.annotations.SerializedName;
 import uk.gov.di.ipv.cri.passport.annotations.ExcludeFromGeneratedCoverageReport;
 
 public class ProtectedHeader {
+    @SerializedName("alg")
     private final String algorithm;
+
+    @SerializedName("x5t")
     private final String sha1Thumbprint;
+
+    @SerializedName("x5t#S256")
     private final String sha256Thumbprint;
 
     @ExcludeFromGeneratedCoverageReport

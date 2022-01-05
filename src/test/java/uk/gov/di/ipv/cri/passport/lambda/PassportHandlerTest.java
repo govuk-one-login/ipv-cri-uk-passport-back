@@ -6,23 +6,27 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.service.PassportService;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PassportHandlerTest {
 
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
-    private final PassportHandler passportHandler = new PassportHandler();
     private final Map<String, String> validPassportFormData =
             Map.of(
                     "passportNumber", "1234567890",
@@ -31,14 +35,23 @@ class PassportHandlerTest {
                     "dateOfBirth", "1984-09-28",
                     "expiryDate", "2024-09-03");
 
-    @Mock private Context context;
+    @Mock Context context;
+    @Mock PassportService passportService;
+
+    private PassportHandler underTest;
+
+    @BeforeEach
+    void setUp() {
+        underTest = new PassportHandler(passportService);
+    }
 
     @Test
-    void shouldReturn200WithCorrectFormData() throws JsonProcessingException {
+    void shouldReturn200WithCorrectFormData() throws IOException {
+        when(passportService.dcsPassportCheck(any(String.class))).thenReturn("Response");
         var event = new APIGatewayProxyRequestEvent();
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
-        var response = passportHandler.handleRequest(event, context);
+        var response = underTest.handleRequest(event, context);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
@@ -52,7 +65,7 @@ class PassportHandlerTest {
                     objectMapper.writeValueAsString(
                             new HashMap<>(validPassportFormData).remove(keyToRemove)));
 
-            var response = passportHandler.handleRequest(event, context);
+            var response = underTest.handleRequest(event, context);
             var responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
             assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
@@ -73,7 +86,7 @@ class PassportHandlerTest {
         var event = new APIGatewayProxyRequestEvent();
         event.setBody(objectMapper.writeValueAsString(mangledDateInput));
 
-        var response = passportHandler.handleRequest(event, context);
+        var response = underTest.handleRequest(event, context);
         var responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());

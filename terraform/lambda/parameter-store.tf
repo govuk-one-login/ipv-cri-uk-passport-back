@@ -26,11 +26,25 @@ resource "aws_ssm_parameter" "dcs_encryption_cert" {
   value       = var.dcs_encryption_cert
 }
 
+resource "aws_ssm_parameter" "dcs_tls_intermediate_cert" {
+  name        = "/${var.environment}/dcs/tls-intermediate-certificate"
+  description = "The DCS's tls certificate chain intermediate cert"
+  type        = "String"
+  value       = var.dcs_tls_intermediate_cert
+}
+
+resource "aws_ssm_parameter" "dcs_tls_root_cert" {
+  name        = "/${var.environment}/dcs/tls-root-certificate"
+  description = "The DCS's tls certificate chain root cert"
+  type        = "String"
+  value       = var.dcs_tls_root_cert
+}
+
 resource "aws_ssm_parameter" "dcs_post_url" {
   name        = "/${var.environment}/dcs/post-url"
-  description = "The DCS's endpoint URL"
+  description = "The DCS's url for passport valid check"
   type        = "String"
-  value       = var.dcs_post_url
+  value       = var.dcs_passport_url
 }
 
 resource "aws_iam_role_policy" "get-parameters" {
@@ -46,14 +60,17 @@ resource "aws_iam_role_policy" "get-parameters" {
           "ssm:GetParameter"
         ]
         Effect = "Allow"
+
         Resource = [
-          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/tls-key",
+          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/cri/passport/tls-key",
           aws_ssm_parameter.passport_tls_cert.arn,
-          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/signing-key",
+          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/cri/passport/signing-key",
           aws_ssm_parameter.passport_signing_cert.arn,
-          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/dev/cri/passport/encryption-key",
+          "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/cri/passport/encryption-key",
           aws_ssm_parameter.passport_encryption_cert.arn,
-          aws_ssm_parameter.dcs_encryption_cert.arn
+          aws_ssm_parameter.dcs_encryption_cert.arn,
+          aws_ssm_parameter.dcs_tls_intermediate_cert.arn,
+          aws_ssm_parameter.dcs_tls_root_cert.arn
         ]
       }
     ]
