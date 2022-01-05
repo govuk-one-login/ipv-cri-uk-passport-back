@@ -44,7 +44,7 @@ resource "aws_ssm_parameter" "dcs_post_url" {
   name        = "/${var.environment}/dcs/post-url"
   description = "The DCS's url for passport valid check"
   type        = "String"
-  value       = var.dcs_passport_url
+  value       = var.dcs_post_url
 }
 
 resource "aws_iam_role_policy" "get-parameters" {
