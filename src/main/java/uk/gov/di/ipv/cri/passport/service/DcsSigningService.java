@@ -1,19 +1,18 @@
 package uk.gov.di.ipv.cri.passport.service;
 
 import com.google.gson.Gson;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.text.ParseException;
 import java.util.Map;
 
 public class DcsSigningService {
@@ -54,5 +53,25 @@ public class DcsSigningService {
                 new RSASSASigner((RSAPrivateKey) configurationService.getPassportCriSigningKey()));
 
         return jwsObject;
+    }
+
+    public String validateOuterSignature(String response)
+            throws CertificateException, ParseException, JOSEException {
+        JWSObject jwsObject = JWSObject.parse(response);
+        return validateSignature(jwsObject);
+    }
+
+    public String validateInnerSignature(JWSObject jwsObject)
+            throws JOSEException, CertificateException {
+        return validateSignature(jwsObject);
+    }
+
+    private String validateSignature(JWSObject jwsObject)
+            throws CertificateException, JOSEException {
+        RSASSAVerifier rsassaVerifier =
+                new RSASSAVerifier(
+                        (RSAPublicKey) configurationService.getDcsSigningCert().getPublicKey());
+        jwsObject.verify(rsassaVerifier);
+        return jwsObject.getPayload().toString();
     }
 }

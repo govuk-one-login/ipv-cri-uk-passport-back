@@ -46,8 +46,7 @@ public class DcsEncryptionService {
         try {
             JWEObject jweObject = JWEObject.parse(encrypted);
             RSADecrypter rsaDecrypter =
-                    new RSADecrypter(
-                            configurationService.getPassportCriPrivateKey());
+                    new RSADecrypter(configurationService.getPassportCriPrivateKey());
             jweObject.decrypt(rsaDecrypter);
 
             return JWSObject.parse(jweObject.getPayload().toString());

@@ -17,6 +17,8 @@ variable "dcs_signing_cert" { type = string }
 
 variable "dcs_encryption_cert" { type = string }
 
+variable "dcs_signing_cert" { type = string }
+
 variable "dcs_tls_intermediate_cert" { type = string }
 
 variable "dcs_tls_root_cert" { type = string }
