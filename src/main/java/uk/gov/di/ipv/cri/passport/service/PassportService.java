@@ -72,11 +72,12 @@ public class PassportService {
         return null;
     }
 
-    public void persistDcsResponse(String responsePayload) {
+    public DcsResponseItem persistDcsResponse(String responsePayload) {
         DcsResponseItem dcsResponseItem = new DcsResponseItem();
         dcsResponseItem.setResourceId(UUID.randomUUID().toString());
         dcsResponseItem.setResourcePayload(responsePayload);
 
         dataStore.create(dcsResponseItem);
+        return dcsResponseItem;
     }
 }

@@ -22,7 +22,7 @@ public class AuthorizationCodeItem {
         return resourceId;
     }
 
-    public void setResourceIdId(String resourceId) {
+    public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
     }
 }

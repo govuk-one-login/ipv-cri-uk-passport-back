@@ -58,6 +58,10 @@ public class ConfigurationService {
         return System.getenv("DCS_RESPONSE_TABLE_NAME");
     }
 
+    public String getAuthCodesTableName() {
+        return System.getenv("CRI_PASSPORT_AUTH_CODES_TABLE_NAME");
+    }
+
     private String getParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.get(System.getenv(environmentVariable));
     }

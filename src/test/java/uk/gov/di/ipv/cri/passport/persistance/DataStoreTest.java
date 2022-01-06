@@ -43,7 +43,7 @@ class DataStoreTest {
 
         authorizationCodeItem = new AuthorizationCodeItem();
         authorizationCodeItem.setAuthCode(new AuthorizationCode().getValue());
-        authorizationCodeItem.setResourceIdId("test-resource-12345");
+        authorizationCodeItem.setResourceId("test-resource-12345");
 
         dataStore =
                 new DataStore<>(
