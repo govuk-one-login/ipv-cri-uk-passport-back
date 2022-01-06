@@ -44,7 +44,31 @@ resource "aws_ssm_parameter" "dcs_post_url" {
   name        = "/${var.environment}/dcs/post-url"
   description = "The DCS's url for passport valid check"
   type        = "String"
-  value       = var.dcs_post_url
+  value       = var.use_localstack ? "http://localhost:4567/restapis/${aws_api_gateway_rest_api.ipv_cri_uk_passport.id}/local-dev/_user_request_/stub-dcs-check-passport" : var.dcs_post_url
+}
+
+resource "aws_ssm_parameter" "stub_dcs_signing_cert" {
+  count      = var.use_localstack ? 1 : 0
+  name        = "/${var.environment}/stub-dcs/signing-cert"
+  description = "The signing certificate used by the stub DCS"
+  type        = "String"
+  value       = var.stub_dcs_signing_cert
+}
+
+resource "aws_ssm_parameter" "stub_dcs_signing_key" {
+  count      = var.use_localstack ? 1 : 0
+  name        = "/${var.environment}/stub-dcs/signing-key"
+  description = "The signing key used by the stub DCS"
+  type        = "SecureString"
+  value       = var.stub_dcs_signing_key
+}
+
+resource "aws_ssm_parameter" "local_only_passport_signing_key" {
+  count      = var.use_localstack ? 1 : 0
+  name        = "/${var.environment}/cri/passport/signing-key"
+  description = "The signing key used by the passport CRI when running in local stack."
+  type        = "SecureString"
+  value       = var.local_only_passport_signing_key
 }
 
 resource "aws_iam_role_policy" "get-parameters" {

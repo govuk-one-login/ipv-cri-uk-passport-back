@@ -19,7 +19,25 @@ variable "dcs_tls_intermediate_cert" { type = string }
 
 variable "dcs_tls_root_cert" { type = string }
 
-variable "dcs_post_url" { type = string }
+variable "dcs_post_url" {
+  type    = string
+  default = ""
+}
+
+variable "stub_dcs_signing_cert" {
+  type    = string
+  default = ""
+}
+
+variable "stub_dcs_signing_key" {
+  type    = string
+  default = ""
+}
+
+variable "local_only_passport_signing_key" {
+  type    = string
+  default = ""
+}
 
 locals {
   default_tags = var.use_localstack ? null : {
