@@ -38,6 +38,10 @@ variable "local_only_passport_signing_key" {
   type    = string
   default = ""
 }
+variable "local_only_passport_tls_key" {
+  type    = string
+  default = ""
+}
 
 locals {
   default_tags = var.use_localstack ? null : {

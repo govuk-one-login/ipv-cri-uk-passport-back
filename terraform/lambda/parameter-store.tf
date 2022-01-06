@@ -71,6 +71,14 @@ resource "aws_ssm_parameter" "local_only_passport_signing_key" {
   value       = var.local_only_passport_signing_key
 }
 
+resource "aws_ssm_parameter" "local_only_passport_tls_key" {
+  count      = var.use_localstack ? 1 : 0
+  name        = "/${var.environment}/cri/passport/tls-key"
+  description = "The tls key used by the passport CRI when running in local stack."
+  type        = "SecureString"
+  value       = var.local_only_passport_tls_key
+}
+
 resource "aws_iam_role_policy" "get-parameters" {
   name = "get-parameters"
   role = module.passport.iam_role_id
