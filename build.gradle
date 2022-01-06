@@ -22,6 +22,7 @@ dependencies {
 			"com.fasterxml.jackson.core:jackson-annotations:2.13.0",
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0",
 			"org.slf4j:slf4j-simple:1.7.32",
+			"software.amazon.awssdk:dynamodb-enhanced:2.17.89",
 			"software.amazon.lambda:powertools-parameters:1.8.0",
 			"com.google.code.gson:gson:2.8.9",
 			"com.nimbusds:nimbus-jose-jwt:9.15.2"
