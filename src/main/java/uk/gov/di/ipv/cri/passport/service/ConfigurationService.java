@@ -93,6 +93,10 @@ public class ConfigurationService {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
     }
 
+    public Certificate getPassportCriEncryptionCert() throws CertificateException {
+        return getCertificateFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_CERT_PARAM");
+    }
+
     public Key getPassportCriSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
     }
@@ -114,6 +118,14 @@ public class ConfigurationService {
             getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
             getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
         };
+    }
+
+    public Certificate getStubDcsSigningCert() throws CertificateException {
+        return getCertificateFromStoreUsingEnv("STUB_DCS_SIGNING_CERT_PARAM");
+    }
+
+    public Key getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        return getKeyFromStoreUsingEnv("STUB_DCS_SIGNING_KEY_PARAM");
     }
 
     public String getDCSPostUrl() {
