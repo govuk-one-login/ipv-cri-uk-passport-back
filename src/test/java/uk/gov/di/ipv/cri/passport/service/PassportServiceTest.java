@@ -71,7 +71,7 @@ class PassportServiceTest {
 
         assertEquals(EXPECTED_RESPONSE, underTest.dcsPassportCheck(PAYLOAD));
 
-        verify(dcsSigningService, times(1)).signData(PAYLOAD); // Mock the result
+        verify(dcsSigningService, times(1)).signData(PAYLOAD);
         verify(dcsEncryptionService, times(1)).encrypt(jwsObject.serialize());
         verify(dcsSigningService, times(1)).signData(ENCRYPTED_PAYLOAD);
         verify(httpClient, times(1)).execute(httpPost.capture());

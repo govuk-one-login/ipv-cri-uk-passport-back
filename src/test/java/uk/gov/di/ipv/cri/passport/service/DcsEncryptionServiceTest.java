@@ -1,8 +1,10 @@
 package uk.gov.di.ipv.cri.passport.service;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEObject;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSADecrypter;
+import com.nimbusds.jose.crypto.RSAEncrypter;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,6 +17,7 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
@@ -33,15 +36,54 @@ class DcsEncryptionServiceTest {
 
     @Mock ConfigurationService configurationService;
 
+    private DcsEncryptionService underTest;
+
+    @BeforeEach
+    void setUp() {
+        underTest = new DcsEncryptionService(configurationService);
+    }
+
     @Test
     void shouldEncryptStringWithCertificate()
             throws CertificateException, JOSEException, NoSuchAlgorithmException,
                     InvalidKeySpecException, ParseException {
         when(configurationService.getDcsEncryptionCert()).thenReturn(getCertificate());
-        DcsEncryptionService underTest = new DcsEncryptionService(configurationService);
         String payload = "test";
         String encryptPayload = underTest.encrypt(payload);
         assertEquals(payload, decryptPayload(encryptPayload));
+    }
+
+    @Test
+    void shouldDecryptStringWithPrivateKey() throws CertificateException, JOSEException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException {
+        when(configurationService.getPassportCriEncryptionKey()).thenReturn(getPrivateKey());
+
+        JWSObject jwsObject = getSignedJWSObject("Hello");
+
+        String encrypted = encryptPayload(jwsObject.serialize());
+
+        JWSObject decrypted = underTest.decrypt(encrypted);
+        assertEquals(jwsObject.getPayload().toString(), decrypted.getPayload().toString());
+    }
+
+    private JWSObject getSignedJWSObject(String payload) throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException {
+        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
+        JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(payload));
+        jwsObject.sign(
+                new RSASSASigner(getPrivateKey()));
+        return jwsObject;
+    }
+
+    private String encryptPayload(String encryptedPayload)
+            throws JOSEException, CertificateException {
+        JWEHeader header =
+                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A128CBC_HS256)
+                        .type(new JOSEObjectType("JWE"))
+                        .build();
+        JWEObject jwe = new JWEObject(header, new Payload(encryptedPayload));
+
+        jwe.encrypt(new RSAEncrypter((RSAPublicKey) getCertificate().getPublicKey()));
+
+        return jwe.serialize();
     }
 
     private String decryptPayload(String encrypt)

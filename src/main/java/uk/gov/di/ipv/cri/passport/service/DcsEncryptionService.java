@@ -1,17 +1,16 @@
 package uk.gov.di.ipv.cri.passport.service;
 
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWEAlgorithm;
-import com.nimbusds.jose.JWEHeader;
-import com.nimbusds.jose.JWEObject;
-import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.text.ParseException;
 
 public class DcsEncryptionService {
 
@@ -42,5 +41,23 @@ public class DcsEncryptionService {
         }
 
         return jwe.serialize();
+    }
+
+    public JWSObject decrypt(String encrypted) {
+        try {
+            JWEObject jweObject = JWEObject.parse(encrypted);
+            RSADecrypter rsaDecrypter =
+                    new RSADecrypter(
+                            (PrivateKey) configurationService.getPassportCriEncryptionKey());
+            jweObject.decrypt(rsaDecrypter);
+
+            return JWSObject.parse(jweObject.getPayload().toString());
+        } catch (ParseException
+                | NoSuchAlgorithmException
+                | InvalidKeySpecException
+                | JOSEException exception) {
+            throw new IpvCryptoException(
+                    String.format("Cannot Decrypt DCS Payload: %s", exception.getMessage()));
+        }
     }
 }
