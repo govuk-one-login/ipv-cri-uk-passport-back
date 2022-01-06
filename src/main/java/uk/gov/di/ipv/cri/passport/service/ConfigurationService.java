@@ -12,6 +12,7 @@ import java.security.Key;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -84,7 +85,7 @@ public class ConfigurationService {
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
-    private Key getKeyFromStoreUsingEnv(String environmentVariable)
+    private PrivateKey getKeyFromStoreUsingEnv(String environmentVariable)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] binaryKey =
                 Base64.getDecoder()
@@ -98,7 +99,7 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("DCS_ENCRYPTION_CERT_PARAM");
     }
 
-    public Key getPassportCriEncryptionKey()
+    public PrivateKey getPassportCriPrivateKey()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
     }
@@ -107,11 +108,11 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_CERT_PARAM");
     }
 
-    public Key getPassportCriSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getPassportCriSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
     }
 
-    public Key getPassportCriTlsKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getPassportCriTlsKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_TLS_KEY_PARAM");
     }
 

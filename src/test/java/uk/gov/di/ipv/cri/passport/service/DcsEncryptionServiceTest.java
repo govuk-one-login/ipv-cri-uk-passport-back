@@ -55,7 +55,7 @@ class DcsEncryptionServiceTest {
 
     @Test
     void shouldDecryptStringWithPrivateKey() throws CertificateException, JOSEException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException {
-        when(configurationService.getPassportCriEncryptionKey()).thenReturn(getPrivateKey());
+        when(configurationService.getPassportCriPrivateKey()).thenReturn(getPrivateKey());
 
         JWSObject jwsObject = getSignedJWSObject("Hello");
 
