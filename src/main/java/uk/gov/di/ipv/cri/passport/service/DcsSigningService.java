@@ -9,7 +9,6 @@ import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
@@ -28,7 +27,7 @@ public class DcsSigningService {
         this.configurationService = new ConfigurationService();
     }
 
-    public JWSObject signData(String stringToSign)
+    public JWSObject createJWS(String stringToSign)
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     CertificateException {
 
@@ -49,8 +48,7 @@ public class DcsSigningService {
                                 .build(),
                         new Payload(stringToSign));
 
-        jwsObject.sign(
-                new RSASSASigner((RSAPrivateKey) configurationService.getPassportCriSigningKey()));
+        jwsObject.sign(new RSASSASigner(configurationService.getPassportCriSigningKey()));
 
         return jwsObject;
     }

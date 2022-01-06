@@ -9,6 +9,11 @@ public class DcsResponseItem {
     private String resourceId;
     private String resourcePayload;
 
+    public DcsResponseItem(String resourceId, String resourcePayload) {
+        this.resourceId = resourceId;
+        this.resourcePayload = resourcePayload;
+    }
+
     @DynamoDbPartitionKey
     public String getResourceId() {
         return resourceId;

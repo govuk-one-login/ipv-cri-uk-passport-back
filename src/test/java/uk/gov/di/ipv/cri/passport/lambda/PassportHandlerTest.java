@@ -6,6 +6,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,15 +16,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
+import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.service.PassportService;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,6 +52,9 @@ class PassportHandlerTest {
     @Mock Context context;
     @Mock PassportService passportService;
     @Mock AuthorizationCodeService authorizationCodeService;
+    @Mock ConfigurationService configurationService;
+    @Mock DcsCryptographyService dcsCryptographyService;
+    @Mock JWSObject jwsObject;
 
     private PassportHandler underTest;
     private AuthorizationCode authorizationCode;
@@ -53,19 +63,14 @@ class PassportHandlerTest {
     void setUp() {
         authorizationCode = new AuthorizationCode();
 
-        underTest = new PassportHandler(passportService, authorizationCodeService);
+        underTest = new PassportHandler(passportService, authorizationCodeService, configurationService, dcsCryptographyService);
     }
 
     @Test
-    void shouldReturn200WithCorrectFormData() throws IOException {
-        String dcsResponse = "test dcs response";
-        when(passportService.dcsPassportCheck(any(String.class))).thenReturn(dcsResponse);
-
-        DcsResponseItem testDcsResponseItem = new DcsResponseItem();
-        testDcsResponseItem.setResourcePayload(dcsResponse);
-        testDcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        when(passportService.persistDcsResponse(dcsResponse)).thenReturn(testDcsResponseItem);
-
+    void shouldReturn200WithCorrectFormData() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", "TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -83,14 +88,10 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldReturnAuthResponseOnSuccessfulOauthRequest() throws IOException {
-        String dcsResponse = "test dcs response";
-        when(passportService.dcsPassportCheck(any(String.class))).thenReturn(dcsResponse);
-
-        DcsResponseItem testDcsResponseItem = new DcsResponseItem();
-        testDcsResponseItem.setResourcePayload(dcsResponse);
-        testDcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        when(passportService.persistDcsResponse(dcsResponse)).thenReturn(testDcsResponseItem);
+    void shouldReturnAuthResponseOnSuccessfulOauthRequest() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", "TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
@@ -111,7 +112,7 @@ class PassportHandlerTest {
 
         verify(authorizationCodeService)
                 .persistAuthorizationCode(
-                        authCode.get("value"), testDcsResponseItem.getResourceId());
+                        authCode.get("value"), dcsResponseItem.getResourceId());
         assertEquals(authorizationCode.toString(), authCode.get("value"));
     }
 
@@ -283,14 +284,10 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldPersistDcsResponse() throws IOException {
-        String dcsResponse = "test dcs response payload";
-        when(passportService.dcsPassportCheck(any(String.class))).thenReturn(dcsResponse);
-
-        DcsResponseItem testDcsResponseItem = new DcsResponseItem();
-        testDcsResponseItem.setResourcePayload(dcsResponse);
-        testDcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        when(passportService.persistDcsResponse(dcsResponse)).thenReturn(testDcsResponseItem);
+    void shouldPersistDcsResponse() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", "TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
@@ -305,21 +302,14 @@ class PassportHandlerTest {
 
         underTest.handleRequest(event, context);
 
-        ArgumentCaptor<String> responseArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(passportService).persistDcsResponse(responseArgumentCaptor.capture());
-
-        assertEquals(dcsResponse, responseArgumentCaptor.getValue());
+        verify(passportService).persistDcsResponse(dcsResponseItem);
     }
 
     @Test
-    void shouldPersistAuthCode() throws IOException {
-        String dcsResponse = "test dcs response payload";
-        when(passportService.dcsPassportCheck(any(String.class))).thenReturn(dcsResponse);
-
-        DcsResponseItem testDcsResponseItem = new DcsResponseItem();
-        testDcsResponseItem.setResourcePayload(dcsResponse);
-        testDcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        when(passportService.persistDcsResponse(dcsResponse)).thenReturn(testDcsResponseItem);
+    void shouldPersistAuthCode() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", "TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
@@ -341,6 +331,6 @@ class PassportHandlerTest {
                         authCodeArgumentCaptor.capture(), resourceIdArgumentCaptor.capture());
 
         assertEquals(authorizationCode.toString(), authCodeArgumentCaptor.getValue());
-        assertEquals(testDcsResponseItem.getResourceId(), resourceIdArgumentCaptor.getValue());
+        assertEquals(dcsResponseItem.getResourceId(), resourceIdArgumentCaptor.getValue());
     }
 }
