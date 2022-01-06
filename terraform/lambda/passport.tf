@@ -14,8 +14,8 @@ module "passport" {
   allow_access_to_cri_passport_auth_codes_table = true
   cri_passport_auth_codes_table_policy_arn      = aws_iam_policy.policy-cri-passport-auth-codes-table.arn
 
-  allow_access_to_cri_passport_credentials_table = true
-  cri_passport_credentials_table_policy_arn      = aws_iam_policy.policy-cri-passport-credentials-table.arn
+  allow_access_to_dcs_response_table            = true
+  dcs_response_table_policy_arn                 = aws_iam_policy.policy-dcs-response-table.arn
 
   env_vars = {
     "DCS_ENCRYPTION_CERT_PARAM"                = "/${var.environment}/dcs/encryption-cert"
@@ -28,7 +28,7 @@ module "passport" {
     "DCS_POST_URL_PARAM"                       = "/${var.environment}/dcs/post-url"
     "DCS_TLS_ROOT_CERT_PARAM"                  = "/${var.environment}/dcs/tls-root-certificate"
     "DCS_TLS_INTERMEDIATE_CERT_PARAM"          = "/${var.environment}/dcs/tls-intermediate-certificate"
-    "CRI_PASSPORT_CREDENTIALS_TABLE_NAME"      = aws_dynamodb_table.cri-passport-credentials.name
+    "DCS_RESPONSE_TABLE_NAME"                  = aws_dynamodb_table.dcs-response.name
     "AUTH_CODES_TABLE_NAME"                    = aws_dynamodb_table.cri-passport-auth-codes.name
     "ACCESS_TOKENS_TABLE_NAME"                 = aws_dynamodb_table.cri-passport-access-tokens.name
   }

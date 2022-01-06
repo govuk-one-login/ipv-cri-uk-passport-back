@@ -65,6 +65,8 @@ public class PassportHandler
             String jsonPayload = objectMapper.writeValueAsString(dcsPayload);
             String response = passportService.dcsPassportCheck(jsonPayload);
 
+            passportService.persistDcsResponse(response);
+
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, response);
 
         } catch (IOException e) {

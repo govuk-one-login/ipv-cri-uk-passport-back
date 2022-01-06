@@ -13,6 +13,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.persistence.DataStore;
+import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -37,6 +39,7 @@ class PassportServiceTest {
     @Mock ConfigurationService configurationService;
     @Mock DcsSigningService dcsSigningService;
     @Mock DcsEncryptionService dcsEncryptionService;
+    @Mock DataStore<DcsResponseItem> dataStore;
     @Mock HttpClient httpClient;
     @Mock JWSObject jwsObject;
     @Mock JWSObject jwsObject2;
@@ -47,25 +50,22 @@ class PassportServiceTest {
     private PassportService underTest;
 
     @BeforeEach
-    void setUp()
-            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    JOSEException, IOException {
-        when(jwsObject.serialize()).thenReturn(SIGNED_PAYLOAD);
-        when(dcsSigningService.signData(PAYLOAD)).thenReturn(jwsObject);
-        when(dcsEncryptionService.encrypt(jwsObject.serialize())).thenReturn(ENCRYPTED_PAYLOAD);
-        when(dcsSigningService.signData(ENCRYPTED_PAYLOAD)).thenReturn(jwsObject2);
-        when(jwsObject2.serialize()).thenReturn(SIGNED_ENCRYPTED_PAYLOAD);
-        when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
-
+    void setUp() {
         underTest =
                 new PassportService(
-                        httpClient, configurationService, dcsEncryptionService, dcsSigningService);
+                        httpClient,
+                        configurationService,
+                        dcsEncryptionService,
+                        dcsSigningService,
+                        dataStore);
     }
 
     @Test
     void shouldSignEncryptSignAndPostToDcsEndpoint()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException {
+        setupCertificateMocks();
+        when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.toString()).thenReturn(EXPECTED_RESPONSE);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
 
@@ -84,8 +84,33 @@ class PassportServiceTest {
     }
 
     @Test
-    void shouldReturnNullWhenResponseFromDcsIsNull() throws IOException {
+    void shouldReturnNullWhenResponseFromDcsIsNull()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException {
+        setupCertificateMocks();
+        when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         assertNull(underTest.dcsPassportCheck(PAYLOAD));
+    }
+
+    @Test
+    void shouldCreateDcsResponseInDataStore() {
+        String dcsResponse = "test dcs response payload";
+        underTest.persistDcsResponse(dcsResponse);
+
+        ArgumentCaptor<DcsResponseItem> dcsResponseItemArgumentCaptor =
+                ArgumentCaptor.forClass(DcsResponseItem.class);
+        verify(dataStore).create(dcsResponseItemArgumentCaptor.capture());
+        assertEquals(dcsResponse, dcsResponseItemArgumentCaptor.getValue().getResourcePayload());
+    }
+
+    private void setupCertificateMocks()
+            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
+                    JOSEException {
+        when(jwsObject.serialize()).thenReturn(SIGNED_PAYLOAD);
+        when(dcsSigningService.signData(PAYLOAD)).thenReturn(jwsObject);
+        when(dcsEncryptionService.encrypt(jwsObject.serialize())).thenReturn(ENCRYPTED_PAYLOAD);
+        when(dcsSigningService.signData(ENCRYPTED_PAYLOAD)).thenReturn(jwsObject2);
+        when(jwsObject2.serialize()).thenReturn(SIGNED_ENCRYPTED_PAYLOAD);
     }
 }
