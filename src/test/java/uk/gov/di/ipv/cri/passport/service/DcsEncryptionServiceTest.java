@@ -54,7 +54,9 @@ class DcsEncryptionServiceTest {
     }
 
     @Test
-    void shouldDecryptStringWithPrivateKey() throws CertificateException, JOSEException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException {
+    void shouldDecryptStringWithPrivateKey()
+            throws CertificateException, JOSEException, ParseException, NoSuchAlgorithmException,
+                    InvalidKeySpecException {
         when(configurationService.getPassportCriPrivateKey()).thenReturn(getPrivateKey());
 
         JWSObject jwsObject = getSignedJWSObject("Hello");
@@ -65,11 +67,11 @@ class DcsEncryptionServiceTest {
         assertEquals(jwsObject.getPayload().toString(), decrypted.getPayload().toString());
     }
 
-    private JWSObject getSignedJWSObject(String payload) throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException {
+    private JWSObject getSignedJWSObject(String payload)
+            throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException {
         JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(payload));
-        jwsObject.sign(
-                new RSASSASigner(getPrivateKey()));
+        jwsObject.sign(new RSASSASigner(getPrivateKey()));
         return jwsObject;
     }
 

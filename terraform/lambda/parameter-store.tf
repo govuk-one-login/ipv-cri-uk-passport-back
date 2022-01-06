@@ -26,6 +26,13 @@ resource "aws_ssm_parameter" "dcs_encryption_cert" {
   value       = var.dcs_encryption_cert
 }
 
+resource "aws_ssm_parameter" "dcs_signing_cert" {
+  name        = "/${var.environment}/dcs/signing-cert"
+  description = "The DCS's public signing cert"
+  type        = "String"
+  value       = var.dcs_signing_cert
+}
+
 resource "aws_ssm_parameter" "dcs_tls_intermediate_cert" {
   name        = "/${var.environment}/dcs/tls-intermediate-certificate"
   description = "The DCS's tls certificate chain intermediate cert"

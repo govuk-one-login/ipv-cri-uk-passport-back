@@ -8,7 +8,6 @@ import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -99,6 +98,10 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("DCS_ENCRYPTION_CERT_PARAM");
     }
 
+    public Certificate getDcsSigningCert() throws CertificateException {
+        return getCertificateFromStoreUsingEnv("DCS_SIGNING_CERT_PARAM");
+    }
+
     public PrivateKey getPassportCriPrivateKey()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
@@ -108,11 +111,13 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_CERT_PARAM");
     }
 
-    public PrivateKey getPassportCriSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getPassportCriSigningKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
     }
 
-    public PrivateKey getPassportCriTlsKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getPassportCriTlsKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_TLS_KEY_PARAM");
     }
 
@@ -135,7 +140,7 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("STUB_DCS_SIGNING_CERT_PARAM");
     }
 
-    public Key getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_SIGNING_KEY_PARAM");
     }
 

@@ -19,6 +19,7 @@ module "passport" {
 
   env_vars = {
     "DCS_ENCRYPTION_CERT_PARAM"                = "/${var.environment}/dcs/encryption-cert"
+    "DCS_SIGNING_CERT_PARAM"                   = "/${var.environment}/dcs/signing-cert"
     "PASSPORT_CRI_SIGNING_KEY_PARAM"           = "/${var.environment}/cri/passport/signing-key"
     "PASSPORT_CRI_ENCRYPTION_KEY_PARAM"        = "/${var.environment}/cri/passport/encryption-key"
     "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/tls-key"
@@ -29,8 +30,8 @@ module "passport" {
     "DCS_TLS_ROOT_CERT_PARAM"                  = "/${var.environment}/dcs/tls-root-certificate"
     "DCS_TLS_INTERMEDIATE_CERT_PARAM"          = "/${var.environment}/dcs/tls-intermediate-certificate"
     "DCS_RESPONSE_TABLE_NAME"                  = aws_dynamodb_table.dcs-response.name
-    "CRI_PASSPORT_AUTH_CODES_TABLE_NAME"                    = aws_dynamodb_table.cri-passport-auth-codes.name
-    "CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME"                 = aws_dynamodb_table.cri-passport-access-tokens.name
+    "CRI_PASSPORT_AUTH_CODES_TABLE_NAME"       = aws_dynamodb_table.cri-passport-auth-codes.name
+    "CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME"    = aws_dynamodb_table.cri-passport-access-tokens.name
   }
 }
 
