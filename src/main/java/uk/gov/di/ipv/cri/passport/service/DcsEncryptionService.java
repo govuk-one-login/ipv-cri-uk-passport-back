@@ -6,7 +6,6 @@ import com.nimbusds.jose.crypto.RSAEncrypter;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -48,7 +47,7 @@ public class DcsEncryptionService {
             JWEObject jweObject = JWEObject.parse(encrypted);
             RSADecrypter rsaDecrypter =
                     new RSADecrypter(
-                            (PrivateKey) configurationService.getPassportCriEncryptionKey());
+                            configurationService.getPassportCriPrivateKey());
             jweObject.decrypt(rsaDecrypter);
 
             return JWSObject.parse(jweObject.getPayload().toString());
