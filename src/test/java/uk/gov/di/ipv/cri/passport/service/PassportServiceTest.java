@@ -23,7 +23,6 @@ import java.security.spec.InvalidKeySpecException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,7 +49,9 @@ class PassportServiceTest {
     private PassportService underTest;
 
     @BeforeEach
-    void setUp() {
+    void setUp()
+            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
+                    JOSEException {
         underTest =
                 new PassportService(
                         httpClient,

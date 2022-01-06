@@ -51,7 +51,7 @@ public class PassportService {
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public String dcsPassportCheck(String payload) throws IOException {
+    public String dcsPassportCheck(String payload) {
         try {
             JWSObject signedPayload = dcsSigningService.signData(payload);
             String encryptedPayload = dcsEncryptionService.encrypt(signedPayload.serialize());
