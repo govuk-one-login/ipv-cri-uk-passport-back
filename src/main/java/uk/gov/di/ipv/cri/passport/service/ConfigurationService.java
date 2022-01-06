@@ -54,6 +54,10 @@ public class ConfigurationService {
         return Boolean.parseBoolean(System.getenv(IS_LOCAL));
     }
 
+    public String getDcsResponseTableName() {
+        return System.getenv("DCS_RESPONSE_TABLE_NAME");
+    }
+
     private String getParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.get(System.getenv(environmentVariable));
     }

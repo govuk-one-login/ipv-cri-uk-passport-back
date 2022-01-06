@@ -9,6 +9,7 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,5 +98,20 @@ class PassportHandlerTest {
         assertEquals(
                 ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA.getMessage(),
                 responseBody.get("message"));
+    }
+
+    @Test
+    void shouldPersistDcsResponse() throws IOException {
+        String dcsResponse = "test dcs response payload";
+        when(passportService.dcsPassportCheck(any(String.class))).thenReturn(dcsResponse);
+        var event = new APIGatewayProxyRequestEvent();
+        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+
+        underTest.handleRequest(event, context);
+
+        ArgumentCaptor<String> responseArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        verify(passportService).persistDcsResponse(responseArgumentCaptor.capture());
+
+        assertEquals(dcsResponse, responseArgumentCaptor.getValue());
     }
 }

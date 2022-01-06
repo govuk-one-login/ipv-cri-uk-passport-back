@@ -48,16 +48,16 @@ variable "env_vars" {
   default     = {}
 }
 
-variable "allow_access_to_cri_passport_credentials_table" {
+variable "allow_access_to_dcs_response_table" {
   type        = bool
   default     = false
-  description = "Should the lambda be given access to the cri-passport-credentials DynamoDB table"
+  description = "Should the lambda be given access to the dcs-response DynamoDB table"
 }
 
-variable "cri_passport_credentials_table_policy_arn" {
+variable "dcs_response_table_policy_arn" {
   type        = string
   default     = null
-  description = "ARN of the policy to allow read write to the cri-passport-credentials DynamoDB table"
+  description = "ARN of the policy to allow read write to the dcs-response DynamoDB table"
 }
 
 variable "allow_access_to_cri_passport_auth_codes_table" {
