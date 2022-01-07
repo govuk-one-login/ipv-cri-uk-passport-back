@@ -5,7 +5,12 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.common.contenttype.ContentType;
-import com.nimbusds.oauth2.sdk.*;
+import com.nimbusds.oauth2.sdk.AccessTokenResponse;
+import com.nimbusds.oauth2.sdk.ErrorObject;
+import com.nimbusds.oauth2.sdk.GrantType;
+import com.nimbusds.oauth2.sdk.OAuth2Error;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.TokenResponse;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
@@ -26,7 +31,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class AccessTokenHandlerTest {
-    // TODO - THE ONLY CHANGE FROM CORE
+
     private static final String TEST_RESOURCE_ID = UUID.randomUUID().toString();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,7 +64,6 @@ public class AccessTokenHandlerTest {
                 "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
         event.setBody(tokenRequestBody);
 
-        // TODO - THE ONLY CHANGE FROM CORE
         when(mockAuthorizationCodeService.getResourceIdByAuthorizationCode("12345"))
                 .thenReturn(TEST_RESOURCE_ID);
 
@@ -144,7 +148,7 @@ public class AccessTokenHandlerTest {
 
         when(mockAccessTokenService.validateTokenRequest(any()))
                 .thenReturn(ValidationResult.createValidResult());
-        // TODO - THE ONLY CHANGE FROM CORE
+
         when(mockAuthorizationCodeService.getResourceIdByAuthorizationCode("12345"))
                 .thenReturn(null);
 

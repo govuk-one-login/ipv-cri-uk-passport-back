@@ -5,7 +5,13 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.nimbusds.common.contenttype.ContentType;
-import com.nimbusds.oauth2.sdk.*;
+import com.nimbusds.oauth2.sdk.AccessTokenResponse;
+import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import com.nimbusds.oauth2.sdk.ErrorObject;
+import com.nimbusds.oauth2.sdk.OAuth2Error;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.TokenRequest;
+import com.nimbusds.oauth2.sdk.TokenResponse;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
@@ -69,7 +75,6 @@ public class AccessTokenHandler
                             .getAuthorizationCode()
                             .getValue();
 
-            // TODO - THE ONLY CHANGE FROM CORE
             String resourceId =
                     authorizationCodeService.getResourceIdByAuthorizationCode(
                             authorizationCodeFromRequest);
@@ -85,7 +90,6 @@ public class AccessTokenHandler
             TokenResponse tokenResponse = accessTokenService.generateAccessToken(tokenRequest);
             AccessTokenResponse accessTokenResponse = tokenResponse.toSuccessResponse();
 
-            // TODO - THE ONLY CHANGE FROM CORE
             accessTokenService.persistAccessToken(accessTokenResponse, resourceId);
 
             authorizationCodeService.revokeAuthorizationCode(authorizationCodeFromRequest);

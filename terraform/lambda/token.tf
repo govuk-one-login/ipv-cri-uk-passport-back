@@ -18,7 +18,7 @@ module "token" {
   cri_passport_access_tokens_table_policy_arn      = aws_iam_policy.policy-cri-passport-access-tokens-table.arn
 
   env_vars = {
-    "CRI_PASSPORT_AUTH_CODES_TABLE_NAME"           = aws_dynamodb_table.cri-passport-auth-codes.name
-    "CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME"        = aws_dynamodb_table.cri-passport-access-tokens.name
+    "CRI_PASSPORT_AUTH_CODES_TABLE_NAME"    = aws_dynamodb_table.cri-passport-auth-codes.name
+    "CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME" = aws_dynamodb_table.cri-passport-access-tokens.name
   }
 }
