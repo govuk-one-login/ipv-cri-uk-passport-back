@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AccessTokenHandlerTest {
+class AccessTokenHandlerTest {
 
     private static final String TEST_RESOURCE_ID = UUID.randomUUID().toString();
 

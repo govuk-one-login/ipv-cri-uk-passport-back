@@ -36,10 +36,9 @@ class DcsCredentialServiceTest {
 
         when(mockDataStore.getItem(anyString())).thenReturn(dcsCredential);
 
-        DcsResponseItem credential =
-                dcsCredentialService.getDcsCredential("dcs-credential-id-1");
+        DcsResponseItem credential = dcsCredentialService.getDcsCredential("dcs-credential-id-1");
 
         assertEquals(dcsCredential.getResourceId(), credential.getResourceId());
-        assertEquals(dcsCredential.getResourceId(), credential.getResourcePayload());
+        assertEquals(dcsCredential.getResourcePayload(), credential.getResourcePayload());
     }
 }

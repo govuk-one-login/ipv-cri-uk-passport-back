@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +52,8 @@ class DcsCredentialHandlerTest {
         dcsCredential.setResourceId("12345");
         dcsCredential.setResourcePayload("Test dcs resource payload");
 
-        dcsCredentialHandler = new DcsCredentialHandler(mockDcsCredentialService, mockAccessTokenService);
+        dcsCredentialHandler =
+                new DcsCredentialHandler(mockDcsCredentialService, mockAccessTokenService);
     }
 
     @Test
@@ -66,10 +66,10 @@ class DcsCredentialHandlerTest {
 
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
-        when(mockDcsCredentialService.getDcsCredential(anyString()))
-                .thenReturn(dcsCredential);
+        when(mockDcsCredentialService.getDcsCredential(anyString())).thenReturn(dcsCredential);
 
-        APIGatewayProxyResponseEvent response = dcsCredentialHandler.handleRequest(event, mockContext);
+        APIGatewayProxyResponseEvent response =
+                dcsCredentialHandler.handleRequest(event, mockContext);
 
         assertEquals(200, response.getStatusCode());
     }
@@ -84,10 +84,10 @@ class DcsCredentialHandlerTest {
 
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
-        when(mockDcsCredentialService.getDcsCredential(anyString()))
-                .thenReturn(dcsCredential);
+        when(mockDcsCredentialService.getDcsCredential(anyString())).thenReturn(dcsCredential);
 
-        APIGatewayProxyResponseEvent response = dcsCredentialHandler.handleRequest(event, mockContext);
+        APIGatewayProxyResponseEvent response =
+                dcsCredentialHandler.handleRequest(event, mockContext);
         Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(dcsCredential.getResourceId(), responseBody.get("resourceId"));
@@ -100,7 +100,8 @@ class DcsCredentialHandlerTest {
         Map<String, String> headers = Collections.singletonMap("Authorization", null);
         event.setHeaders(headers);
 
-        APIGatewayProxyResponseEvent response = dcsCredentialHandler.handleRequest(event, mockContext);
+        APIGatewayProxyResponseEvent response =
+                dcsCredentialHandler.handleRequest(event, mockContext);
         responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(BearerTokenError.MISSING_TOKEN.getHTTPStatusCode(), response.getStatusCode());
@@ -116,7 +117,8 @@ class DcsCredentialHandlerTest {
         Map<String, String> headers = Collections.singletonMap("Authorization", "11111111");
         event.setHeaders(headers);
 
-        APIGatewayProxyResponseEvent response = dcsCredentialHandler.handleRequest(event, mockContext);
+        APIGatewayProxyResponseEvent response =
+                dcsCredentialHandler.handleRequest(event, mockContext);
         responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(
@@ -131,7 +133,8 @@ class DcsCredentialHandlerTest {
     void shouldReturnErrorResponseWhenTokenIsMissing() throws JsonProcessingException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
 
-        APIGatewayProxyResponseEvent response = dcsCredentialHandler.handleRequest(event, mockContext);
+        APIGatewayProxyResponseEvent response =
+                dcsCredentialHandler.handleRequest(event, mockContext);
         responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(BearerTokenError.MISSING_TOKEN.getHTTPStatusCode(), response.getStatusCode());
@@ -151,7 +154,8 @@ class DcsCredentialHandlerTest {
 
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString())).thenReturn(null);
 
-        APIGatewayProxyResponseEvent response = dcsCredentialHandler.handleRequest(event, mockContext);
+        APIGatewayProxyResponseEvent response =
+                dcsCredentialHandler.handleRequest(event, mockContext);
         Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(403, response.getStatusCode());
