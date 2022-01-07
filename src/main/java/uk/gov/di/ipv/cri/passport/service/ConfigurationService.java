@@ -20,11 +20,13 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.util.Optional;
 
 public class ConfigurationService {
 
     public static final int LOCALHOST_PORT = 4567;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
+    private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
 
     private final SSMProvider ssmProvider;
@@ -60,6 +62,10 @@ public class ConfigurationService {
 
     public String getAuthCodesTableName() {
         return System.getenv("CRI_PASSPORT_AUTH_CODES_TABLE_NAME");
+    }
+
+    public String getAccessTokensTableName() {
+        return System.getenv("CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME");
     }
 
     private String getParameterFromStoreUsingEnv(String environmentVariable) {
@@ -150,5 +156,11 @@ public class ConfigurationService {
         md.update(der);
         byte[] digest = md.digest();
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+    }
+
+    public long getBearerAccessTokenTtl() {
+        return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
+                .map(Long::valueOf)
+                .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
     }
 }
