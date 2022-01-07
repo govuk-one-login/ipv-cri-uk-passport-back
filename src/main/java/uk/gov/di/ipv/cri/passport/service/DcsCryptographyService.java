@@ -5,18 +5,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
+import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.text.ParseException;
 import java.util.Map;
+import java.util.UUID;
 
 public class DcsCryptographyService {
 
@@ -33,6 +39,19 @@ public class DcsCryptographyService {
         JWEObject encryptedPassportDetails = createJWE(signedPassportDetails.serialize());
         JWSObject signedAndEncryptedPassportDetails = createJWS(encryptedPassportDetails.serialize());
         return signedAndEncryptedPassportDetails;
+    }
+
+    public DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse) throws CertificateException, ParseException, JOSEException {
+        JWSObject outerSignedPayload = JWSObject.parse(dcsSignedEncryptedResponse.getPayload());
+        if (isInvalidSignature(outerSignedPayload)) {
+            throw new IpvCryptoException("DCS Response Outer Signature invalid.");
+        }
+        JWEObject encryptedSignedPayload = JWEObject.parse(outerSignedPayload.getPayload().toString());
+        JWSObject decryptedSignedPayload = decrypt(encryptedSignedPayload);
+        if (isInvalidSignature(decryptedSignedPayload)) {
+            throw new IpvCryptoException("DCS Response Inner Signature invalid.");
+        }
+        return new DcsResponseItem(UUID.randomUUID().toString(), decryptedSignedPayload.getPayload().toString());
     }
 
     private JWSObject createJWS(String stringToSign)
@@ -78,5 +97,29 @@ public class DcsCryptographyService {
         }
 
         return jwe;
+    }
+
+    private boolean isInvalidSignature(JWSObject jwsObject)
+            throws CertificateException, JOSEException {
+        RSASSAVerifier rsassaVerifier =
+                new RSASSAVerifier(
+                        (RSAPublicKey) configurationService.getDcsSigningCert().getPublicKey());
+        return !jwsObject.verify(rsassaVerifier);
+    }
+
+    public JWSObject decrypt(JWEObject encrypted) {
+        try {
+            RSADecrypter rsaDecrypter =
+                    new RSADecrypter(configurationService.getPassportCriPrivateKey());
+            encrypted.decrypt(rsaDecrypter);
+
+            return JWSObject.parse(encrypted.getPayload().toString());
+        } catch (ParseException
+                | NoSuchAlgorithmException
+                | InvalidKeySpecException
+                | JOSEException exception) {
+            throw new IpvCryptoException(
+                    String.format("Cannot Decrypt DCS Payload: %s", exception.getMessage()));
+        }
     }
 }

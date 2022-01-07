@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
@@ -53,7 +54,7 @@ class PassportServiceTest {
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         when(jwsObject.serialize()).thenReturn(expectedPayload);
 
-        DcsResponseItem actualResponse = underTest.dcsPassportCheck(jwsObject);
+        DcsSignedEncryptedResponse actualResponse = underTest.dcsPassportCheck(jwsObject);
 
         verify(httpClient, times(1)).execute(httpPost.capture());
 
@@ -62,7 +63,7 @@ class PassportServiceTest {
                 "application/jose", httpPost.getValue().getFirstHeader("content-type").getValue());
         assertEquals(expectedPayload, EntityUtils.toString(httpPost.getValue().getEntity()));
 
-        assertEquals(EXPECTED_RESPONSE, actualResponse.getResourcePayload());
+        assertEquals(EXPECTED_RESPONSE, actualResponse.getPayload());
     }
 
     @Test

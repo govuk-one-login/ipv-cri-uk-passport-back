@@ -5,6 +5,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.helpers.HttpClientSetUp;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
@@ -14,7 +15,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.UUID;
 
 public class PassportService {
 
@@ -43,7 +43,7 @@ public class PassportService {
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public DcsResponseItem dcsPassportCheck(JWSObject payload) {
+    public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload) {
         try {
             HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
             request.addHeader("content-type", "application/jose");
@@ -52,7 +52,7 @@ public class PassportService {
             HttpResponse response = httpClient.execute(request);
 
             if ((response != null)) {
-                return new DcsResponseItem(UUID.randomUUID().toString(), response.toString());
+                return new DcsSignedEncryptedResponse(response.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -61,11 +61,6 @@ public class PassportService {
     }
 
     public void persistDcsResponse(DcsResponseItem responsePayload) {
-        // TODO: REMOVE THESE!!!
-        /*DcsResponseItem dcsResponseItem = new DcsResponseItem();
-        dcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        dcsResponseItem.setResourcePayload(responsePayload);*/
-
         dataStore.create(responsePayload);
     }
 }
