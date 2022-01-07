@@ -28,35 +28,43 @@ public class DcsCryptographyService {
 
     private final ConfigurationService configurationService;
     private final Gson gson = new Gson();
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper =
+            new ObjectMapper().registerModule(new JavaTimeModule());
 
     public DcsCryptographyService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
     }
 
-    public JWSObject preparePayload(DcsPayload passportDetails) throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, JsonProcessingException {
-        JWSObject signedPassportDetails = createJWS(objectMapper.writeValueAsString(passportDetails));
+    public JWSObject preparePayload(DcsPayload passportDetails)
+            throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
+                    JOSEException, JsonProcessingException {
+        JWSObject signedPassportDetails =
+                createJWS(objectMapper.writeValueAsString(passportDetails));
         JWEObject encryptedPassportDetails = createJWE(signedPassportDetails.serialize());
-        JWSObject signedAndEncryptedPassportDetails = createJWS(encryptedPassportDetails.serialize());
+        JWSObject signedAndEncryptedPassportDetails =
+                createJWS(encryptedPassportDetails.serialize());
         return signedAndEncryptedPassportDetails;
     }
 
-    public DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse) throws CertificateException, ParseException, JOSEException {
+    public DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse)
+            throws CertificateException, ParseException, JOSEException {
         JWSObject outerSignedPayload = JWSObject.parse(dcsSignedEncryptedResponse.getPayload());
         if (isInvalidSignature(outerSignedPayload)) {
             throw new IpvCryptoException("DCS Response Outer Signature invalid.");
         }
-        JWEObject encryptedSignedPayload = JWEObject.parse(outerSignedPayload.getPayload().toString());
+        JWEObject encryptedSignedPayload =
+                JWEObject.parse(outerSignedPayload.getPayload().toString());
         JWSObject decryptedSignedPayload = decrypt(encryptedSignedPayload);
         if (isInvalidSignature(decryptedSignedPayload)) {
             throw new IpvCryptoException("DCS Response Inner Signature invalid.");
         }
-        return new DcsResponseItem(UUID.randomUUID().toString(), decryptedSignedPayload.getPayload().toString());
+        return new DcsResponseItem(
+                UUID.randomUUID().toString(), decryptedSignedPayload.getPayload().toString());
     }
 
     private JWSObject createJWS(String stringToSign)
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-            CertificateException {
+                    CertificateException {
 
         Thumbprints thumbprints = configurationService.makeThumbprints();
 

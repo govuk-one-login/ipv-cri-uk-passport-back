@@ -39,11 +39,7 @@ class PassportServiceTest {
 
     @BeforeEach
     void setUp() {
-        underTest =
-                new PassportService(
-                        httpClient,
-                        configurationService,
-                        dataStore);
+        underTest = new PassportService(httpClient, configurationService, dataStore);
     }
 
     @Test

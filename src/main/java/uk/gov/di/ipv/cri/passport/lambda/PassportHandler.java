@@ -59,7 +59,10 @@ public class PassportHandler
     private final DcsCryptographyService dcsCryptographyService;
 
     public PassportHandler(
-            PassportService passportService, AuthorizationCodeService authorizationCodeService, ConfigurationService configurationService, DcsCryptographyService dcsCryptographyService) {
+            PassportService passportService,
+            AuthorizationCodeService authorizationCodeService,
+            ConfigurationService configurationService,
+            DcsCryptographyService dcsCryptographyService) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
@@ -110,7 +113,8 @@ public class PassportHandler
 
         try {
             JWSObject preparedDcsPayload = dcsCryptographyService.preparePayload(dcsPayload);
-            DcsSignedEncryptedResponse response = passportService.dcsPassportCheck(preparedDcsPayload);
+            DcsSignedEncryptedResponse response =
+                    passportService.dcsPassportCheck(preparedDcsPayload);
             DcsResponseItem responseToPersist = dcsCryptographyService.unwrapDcsResponse(response);
             passportService.persistDcsResponse(responseToPersist);
 
@@ -124,7 +128,11 @@ public class PassportHandler
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, payload);
 
-        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
+        } catch (CertificateException
+                | NoSuchAlgorithmException
+                | InvalidKeySpecException
+                | JOSEException
+                | JsonProcessingException e) {
             e.printStackTrace();
         } catch (java.text.ParseException e) {
             e.printStackTrace();

@@ -65,16 +65,27 @@ class PassportHandlerTest {
     void setUp() {
         authorizationCode = new AuthorizationCode();
 
-        underTest = new PassportHandler(passportService, authorizationCodeService, configurationService, dcsCryptographyService);
+        underTest =
+                new PassportHandler(
+                        passportService,
+                        authorizationCodeService,
+                        configurationService,
+                        dcsCryptographyService);
     }
 
     @Test
-    void shouldReturn200WithCorrectFormData() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse = new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
-        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsSignedEncryptedResponse);
+    void shouldReturn200WithCorrectFormData()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        DcsResponseItem dcsResponseItem =
+                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(dcsResponseItem);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -92,12 +103,18 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldReturnAuthResponseOnSuccessfulOauthRequest() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse = new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
-        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsSignedEncryptedResponse);
+    void shouldReturnAuthResponseOnSuccessfulOauthRequest()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        DcsResponseItem dcsResponseItem =
+                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(dcsResponseItem);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -116,8 +133,7 @@ class PassportHandlerTest {
         Map<String, String> authCode = (Map) responseBody.get("code");
 
         verify(authorizationCodeService)
-                .persistAuthorizationCode(
-                        authCode.get("value"), dcsResponseItem.getResourceId());
+                .persistAuthorizationCode(authCode.get("value"), dcsResponseItem.getResourceId());
         assertEquals(authorizationCode.toString(), authCode.get("value"));
     }
 
@@ -289,12 +305,18 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldPersistDcsResponse() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse = new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
-        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsSignedEncryptedResponse);
+    void shouldPersistDcsResponse()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        DcsResponseItem dcsResponseItem =
+                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class))).thenReturn(dcsResponseItem);
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(dcsResponseItem);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
@@ -313,12 +335,18 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldPersistAuthCode() throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse = new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        when(passportService.dcsPassportCheck(any(JWSObject.class))).thenReturn(dcsSignedEncryptedResponse);
+    void shouldPersistAuthCode()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class))).thenReturn(dcsResponseItem);
+        DcsResponseItem dcsResponseItem =
+                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(dcsResponseItem);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
