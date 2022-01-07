@@ -69,6 +69,7 @@ public class AccessTokenHandler
                             .getAuthorizationCode()
                             .getValue();
 
+            // TODO - THE ONLY CHANGE FROM CORE
             String resourceId =
                     authorizationCodeService.getResourceIdByAuthorizationCode(
                             authorizationCodeFromRequest);
@@ -84,6 +85,7 @@ public class AccessTokenHandler
             TokenResponse tokenResponse = accessTokenService.generateAccessToken(tokenRequest);
             AccessTokenResponse accessTokenResponse = tokenResponse.toSuccessResponse();
 
+            // TODO - THE ONLY CHANGE FROM CORE
             accessTokenService.persistAccessToken(accessTokenResponse, resourceId);
 
             authorizationCodeService.revokeAuthorizationCode(authorizationCodeFromRequest);
