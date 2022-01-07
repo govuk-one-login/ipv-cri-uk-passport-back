@@ -7,6 +7,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.id.Identifier;
@@ -19,6 +21,8 @@ import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
+import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.service.PassportService;
 import uk.gov.di.ipv.cri.passport.validation.ValidationResult;
 
@@ -50,11 +54,15 @@ public class PassportHandler
 
     private final PassportService passportService;
     private final AuthorizationCodeService authorizationCodeService;
+    private final ConfigurationService configurationService;
+    private final DcsCryptographyService dcsCryptographyService;
 
     public PassportHandler(
-            PassportService passportService, AuthorizationCodeService authorizationCodeService) {
+            PassportService passportService, AuthorizationCodeService authorizationCodeService, ConfigurationService configurationService, DcsCryptographyService dcsCryptographyService) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
+        this.configurationService = configurationService;
+        this.dcsCryptographyService = dcsCryptographyService;
     }
 
     public PassportHandler()
@@ -62,6 +70,8 @@ public class PassportHandler
                     KeyStoreException, IOException {
         this.passportService = new PassportService();
         this.authorizationCodeService = new AuthorizationCodeService();
+        this.configurationService = new ConfigurationService();
+        this.dcsCryptographyService = new DcsCryptographyService(configurationService);
     }
 
     @Override
@@ -98,22 +108,21 @@ public class PassportHandler
         }
 
         try {
-            String jsonPayload = objectMapper.writeValueAsString(dcsPayload);
-            String response = passportService.dcsPassportCheck(jsonPayload);
-
-            DcsResponseItem dcsResponseItem = passportService.persistDcsResponse(response);
+            JWSObject preparedDcsPayload = dcsCryptographyService.preparePayload(dcsPayload);
+            DcsResponseItem response = passportService.dcsPassportCheck(preparedDcsPayload);
+            passportService.persistDcsResponse(response);
 
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
 
             authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), dcsResponseItem.getResourceId());
+                    authorizationCode.getValue(), response.getResourceId());
 
             Map<String, Identifier> payload = Map.of("code", authorizationCode);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, payload);
 
-        } catch (IOException e) {
+        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
             e.printStackTrace();
         }
 

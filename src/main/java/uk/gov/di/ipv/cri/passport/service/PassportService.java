@@ -1,6 +1,5 @@
 package uk.gov.di.ipv.cri.passport.service;
 
-import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.JWSObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -20,21 +19,15 @@ import java.util.UUID;
 public class PassportService {
 
     private final ConfigurationService configurationService;
-    private final DcsSigningService dcsSigningService;
-    private final DcsEncryptionService dcsEncryptionService;
     private final DataStore<DcsResponseItem> dataStore;
     private final HttpClient httpClient;
 
     public PassportService(
             HttpClient httpClient,
             ConfigurationService configurationService,
-            DcsEncryptionService dcsEncryptionService,
-            DcsSigningService dcsSigningService,
             DataStore<DcsResponseItem> dataStore) {
         this.httpClient = httpClient;
         this.configurationService = configurationService;
-        this.dcsEncryptionService = dcsEncryptionService;
-        this.dcsSigningService = dcsSigningService;
         this.dataStore = dataStore;
     }
 
@@ -42,8 +35,6 @@ public class PassportService {
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
-        this.dcsSigningService = new DcsSigningService();
-        this.dcsEncryptionService = new DcsEncryptionService();
         this.dataStore =
                 new DataStore<>(
                         configurationService.getDcsResponseTableName(),
@@ -52,21 +43,16 @@ public class PassportService {
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public String dcsPassportCheck(String payload) {
+    public DcsResponseItem dcsPassportCheck(JWSObject payload) {
         try {
-            JWSObject signedPayload = dcsSigningService.createJWS(payload);
-            JWEObject encryptedPayload = dcsEncryptionService.createJWE(signedPayload.serialize());
-            JWSObject signedAndEncryptedPayload =
-                    dcsSigningService.createJWS(encryptedPayload.serialize());
-
-            var request = new HttpPost(configurationService.getDCSPostUrl());
+            HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
             request.addHeader("content-type", "application/jose");
-            request.setEntity(new StringEntity(signedAndEncryptedPayload.serialize()));
+            request.setEntity(new StringEntity(payload.serialize()));
 
             HttpResponse response = httpClient.execute(request);
 
             if ((response != null)) {
-                return response.toString();
+                return new DcsResponseItem(UUID.randomUUID().toString(), response.toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,12 +60,12 @@ public class PassportService {
         return null;
     }
 
-    public DcsResponseItem persistDcsResponse(String responsePayload) {
-        DcsResponseItem dcsResponseItem = new DcsResponseItem();
+    public void persistDcsResponse(DcsResponseItem responsePayload) {
+        // TODO: REMOVE THESE!!!
+        /*DcsResponseItem dcsResponseItem = new DcsResponseItem();
         dcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        dcsResponseItem.setResourcePayload(responsePayload);
+        dcsResponseItem.setResourcePayload(responsePayload);*/
 
-        dataStore.create(dcsResponseItem);
-        return dcsResponseItem;
+        dataStore.create(responsePayload);
     }
 }
