@@ -17,6 +17,7 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
@@ -58,7 +59,10 @@ public class PassportHandler
     private final DcsCryptographyService dcsCryptographyService;
 
     public PassportHandler(
-            PassportService passportService, AuthorizationCodeService authorizationCodeService, ConfigurationService configurationService, DcsCryptographyService dcsCryptographyService) {
+            PassportService passportService,
+            AuthorizationCodeService authorizationCodeService,
+            ConfigurationService configurationService,
+            DcsCryptographyService dcsCryptographyService) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
@@ -109,20 +113,28 @@ public class PassportHandler
 
         try {
             JWSObject preparedDcsPayload = dcsCryptographyService.preparePayload(dcsPayload);
-            DcsResponseItem response = passportService.dcsPassportCheck(preparedDcsPayload);
-            passportService.persistDcsResponse(response);
+            DcsSignedEncryptedResponse response =
+                    passportService.dcsPassportCheck(preparedDcsPayload);
+            DcsResponseItem responseToPersist = dcsCryptographyService.unwrapDcsResponse(response);
+            passportService.persistDcsResponse(responseToPersist);
 
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
 
             authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), response.getResourceId());
+                    authorizationCode.getValue(), responseToPersist.getResourceId());
 
             Map<String, Identifier> payload = Map.of("code", authorizationCode);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, payload);
 
-        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
+        } catch (CertificateException
+                | NoSuchAlgorithmException
+                | InvalidKeySpecException
+                | JOSEException
+                | JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (java.text.ParseException e) {
             e.printStackTrace();
         }
 
