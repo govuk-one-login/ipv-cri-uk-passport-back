@@ -49,8 +49,11 @@ class DcsEncryptionServiceTest {
                     InvalidKeySpecException, ParseException {
         when(configurationService.getDcsEncryptionCert()).thenReturn(getCertificate());
         String payload = "test";
-        String encryptPayload = underTest.encrypt(payload);
-        assertEquals(payload, decryptPayload(encryptPayload));
+        JWEObject encryptPayload = underTest.createJWE(payload);
+
+        RSADecrypter rsaDecrypter = new RSADecrypter(getPrivateKey());
+        encryptPayload.decrypt(rsaDecrypter);
+        assertEquals(payload, decryptPayload(encryptPayload.getPayload().toString()));
     }
 
     @Test

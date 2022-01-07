@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.passport.service;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.JWSObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -23,7 +24,10 @@ import java.security.spec.InvalidKeySpecException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PassportServiceTest {
@@ -42,6 +46,7 @@ class PassportServiceTest {
     @Mock HttpClient httpClient;
     @Mock JWSObject jwsObject;
     @Mock JWSObject jwsObject2;
+    @Mock JWEObject jweObject;
     @Mock HttpResponse httpResponse;
 
     @Captor ArgumentCaptor<HttpPost> httpPost;
@@ -72,9 +77,9 @@ class PassportServiceTest {
 
         assertEquals(EXPECTED_RESPONSE, underTest.dcsPassportCheck(PAYLOAD));
 
-        verify(dcsSigningService, times(1)).signData(PAYLOAD);
-        verify(dcsEncryptionService, times(1)).encrypt(jwsObject.serialize());
-        verify(dcsSigningService, times(1)).signData(ENCRYPTED_PAYLOAD);
+        verify(dcsSigningService, times(1)).createJWS(PAYLOAD);
+        verify(dcsEncryptionService, times(1)).createJWE(jwsObject.serialize());
+        verify(dcsSigningService, times(1)).createJWS(ENCRYPTED_PAYLOAD);
         verify(httpClient, times(1)).execute(httpPost.capture());
 
         assertEquals(CHECK_PASSPORT_URI, httpPost.getValue().getURI().toString());
@@ -109,9 +114,10 @@ class PassportServiceTest {
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     JOSEException {
         when(jwsObject.serialize()).thenReturn(SIGNED_PAYLOAD);
-        when(dcsSigningService.signData(PAYLOAD)).thenReturn(jwsObject);
-        when(dcsEncryptionService.encrypt(jwsObject.serialize())).thenReturn(ENCRYPTED_PAYLOAD);
-        when(dcsSigningService.signData(ENCRYPTED_PAYLOAD)).thenReturn(jwsObject2);
+        when(jweObject.serialize()).thenReturn(ENCRYPTED_PAYLOAD);
+        when(dcsSigningService.createJWS(PAYLOAD)).thenReturn(jwsObject);
+        when(dcsEncryptionService.createJWE(jwsObject.serialize())).thenReturn(jweObject);
+        when(dcsSigningService.createJWS(ENCRYPTED_PAYLOAD)).thenReturn(jwsObject2);
         when(jwsObject2.serialize()).thenReturn(SIGNED_ENCRYPTED_PAYLOAD);
     }
 }

@@ -57,7 +57,7 @@ class DcsSigningServiceTest {
                 .thenReturn(new Thumbprints(SHA_1_THUMBPRINT, SHA_256_THUMBPRINT));
 
         String stringToSign = "String to Sign";
-        JWSObject jwsObject = underTest.signData(stringToSign);
+        JWSObject jwsObject = underTest.createJWS(stringToSign);
         JWSObject parsedJWSObject = JWSObject.parse(jwsObject.serialize());
 
         JWSVerifier verifier =

@@ -27,7 +27,7 @@ public class DcsSigningService {
         this.configurationService = new ConfigurationService();
     }
 
-    public JWSObject signData(String stringToSign)
+    public JWSObject createJWS(String stringToSign)
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     CertificateException {
 

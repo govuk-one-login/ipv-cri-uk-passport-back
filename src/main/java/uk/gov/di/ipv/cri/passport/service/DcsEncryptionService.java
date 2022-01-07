@@ -23,7 +23,7 @@ public class DcsEncryptionService {
         this.configurationService = new ConfigurationService();
     }
 
-    public String encrypt(String data) throws JOSEException, CertificateException {
+    public JWEObject createJWE(String data) throws JOSEException, CertificateException {
 
         var header =
                 new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A128CBC_HS256)
@@ -39,7 +39,7 @@ public class DcsEncryptionService {
             throw new IpvCryptoException("Something went wrong, couldn't encrypt JWE");
         }
 
-        return jwe.serialize();
+        return jwe;
     }
 
     public JWSObject decrypt(String encrypted) {

@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.passport.service;
 
+import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.JWSObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -39,7 +40,7 @@ public class PassportService {
 
     public PassportService()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    KeyStoreException, IOException {
+            KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.dcsSigningService = new DcsSigningService();
         this.dcsEncryptionService = new DcsEncryptionService();
@@ -53,13 +54,13 @@ public class PassportService {
 
     public String dcsPassportCheck(String payload) {
         try {
-            JWSObject signedPayload = dcsSigningService.signData(payload);
-            String encryptedPayload = dcsEncryptionService.encrypt(signedPayload.serialize());
-            String reSignedPayload = dcsSigningService.signData(encryptedPayload).serialize();
+            JWSObject signedPayload = dcsSigningService.createJWS(payload);
+            JWEObject encryptedPayload = dcsEncryptionService.createJWE(signedPayload.serialize());
+            JWSObject signedAndEncryptedPayload = dcsSigningService.createJWS(encryptedPayload.serialize());
 
             var request = new HttpPost(configurationService.getDCSPostUrl());
             request.addHeader("content-type", "application/jose");
-            request.setEntity(new StringEntity(reSignedPayload));
+            request.setEntity(new StringEntity(signedAndEncryptedPayload.serialize()));
 
             HttpResponse response = httpClient.execute(request);
 
