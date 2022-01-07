@@ -50,11 +50,11 @@ public class AccessTokenService {
         return Objects.isNull(accessTokenItem) ? null : accessTokenItem.getResourceId();
     }
 
-    public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceIdd) {
+    public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setAccessToken(
                 tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader());
-        accessTokenItem.setResourceId(resourceIdd);
+        accessTokenItem.setResourceId(resourceId);
         dataStore.create(accessTokenItem);
     }
 }

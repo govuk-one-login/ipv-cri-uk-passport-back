@@ -64,6 +64,10 @@ public class ConfigurationService {
         return System.getenv("CRI_PASSPORT_AUTH_CODES_TABLE_NAME");
     }
 
+    public String getAccessTokensTableName() {
+        return System.getenv("CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME");
+    }
+
     private String getParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.get(System.getenv(environmentVariable));
     }
@@ -152,10 +156,6 @@ public class ConfigurationService {
         md.update(der);
         byte[] digest = md.digest();
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-    }
-
-    public String getAccessTokensTableName() {
-        return System.getenv("ACCESS_TOKENS_TABLE_NAME");
     }
 
     public long getBearerAccessTokenTtl() {
