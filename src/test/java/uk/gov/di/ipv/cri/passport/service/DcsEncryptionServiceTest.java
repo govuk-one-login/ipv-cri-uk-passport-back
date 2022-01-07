@@ -53,7 +53,7 @@ class DcsEncryptionServiceTest {
 
         RSADecrypter rsaDecrypter = new RSADecrypter(getPrivateKey());
         encryptPayload.decrypt(rsaDecrypter);
-        assertEquals(payload, decryptPayload(encryptPayload.getPayload().toString()));
+        assertEquals(payload, encryptPayload.getPayload().toString());
     }
 
     @Test
@@ -89,16 +89,6 @@ class DcsEncryptionServiceTest {
         jwe.encrypt(new RSAEncrypter((RSAPublicKey) getCertificate().getPublicKey()));
 
         return jwe.serialize();
-    }
-
-    private String decryptPayload(String encrypt)
-            throws InvalidKeySpecException, NoSuchAlgorithmException, ParseException,
-                    JOSEException {
-        RSADecrypter rsaDecrypter = new RSADecrypter(getPrivateKey());
-
-        JWEObject jweObject = JWEObject.parse(encrypt);
-        jweObject.decrypt(rsaDecrypter);
-        return jweObject.getPayload().toString();
     }
 
     private PrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {

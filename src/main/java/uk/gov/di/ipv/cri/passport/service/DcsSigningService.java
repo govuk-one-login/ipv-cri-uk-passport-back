@@ -48,8 +48,7 @@ public class DcsSigningService {
                                 .build(),
                         new Payload(stringToSign));
 
-        jwsObject.sign(
-                new RSASSASigner(configurationService.getPassportCriSigningKey()));
+        jwsObject.sign(new RSASSASigner(configurationService.getPassportCriSigningKey()));
 
         return jwsObject;
     }

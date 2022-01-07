@@ -140,7 +140,8 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("STUB_DCS_SIGNING_CERT_PARAM");
     }
 
-    public PrivateKey getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getStubDcsSigningKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_SIGNING_KEY_PARAM");
     }
 

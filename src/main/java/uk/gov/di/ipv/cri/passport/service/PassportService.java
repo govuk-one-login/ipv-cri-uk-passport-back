@@ -40,7 +40,7 @@ public class PassportService {
 
     public PassportService()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-            KeyStoreException, IOException {
+                    KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.dcsSigningService = new DcsSigningService();
         this.dcsEncryptionService = new DcsEncryptionService();
@@ -56,7 +56,8 @@ public class PassportService {
         try {
             JWSObject signedPayload = dcsSigningService.createJWS(payload);
             JWEObject encryptedPayload = dcsEncryptionService.createJWE(signedPayload.serialize());
-            JWSObject signedAndEncryptedPayload = dcsSigningService.createJWS(encryptedPayload.serialize());
+            JWSObject signedAndEncryptedPayload =
+                    dcsSigningService.createJWS(encryptedPayload.serialize());
 
             var request = new HttpPost(configurationService.getDCSPostUrl());
             request.addHeader("content-type", "application/jose");
