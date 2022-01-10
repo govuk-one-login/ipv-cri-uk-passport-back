@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 
 public class RequestHelper {
 
-    public static final String IPV_SESSION_ID_HEADER = "ipv-session-id";
-
     private RequestHelper() {}
 
     public static String getHeaderByKey(Map<String, String> headers, String headerKey) {
