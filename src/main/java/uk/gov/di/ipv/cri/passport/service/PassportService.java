@@ -11,6 +11,7 @@ import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -43,21 +44,18 @@ public class PassportService {
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload) {
-        try {
-            HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
-            request.addHeader("content-type", "application/jose");
-            request.setEntity(new StringEntity(payload.serialize()));
+    public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload) throws IOException {
+        HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
+        request.addHeader("content-type", "application/jose");
+        request.setEntity(new StringEntity(payload.serialize()));
 
-            HttpResponse response = httpClient.execute(request);
+        HttpResponse response = httpClient.execute(request);
 
-            if ((response != null)) {
-                return new DcsSignedEncryptedResponse(response.toString());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if ( response == null) {
+            throw new NullPointerException("Response from DCS is null");
         }
-        return null;
+
+        return new DcsSignedEncryptedResponse(response.toString());
     }
 
     public void persistDcsResponse(DcsResponseItem responsePayload) {
