@@ -12,14 +12,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,12 +70,18 @@ class PassportServiceTest {
         when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         when(jwsObject.serialize()).thenReturn("Test");
-        assertNull(underTest.dcsPassportCheck(jwsObject));
+        NullPointerException nullPointerException = assertThrows(NullPointerException.class, () -> {
+            underTest.dcsPassportCheck(jwsObject);
+        });
+        assertEquals("Response from DCS is null", nullPointerException.getMessage());
     }
 
     @Test
     void shouldCreateDcsResponseInDataStore() {
-        DcsResponseItem dcsResponse = new DcsResponseItem("UUID", "TEST_PAYLOAD");
+        UUID correlationId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        DcsResponse validDcsResponse = new DcsResponse(correlationId, requestId, false, true, null);
+        DcsResponseItem dcsResponse = new DcsResponseItem("UUID", validDcsResponse);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

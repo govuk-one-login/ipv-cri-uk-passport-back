@@ -2,16 +2,17 @@ package uk.gov.di.ipv.cri.passport.persistence.item;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 
 @DynamoDbBean
 public class DcsResponseItem {
 
     private String resourceId;
-    private String resourcePayload;
+    private DcsResponse dcsResponse;
 
-    public DcsResponseItem(String resourceId, String resourcePayload) {
+    public DcsResponseItem(String resourceId, DcsResponse dcsResponse) {
         this.resourceId = resourceId;
-        this.resourcePayload = resourcePayload;
+        this.dcsResponse = dcsResponse;
     }
 
     @DynamoDbPartitionKey
@@ -23,11 +24,11 @@ public class DcsResponseItem {
         this.resourceId = resourceId;
     }
 
-    public String getResourcePayload() {
-        return resourcePayload;
+    public DcsResponse getDcsResponse() {
+        return dcsResponse;
     }
 
-    public void setResourcePayload(String resourcePayload) {
-        this.resourcePayload = resourcePayload;
+    public void setDcsResponse(DcsResponse dcsResponse) {
+        this.dcsResponse = dcsResponse;
     }
 }

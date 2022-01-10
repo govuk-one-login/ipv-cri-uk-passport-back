@@ -1,5 +1,7 @@
 package uk.gov.di.ipv.cri.passport.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.util.UUID;
@@ -13,12 +15,13 @@ public class DcsResponse {
     private final boolean valid;
     private final String[] errorMessage;
 
+    @JsonCreator
     public DcsResponse(
-            UUID correlationId,
-            UUID requestId,
-            boolean error,
-            boolean valid,
-            String[] errorMessage) {
+            @JsonProperty(value="correlationId", required=true) UUID correlationId,
+            @JsonProperty(value="requestId", required=true) UUID requestId,
+            @JsonProperty(value="error", required=true) boolean error,
+            @JsonProperty(value="valid", required=true) boolean valid,
+            @JsonProperty(value="errorMessage", required=false) String[] errorMessage) {
         this.correlationId = correlationId;
         this.requestId = requestId;
         this.error = error;

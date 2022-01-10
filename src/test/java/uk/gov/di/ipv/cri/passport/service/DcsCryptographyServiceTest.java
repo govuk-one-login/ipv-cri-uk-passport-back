@@ -23,7 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
@@ -46,6 +47,7 @@ import java.security.spec.RSAPublicKeySpec;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Base64;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -86,14 +88,14 @@ class DcsCryptographyServiceTest {
                 .thenReturn(new Thumbprints(SHA_1_THUMBPRINT, SHA_256_THUMBPRINT));
         when(configurationService.getDcsEncryptionCert()).thenReturn(getEncryptionCertificate());
 
-        DcsPayload dcsPayload =
-                new DcsPayload(
+        PassportFormRequest passportFormRequest =
+                new PassportFormRequest(
                         "PASSPORT_NUMBER",
                         "SURNAME",
                         new String[] {"FORENAMES"},
                         LocalDate.now(),
                         LocalDate.now());
-        JWSObject preparedPayload = underTest.preparePayload(dcsPayload);
+        JWSObject preparedPayload = underTest.preparePayload(passportFormRequest);
 
         JWSVerifier verifier =
                 new RSASSAVerifier((RSAPublicKey) getSigningPublicKey(getSigningPrivateKey()));
@@ -107,22 +109,26 @@ class DcsCryptographyServiceTest {
                 JWSObject.parse(encryptedContents.getPayload().toString());
 
         assertTrue(decryptedPassportDetails.verify(verifier));
-        String expected = objectMapper.writeValueAsString(dcsPayload);
+        String expected = objectMapper.writeValueAsString(passportFormRequest);
         assertEquals(expected, decryptedPassportDetails.getPayload().toString());
     }
 
     @Test
     void shouldUnwrapDcsResponse()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    ParseException, JOSEException {
+            ParseException, JOSEException, JsonProcessingException {
         when(configurationService.getDcsSigningCert())
                 .thenReturn(TestUtils.getDcsSigningCertificate(BASE64_DCS_SIGNING_CERT));
         when(configurationService.getPassportCriPrivateKey()).thenReturn(getEncryptionPrivateKey());
-        String payload = "some test data";
-        String dcsResponse = generateDCSResponse(payload);
+        DcsResponse expectedDcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+        String dcsResponse = generateDCSResponse(objectMapper.writeValueAsString(expectedDcsResponse));
         DcsSignedEncryptedResponse dcsResponseItem = new DcsSignedEncryptedResponse(dcsResponse);
+        DcsResponse actualDcsResponse = underTest.unwrapDcsResponse(dcsResponseItem).getDcsResponse();
 
-        assertEquals(payload, underTest.unwrapDcsResponse(dcsResponseItem).getResourcePayload());
+        assertEquals(expectedDcsResponse.getCorrelationId(), actualDcsResponse.getCorrelationId());
+        assertEquals(expectedDcsResponse.getRequestId(), actualDcsResponse.getRequestId());
+        assertEquals(expectedDcsResponse.getError(), actualDcsResponse.getError());
+        assertEquals(expectedDcsResponse.isValid(), actualDcsResponse.isValid());
     }
 
     @Test

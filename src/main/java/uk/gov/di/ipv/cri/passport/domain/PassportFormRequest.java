@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-public class DcsPayload {
+public class PassportFormRequest {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIME_ZONE = "UTC";
 
@@ -38,7 +38,7 @@ public class DcsPayload {
     public final LocalDate expiryDate;
 
     @JsonCreator
-    public DcsPayload(
+    public PassportFormRequest(
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "surname", required = true) String surname,
             @JsonProperty(value = "forenames", required = true) String[] forenames,

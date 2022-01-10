@@ -11,21 +11,20 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.service.PassportService;
-import uk.gov.di.ipv.cri.passport.validation.ValidationResult;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -71,7 +70,7 @@ public class PassportHandler
 
     public PassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    KeyStoreException, IOException {
+            KeyStoreException, IOException {
         this.passportService = new PassportService();
         this.authorizationCodeService = new AuthorizationCodeService();
         this.configurationService = new ConfigurationService();
@@ -84,61 +83,22 @@ public class PassportHandler
         Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
 
         try {
-            ValidationResult<ErrorResponse> validationResult =
-                    validateRequest(queryStringParameters);
-            if (!validationResult.isValid()) {
-                LOGGER.error("Missing required query parameters for authorisation request");
-                return ApiGatewayResponseGenerator.proxyJsonResponse(
-                        HttpStatus.SC_BAD_REQUEST, validationResult.getError());
-            }
-
-            AuthenticationRequest.parse(queryStringParameters);
-        } catch (ParseException e) {
-            LOGGER.error("Authentication request could not be parsed", e);
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_BAD_REQUEST,
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
-        }
-        LOGGER.info("Successfully parsed authentication request");
-
-        DcsPayload dcsPayload;
-        try {
-            dcsPayload = objectMapper.readValue(input.getBody(), DcsPayload.class);
-
-        } catch (JsonProcessingException e) {
-            LOGGER.error("Passport form data could not be parsed", e);
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA);
-        }
-
-        try {
-            JWSObject preparedDcsPayload = dcsCryptographyService.preparePayload(dcsPayload);
-            DcsSignedEncryptedResponse response =
-                    passportService.dcsPassportCheck(preparedDcsPayload);
-            DcsResponseItem responseToPersist = dcsCryptographyService.unwrapDcsResponse(response);
-            passportService.persistDcsResponse(responseToPersist);
-
+            validateRequest(queryStringParameters);
+            PassportFormRequest passportFormRequest = parsePassportFormRequest(input.getBody());
+            JWSObject preparedDcsPayload = preparePayload(passportFormRequest);
+            DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
+            DcsResponseItem unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
+            passportService.persistDcsResponse(unwrappedDcsResponse);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
-
             authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), responseToPersist.getResourceId());
+                    authorizationCode.getValue(), unwrappedDcsResponse.getResourceId());
 
-            Map<String, Identifier> payload = Map.of("code", authorizationCode);
-
-            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, payload);
-
-        } catch (CertificateException
-                | NoSuchAlgorithmException
-                | InvalidKeySpecException
-                | JOSEException
-                | JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (java.text.ParseException e) {
-            e.printStackTrace();
+            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, Map.of("code", authorizationCode));
+        } catch (HttpResponseExceptionWithErrorBody e) {
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    e.getStatusCode(), e.getErrorBody());
         }
-
-        return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, dcsPayload);
     }
 
     private Map<String, List<String>> getQueryStringParametersAsMap(
@@ -152,12 +112,62 @@ public class PassportHandler
         return Collections.emptyMap();
     }
 
-    private ValidationResult<ErrorResponse> validateRequest(
-            Map<String, List<String>> queryStringParameters) {
-        if (Objects.isNull(queryStringParameters) || queryStringParameters.isEmpty()) {
-            return new ValidationResult<>(false, ErrorResponse.MISSING_QUERY_PARAMETERS);
-        }
+    private void validateRequest(
+            Map<String, List<String>> queryStringParameters) throws HttpResponseExceptionWithErrorBody {
 
-        return ValidationResult.createValidResult();
+        LOGGER.info("Validating input query string parameters");
+        if (Objects.isNull(queryStringParameters) || queryStringParameters.isEmpty()) {
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.MISSING_QUERY_PARAMETERS);
+        }
+        checkQueryStringCanBeParsedToAuthenticationRequest(queryStringParameters);
+    }
+
+    private void checkQueryStringCanBeParsedToAuthenticationRequest(Map<String, List<String>> queryStringParameters) throws HttpResponseExceptionWithErrorBody {
+        try {
+            AuthenticationRequest.parse(queryStringParameters);
+        } catch (ParseException e) {
+            LOGGER.error(("Failed to parse oath query string parameters: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
+        }
+    }
+
+    private PassportFormRequest parsePassportFormRequest(String input) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Parsing passport form data into payload for DCS");
+        try {
+            return objectMapper.readValue(input, PassportFormRequest.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA);
+        }
+    }
+
+    private JWSObject preparePayload(PassportFormRequest passportFormRequest) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Preparing payload for DCS");
+        try {
+            return dcsCryptographyService.preparePayload(passportFormRequest);
+        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
+            LOGGER.error(("Failed to prepare payload for DCS: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_PREPARE_DCS_PAYLOAD);
+        }
+    }
+
+    private DcsSignedEncryptedResponse doPassportCheck(JWSObject preparedPayload) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Sending passport check to DCS");
+        try {
+            return passportService.dcsPassportCheck(preparedPayload);
+        } catch (IOException e) {
+            LOGGER.error(("Passport check with DCS failed: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.ERROR_CONTACTING_DCS);
+        }
+    }
+
+    private DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse response) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Unwrapping DCS response");
+        try {
+            return dcsCryptographyService.unwrapDcsResponse(response);
+        } catch (CertificateException | java.text.ParseException | JOSEException | JsonProcessingException e) {
+            LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_UNWRAP_DCS_RESPONSE);
+        }
     }
 }

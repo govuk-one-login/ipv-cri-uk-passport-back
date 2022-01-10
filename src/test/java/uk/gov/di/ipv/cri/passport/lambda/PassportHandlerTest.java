@@ -16,7 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
@@ -32,6 +33,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,6 +52,8 @@ class PassportHandlerTest {
                     "forenames", "[Tubbs]",
                     "dateOfBirth", "1984-09-28",
                     "expiryDate", "2024-09-03");
+
+    private final DcsResponse validDcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -80,10 +84,10 @@ class PassportHandlerTest {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+                new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(dcsResponseItem);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
@@ -109,10 +113,10 @@ class PassportHandlerTest {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+                new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(dcsResponseItem);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
@@ -311,10 +315,10 @@ class PassportHandlerTest {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+                new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(dcsResponseItem);
 
@@ -342,9 +346,9 @@ class PassportHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
         DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", dcsSignedEncryptedResponse.getPayload());
+                new DcsResponseItem("UUID", validDcsResponse);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(dcsResponseItem);
 
