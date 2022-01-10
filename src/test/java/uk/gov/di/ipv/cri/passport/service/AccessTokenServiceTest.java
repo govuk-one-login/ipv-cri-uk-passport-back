@@ -34,7 +34,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AccessTokenServiceTest {
+class AccessTokenServiceTest {
     private DataStore<AccessTokenItem> mockDataStore;
     private ConfigurationService mockConfigurationService;
     private AccessTokenService accessTokenService;
