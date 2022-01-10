@@ -13,6 +13,8 @@ variable "passport_signing_cert" { type = string }
 
 variable "passport_encryption_cert" { type = string }
 
+variable "dcs_signing_cert" { type = string }
+
 variable "dcs_encryption_cert" { type = string }
 
 variable "dcs_tls_intermediate_cert" { type = string }
@@ -34,10 +36,21 @@ variable "stub_dcs_signing_key" {
   default = ""
 }
 
+variable "stub_dcs_encryption_key" {
+  type    = string
+  default = ""
+}
+
 variable "local_only_passport_signing_key" {
   type    = string
   default = ""
 }
+
+variable "local_only_passport_encryption_key" {
+  type    = string
+  default = ""
+}
+
 variable "local_only_passport_tls_key" {
   type    = string
   default = ""

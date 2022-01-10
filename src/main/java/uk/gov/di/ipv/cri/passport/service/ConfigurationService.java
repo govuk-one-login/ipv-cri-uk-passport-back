@@ -94,6 +94,10 @@ public class ConfigurationService {
         return factory.generatePrivate(privateKeySpec);
     }
 
+    public Certificate getDcsSigningCert() throws CertificateException {
+        return getCertificateFromStoreUsingEnv("DCS_SIGNING_CERT_PARAM");
+    }
+
     public Certificate getDcsEncryptionCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("DCS_ENCRYPTION_CERT_PARAM");
     }
@@ -130,12 +134,12 @@ public class ConfigurationService {
         };
     }
 
-    public Certificate getStubDcsSigningCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("STUB_DCS_SIGNING_CERT_PARAM");
-    }
-
     public Key getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_SIGNING_KEY_PARAM");
+    }
+
+    public Key getStubDcsEncryptionKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        return getKeyFromStoreUsingEnv("STUB_DCS_ENCRYPTION_KEY_PARAM");
     }
 
     public String getDCSPostUrl() {
