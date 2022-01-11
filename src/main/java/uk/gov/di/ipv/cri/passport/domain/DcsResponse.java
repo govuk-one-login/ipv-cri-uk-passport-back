@@ -17,11 +17,11 @@ public class DcsResponse {
 
     @JsonCreator
     public DcsResponse(
-            @JsonProperty(value="correlationId", required=true) UUID correlationId,
-            @JsonProperty(value="requestId", required=true) UUID requestId,
-            @JsonProperty(value="error", required=true) boolean error,
-            @JsonProperty(value="valid", required=true) boolean valid,
-            @JsonProperty(value="errorMessage", required=false) String[] errorMessage) {
+            @JsonProperty(value = "correlationId", required = true) UUID correlationId,
+            @JsonProperty(value = "requestId", required = true) UUID requestId,
+            @JsonProperty(value = "error", required = true) boolean error,
+            @JsonProperty(value = "valid", required = true) boolean valid,
+            @JsonProperty(value = "errorMessage", required = false) String[] errorMessage) {
         this.correlationId = correlationId;
         this.requestId = requestId;
         this.error = error;

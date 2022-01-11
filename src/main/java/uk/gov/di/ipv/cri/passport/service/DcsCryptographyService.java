@@ -12,13 +12,11 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
-import uk.gov.di.ipv.cri.passport.lambda.PassportHandler;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -26,7 +24,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Map;
-import java.util.UUID;
 
 public class DcsCryptographyService {
 
@@ -51,7 +48,7 @@ public class DcsCryptographyService {
         return signedAndEncryptedPassportDetails;
     }
 
-    public DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse)
+    public DcsResponse unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse)
             throws CertificateException, ParseException, JOSEException, JsonProcessingException {
         JWSObject outerSignedPayload = JWSObject.parse(dcsSignedEncryptedResponse.getPayload());
         if (isInvalidSignature(outerSignedPayload)) {
@@ -64,9 +61,8 @@ public class DcsCryptographyService {
             throw new IpvCryptoException("DCS Response Inner Signature invalid.");
         }
         try {
-            DcsResponse parsedResponse = objectMapper.readValue(decryptedSignedPayload.getPayload().toString(), DcsResponse.class);
-            return new DcsResponseItem(
-                    UUID.randomUUID().toString(), parsedResponse);
+            return objectMapper.readValue(
+                    decryptedSignedPayload.getPayload().toString(), DcsResponse.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("Failed to parse decrypted DCS response: " + e.getMessage());
             throw e;

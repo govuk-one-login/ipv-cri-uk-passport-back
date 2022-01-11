@@ -11,7 +11,6 @@ import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -37,7 +36,7 @@ public class PassportService {
                     KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.dataStore =
-                new DataStore<>(
+                new DataStore<DcsResponseItem>(
                         configurationService.getDcsResponseTableName(),
                         DcsResponseItem.class,
                         DataStore.getClient());
@@ -51,7 +50,7 @@ public class PassportService {
 
         HttpResponse response = httpClient.execute(request);
 
-        if ( response == null) {
+        if (response == null) {
             throw new NullPointerException("Response from DCS is null");
         }
 

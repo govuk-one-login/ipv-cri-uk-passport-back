@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public enum ErrorResponse {
     FAILED_TO_PARSE_PASSPORT_FORM_DATA(1000, "Failed to parse passport form data"),
     MISSING_QUERY_PARAMETERS(1001, "Missing query parameters for auth request"),
-    FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS(1002, "Failed to parse oauth2-specific query string parameters"),
+    FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS(
+            1002, "Failed to parse oauth2-specific query string parameters"),
     FAILED_TO_PREPARE_DCS_PAYLOAD(1003, "Failed to prepare DCS paylaod"),
     ERROR_CONTACTING_DCS(1004, "Error when contacting DCS for passport check"),
     FAILED_TO_UNWRAP_DCS_RESPONSE(1005, "Failed to unwrap Dcs response");
