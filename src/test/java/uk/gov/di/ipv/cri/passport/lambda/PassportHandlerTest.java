@@ -17,8 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
@@ -53,7 +53,8 @@ class PassportHandlerTest {
                     "dateOfBirth", "1984-09-28",
                     "expiryDate", "2024-09-03");
 
-    private final DcsResponse validDcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+    private final DcsResponse validDcsResponse =
+            new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -83,13 +84,12 @@ class PassportHandlerTest {
                     InvalidKeySpecException, JOSEException, ParseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+                .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(dcsResponseItem);
+                .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -112,13 +112,13 @@ class PassportHandlerTest {
                     InvalidKeySpecException, JOSEException, ParseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", validDcsResponse);
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+                .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(dcsResponseItem);
+                .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -136,8 +136,13 @@ class PassportHandlerTest {
         Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
         Map<String, String> authCode = (Map) responseBody.get("code");
 
+        ArgumentCaptor<DcsResponseItem> persistedDcsResponseItem =
+                ArgumentCaptor.forClass(DcsResponseItem.class);
+        verify(passportService).persistDcsResponse(persistedDcsResponseItem.capture());
+
         verify(authorizationCodeService)
-                .persistAuthorizationCode(authCode.get("value"), dcsResponseItem.getResourceId());
+                .persistAuthorizationCode(
+                        authCode.get("value"), persistedDcsResponseItem.getValue().getResourceId());
         assertEquals(authorizationCode.toString(), authCode.get("value"));
     }
 
@@ -314,13 +319,13 @@ class PassportHandlerTest {
                     InvalidKeySpecException, JOSEException, ParseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", validDcsResponse);
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+                .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(dcsResponseItem);
+                .thenReturn(validDcsResponse);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
@@ -335,7 +340,11 @@ class PassportHandlerTest {
 
         underTest.handleRequest(event, context);
 
-        verify(passportService).persistDcsResponse(dcsResponseItem);
+        ArgumentCaptor<DcsResponseItem> persistedDcsResponseItem =
+                ArgumentCaptor.forClass(DcsResponseItem.class);
+
+        verify(passportService).persistDcsResponse(persistedDcsResponseItem.capture());
+        assertEquals(validDcsResponse, persistedDcsResponseItem.getValue().getDcsResponse());
     }
 
     @Test
@@ -346,11 +355,11 @@ class PassportHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class))).thenReturn(jwsObject);
-        DcsResponseItem dcsResponseItem =
-                new DcsResponseItem("UUID", validDcsResponse);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+                .thenReturn(jwsObject);
+        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", validDcsResponse);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(dcsResponseItem);
+                .thenReturn(validDcsResponse);
 
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
 
@@ -367,11 +376,17 @@ class PassportHandlerTest {
 
         ArgumentCaptor<String> authCodeArgumentCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> resourceIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<DcsResponseItem> dcsResponseItemArgumentCaptor =
+                ArgumentCaptor.forClass(DcsResponseItem.class);
+        verify(passportService).persistDcsResponse(dcsResponseItemArgumentCaptor.capture());
+
         verify(authorizationCodeService)
                 .persistAuthorizationCode(
                         authCodeArgumentCaptor.capture(), resourceIdArgumentCaptor.capture());
 
         assertEquals(authorizationCode.toString(), authCodeArgumentCaptor.getValue());
-        assertEquals(dcsResponseItem.getResourceId(), resourceIdArgumentCaptor.getValue());
+        assertEquals(
+                dcsResponseItemArgumentCaptor.getValue().getResourceId(),
+                resourceIdArgumentCaptor.getValue());
     }
 }

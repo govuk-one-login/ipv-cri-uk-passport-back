@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -70,9 +69,12 @@ class PassportServiceTest {
         when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         when(jwsObject.serialize()).thenReturn("Test");
-        NullPointerException nullPointerException = assertThrows(NullPointerException.class, () -> {
-            underTest.dcsPassportCheck(jwsObject);
-        });
+        NullPointerException nullPointerException =
+                assertThrows(
+                        NullPointerException.class,
+                        () -> {
+                            underTest.dcsPassportCheck(jwsObject);
+                        });
         assertEquals("Response from DCS is null", nullPointerException.getMessage());
     }
 

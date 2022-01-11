@@ -24,8 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
 import uk.gov.di.ipv.cri.passport.utils.TestUtils;
@@ -116,14 +116,16 @@ class DcsCryptographyServiceTest {
     @Test
     void shouldUnwrapDcsResponse()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-            ParseException, JOSEException, JsonProcessingException {
+                    ParseException, JOSEException, JsonProcessingException {
         when(configurationService.getDcsSigningCert())
                 .thenReturn(TestUtils.getDcsSigningCertificate(BASE64_DCS_SIGNING_CERT));
         when(configurationService.getPassportCriPrivateKey()).thenReturn(getEncryptionPrivateKey());
-        DcsResponse expectedDcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
-        String dcsResponse = generateDCSResponse(objectMapper.writeValueAsString(expectedDcsResponse));
+        DcsResponse expectedDcsResponse =
+                new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+        String dcsResponse =
+                generateDCSResponse(objectMapper.writeValueAsString(expectedDcsResponse));
         DcsSignedEncryptedResponse dcsResponseItem = new DcsSignedEncryptedResponse(dcsResponse);
-        DcsResponse actualDcsResponse = underTest.unwrapDcsResponse(dcsResponseItem).getDcsResponse();
+        DcsResponse actualDcsResponse = underTest.unwrapDcsResponse(dcsResponseItem);
 
         assertEquals(expectedDcsResponse.getCorrelationId(), actualDcsResponse.getCorrelationId());
         assertEquals(expectedDcsResponse.getRequestId(), actualDcsResponse.getRequestId());
