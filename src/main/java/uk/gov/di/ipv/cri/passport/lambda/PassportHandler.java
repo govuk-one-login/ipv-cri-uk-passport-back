@@ -84,7 +84,6 @@ public class PassportHandler
 
         try {
             validateRequest(queryStringParameters);
-            checkQueryStringCanBeParsedToAuthenticationRequest(queryStringParameters);
             DcsPayload parsedInputForDcs = parseDscPayloadFromInput(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(parsedInputForDcs);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
@@ -97,54 +96,8 @@ public class PassportHandler
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, Map.of("code", authorizationCode));
         } catch (HttpResponseExceptionWithErrorBody e) {
-            LOGGER.error(e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(), e.getErrorBody());
-        }
-    }
-
-    private void checkQueryStringCanBeParsedToAuthenticationRequest(Map<String, List<String>> queryStringParameters) throws HttpResponseExceptionWithErrorBody {
-        try {
-            AuthenticationRequest.parse(queryStringParameters);
-        } catch (ParseException e) {
-            LOGGER.error(("Failed to parse oath query string parameters: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
-        }
-    }
-
-    private DcsPayload parseDscPayloadFromInput(String input) throws HttpResponseExceptionWithErrorBody {
-        try {
-            return objectMapper.readValue(input, DcsPayload.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA);
-        }
-    }
-
-    private DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse response) throws HttpResponseExceptionWithErrorBody {
-        try {
-            return dcsCryptographyService.unwrapDcsResponse(response);
-        } catch (CertificateException | java.text.ParseException | JOSEException e) {
-            LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_UNWRAP_DCS_RESPONSE);
-        }
-    }
-
-    private JWSObject preparePayload(DcsPayload dcsPayload) throws HttpResponseExceptionWithErrorBody {
-        try {
-            return dcsCryptographyService.preparePayload(dcsPayload);
-        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
-            LOGGER.error(("Failed to prepare payload for DCS: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_PREPARE_DCS_PAYLOAD);
-        }
-    }
-
-    private DcsSignedEncryptedResponse doPassportCheck(JWSObject preparedPayload) throws HttpResponseExceptionWithErrorBody {
-        try {
-            return passportService.dcsPassportCheck(preparedPayload);
-        } catch (IOException e) {
-            LOGGER.error(("Failed to contact DCS: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.ERROR_CONTACTING_DCS);
         }
     }
 
@@ -161,8 +114,60 @@ public class PassportHandler
 
     private void validateRequest(
             Map<String, List<String>> queryStringParameters) throws HttpResponseExceptionWithErrorBody {
+
+        LOGGER.info("Validating input query string parameters");
         if (Objects.isNull(queryStringParameters) || queryStringParameters.isEmpty()) {
             throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.MISSING_QUERY_PARAMETERS);
+        }
+        checkQueryStringCanBeParsedToAuthenticationRequest(queryStringParameters);
+    }
+
+    private void checkQueryStringCanBeParsedToAuthenticationRequest(Map<String, List<String>> queryStringParameters) throws HttpResponseExceptionWithErrorBody {
+        try {
+            AuthenticationRequest.parse(queryStringParameters);
+        } catch (ParseException e) {
+            LOGGER.error(("Failed to parse oath query string parameters: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
+        }
+    }
+
+    private DcsPayload parseDscPayloadFromInput(String input) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Parsing passport form data into payload for DCS");
+        try {
+            return objectMapper.readValue(input, DcsPayload.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA);
+        }
+    }
+
+    private JWSObject preparePayload(DcsPayload dcsPayload) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Preparing payload for DCS");
+        try {
+            return dcsCryptographyService.preparePayload(dcsPayload);
+        } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
+            LOGGER.error(("Failed to prepare payload for DCS: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_PREPARE_DCS_PAYLOAD);
+        }
+    }
+
+    private DcsSignedEncryptedResponse doPassportCheck(JWSObject preparedPayload) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Sending passport check to DCS");
+        try {
+            return passportService.dcsPassportCheck(preparedPayload);
+        } catch (IOException e) {
+            LOGGER.error(("Passport check with DCS failed: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.ERROR_CONTACTING_DCS);
+        }
+    }
+
+    private DcsResponseItem unwrapDcsResponse(DcsSignedEncryptedResponse response) throws HttpResponseExceptionWithErrorBody {
+        LOGGER.info("Unwrapping DCS response");
+        try {
+            return dcsCryptographyService.unwrapDcsResponse(response);
+        } catch (CertificateException | java.text.ParseException | JOSEException e) {
+            LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
+            throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_UNWRAP_DCS_RESPONSE);
         }
     }
 }
