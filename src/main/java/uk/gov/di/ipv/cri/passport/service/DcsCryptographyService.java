@@ -63,9 +63,10 @@ public class DcsCryptographyService {
         try {
             return objectMapper.readValue(
                     decryptedSignedPayload.getPayload().toString(), DcsResponse.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("Failed to parse decrypted DCS response: " + e.getMessage());
-            throw e;
+        } catch (JsonProcessingException exception) {
+            throw new IpvCryptoException(
+                    String.format(
+                            "Failed to parse decrypted DCS response: %s", exception.getMessage()));
         }
     }
 
