@@ -14,10 +14,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +32,7 @@ class PassportServiceTest {
     public static final String CHECK_PASSPORT_URI = "https://localhost/check/passport";
 
     @Mock ConfigurationService configurationService;
-    @Mock DataStore<DcsResponseItem> dataStore;
+    @Mock DataStore<PassportCheckDao> dataStore;
     @Mock HttpClient httpClient;
     @Mock JWSObject jwsObject;
     @Mock HttpResponse httpResponse;
@@ -71,10 +73,7 @@ class PassportServiceTest {
         when(jwsObject.serialize()).thenReturn("Test");
         NullPointerException nullPointerException =
                 assertThrows(
-                        NullPointerException.class,
-                        () -> {
-                            underTest.dcsPassportCheck(jwsObject);
-                        });
+                        NullPointerException.class, () -> underTest.dcsPassportCheck(jwsObject));
         assertEquals("Response from DCS is null", nullPointerException.getMessage());
     }
 
@@ -83,7 +82,15 @@ class PassportServiceTest {
         UUID correlationId = UUID.randomUUID();
         UUID requestId = UUID.randomUUID();
         DcsResponse validDcsResponse = new DcsResponse(correlationId, requestId, false, true, null);
-        DcsResponseItem dcsResponse = new DcsResponseItem("UUID", validDcsResponse);
+        PassportFormRequest passportFormRequest =
+                new PassportFormRequest(
+                        "PASSPORT_NUMBER",
+                        "SURNAME",
+                        new String[] {"FORENAMES"},
+                        LocalDate.now(),
+                        LocalDate.now());
+        PassportCheckDao dcsResponse =
+                new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

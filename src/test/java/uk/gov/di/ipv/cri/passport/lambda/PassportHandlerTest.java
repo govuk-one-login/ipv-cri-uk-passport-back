@@ -20,7 +20,7 @@ import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.service.DcsCryptographyService;
@@ -31,6 +31,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -43,18 +45,31 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PassportHandlerTest {
 
+    public static final String PASSPORT_NUMBER = "1234567890";
+    public static final String SURNAME = "Tattsyrup";
+    public static final String[] FORENAMES = {"Tubbs"};
+    public static final String DATE_OF_BIRTH = "1984-09-28";
+    public static final String EXPIRY_DATE = "2024-09-03";
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
     private final Map<String, String> validPassportFormData =
             Map.of(
-                    "passportNumber", "1234567890",
-                    "surname", "Tattsyrup",
-                    "forenames", "[Tubbs]",
-                    "dateOfBirth", "1984-09-28",
-                    "expiryDate", "2024-09-03");
+                    "passportNumber", PASSPORT_NUMBER,
+                    "surname", SURNAME,
+                    "forenames", Arrays.toString(FORENAMES),
+                    "dateOfBirth", DATE_OF_BIRTH,
+                    "expiryDate", EXPIRY_DATE);
 
     private final DcsResponse validDcsResponse =
             new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+
+    private final PassportFormRequest passportFormRequest =
+            new PassportFormRequest(
+                    PASSPORT_NUMBER,
+                    SURNAME,
+                    FORENAMES,
+                    LocalDate.parse(DATE_OF_BIRTH),
+                    LocalDate.parse(EXPIRY_DATE));
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -112,7 +127,8 @@ class PassportHandlerTest {
                     InvalidKeySpecException, JOSEException, ParseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", validDcsResponse);
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
@@ -136,8 +152,8 @@ class PassportHandlerTest {
         Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
         Map<String, String> authCode = (Map) responseBody.get("code");
 
-        ArgumentCaptor<DcsResponseItem> persistedDcsResponseItem =
-                ArgumentCaptor.forClass(DcsResponseItem.class);
+        ArgumentCaptor<PassportCheckDao> persistedDcsResponseItem =
+                ArgumentCaptor.forClass(PassportCheckDao.class);
         verify(passportService).persistDcsResponse(persistedDcsResponseItem.capture());
 
         verify(authorizationCodeService)
@@ -314,12 +330,11 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldPersistDcsResponse()
+    void shouldPersistPassportCheckDao()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
@@ -340,11 +355,14 @@ class PassportHandlerTest {
 
         underTest.handleRequest(event, context);
 
-        ArgumentCaptor<DcsResponseItem> persistedDcsResponseItem =
-                ArgumentCaptor.forClass(DcsResponseItem.class);
+        ArgumentCaptor<PassportCheckDao> persistedPassportCheckDao =
+                ArgumentCaptor.forClass(PassportCheckDao.class);
 
-        verify(passportService).persistDcsResponse(persistedDcsResponseItem.capture());
-        assertEquals(validDcsResponse, persistedDcsResponseItem.getValue().getDcsResponse());
+        verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
+        assertEquals(
+                validPassportFormData.get("passportNumber"),
+                persistedPassportCheckDao.getValue().getPassportFormRequest().passportNumber);
+        assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getDcsResponse());
     }
 
     @Test
@@ -357,7 +375,8 @@ class PassportHandlerTest {
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
                 .thenReturn(jwsObject);
-        DcsResponseItem dcsResponseItem = new DcsResponseItem("UUID", validDcsResponse);
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
 
@@ -376,8 +395,8 @@ class PassportHandlerTest {
 
         ArgumentCaptor<String> authCodeArgumentCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> resourceIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<DcsResponseItem> dcsResponseItemArgumentCaptor =
-                ArgumentCaptor.forClass(DcsResponseItem.class);
+        ArgumentCaptor<PassportCheckDao> dcsResponseItemArgumentCaptor =
+                ArgumentCaptor.forClass(PassportCheckDao.class);
         verify(passportService).persistDcsResponse(dcsResponseItemArgumentCaptor.capture());
 
         verify(authorizationCodeService)
