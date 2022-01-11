@@ -13,8 +13,10 @@ module "stub-dcs" {
   role_name              = "${var.environment}-stub-dcs-role"
 
   env_vars = {
-    "STUB_DCS_SIGNING_CERT_PARAM"        = aws_ssm_parameter.stub_dcs_signing_cert[0].name
+    "DCS_SIGNING_CERT_PARAM"             = aws_ssm_parameter.dcs_signing_cert.name
     "STUB_DCS_SIGNING_KEY_PARAM"         = aws_ssm_parameter.stub_dcs_signing_key[0].name
+    "STUB_DCS_ENCRYPTION_KEY_PARAM"      = aws_ssm_parameter.stub_dcs_encryption_key[0].name
+    "PASSPORT_CRI_SIGNING_CERT_PARAM"    = aws_ssm_parameter.passport_signing_cert.name
     "PASSPORT_CRI_ENCRYPTION_CERT_PARAM" = aws_ssm_parameter.passport_encryption_cert.name
   }
 }

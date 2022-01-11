@@ -14,11 +14,19 @@ public class DcsPayload {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIME_ZONE = "UTC";
 
-    @JsonProperty public final UUID correlationId;
-    @JsonProperty public final UUID requestId;
-    @JsonProperty public final String timestamp;
-    @JsonProperty public final String passportNumber;
-    @JsonProperty public final String surname;
+    public UUID getCorrelationId() {
+        return correlationId;
+    }
+
+    public UUID getRequestId() {
+        return requestId;
+    }
+
+    @JsonProperty private final UUID correlationId;
+    @JsonProperty private final UUID requestId;
+    @JsonProperty private final String timestamp;
+    @JsonProperty private final String passportNumber;
+    @JsonProperty private final String surname;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public final String[] forenames;
