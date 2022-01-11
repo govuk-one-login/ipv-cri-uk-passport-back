@@ -1,10 +1,13 @@
 package uk.gov.di.ipv.cri.passport.persistence;
 
+import com.amazonaws.http.apache.client.impl.SdkHttpClient;
+import software.amazon.awssdk.core.internal.http.loader.DefaultSdkHttpClientBuilder;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
@@ -30,11 +33,12 @@ public class DataStore<T> {
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
     }
 
-    public static DynamoDbEnhancedClient getClient() {
-        DynamoDbClient client =
-                new ConfigurationService().isRunningLocally()
-                        ? createLocalDbClient()
-                        : DynamoDbClient.create();
+    public static DynamoDbEnhancedClient getClient(URI uri) {
+        DynamoDbClient client = DynamoDbClient.builder()
+                .endpointOverride(uri)
+                .httpClient(UrlConnectionHttpClient.create())
+                .region(Region.EU_WEST_2)
+                .build();
 
         return DynamoDbEnhancedClient.builder().dynamoDbClient(client).build();
     }
@@ -72,13 +76,6 @@ public class DataStore<T> {
 
     public T delete(String partitionValue) {
         return delete(Key.builder().partitionValue(partitionValue).build());
-    }
-
-    private static DynamoDbClient createLocalDbClient() {
-        return DynamoDbClient.builder()
-                .endpointOverride(URI.create(LOCALHOST_URI))
-                .region(Region.EU_WEST_2)
-                .build();
     }
 
     private T getItemByKey(Key key) {

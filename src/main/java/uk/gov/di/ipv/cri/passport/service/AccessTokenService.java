@@ -27,7 +27,7 @@ public class AccessTokenService {
                 new DataStore<>(
                         configurationService.getAccessTokensTableName(),
                         AccessTokenItem.class,
-                        DataStore.getClient());
+                        DataStore.getClient(configurationService.getDynamoDbUri()));
     }
 
     public AccessTokenService(

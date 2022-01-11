@@ -2,18 +2,22 @@ package uk.gov.di.ipv.cri.passport.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.util.UUID;
 
 @ExcludeFromGeneratedCoverageReport
+@DynamoDbBean
 public class DcsResponse {
 
-    private final UUID correlationId;
-    private final UUID requestId;
-    private final boolean error;
-    private final boolean valid;
-    private final String[] errorMessage;
+    private UUID correlationId;
+    private UUID requestId;
+    private boolean error;
+    private boolean valid;
+    private String[] errorMessage;
+
+    public DcsResponse() {};
 
     @JsonCreator
     public DcsResponse(

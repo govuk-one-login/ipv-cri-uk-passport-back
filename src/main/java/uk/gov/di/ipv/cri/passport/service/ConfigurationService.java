@@ -28,6 +28,7 @@ public class ConfigurationService {
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
+    private static final String DEFAULT_DYNAMODB_URI = "http://localhost:4567";
 
     private final SSMProvider ssmProvider;
 
@@ -168,5 +169,12 @@ public class ConfigurationService {
         return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
                 .map(Long::valueOf)
                 .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
+    }
+
+    public URI getDynamoDbUri() {
+        URI defaultDynamoDbUri = URI.create(DEFAULT_DYNAMODB_URI);
+        return Optional.ofNullable(System.getenv("DYNAMODB_URI"))
+                .map(URI::create)
+                .orElse(defaultDynamoDbUri);
     }
 }

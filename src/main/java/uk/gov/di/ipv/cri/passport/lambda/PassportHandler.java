@@ -21,7 +21,7 @@ import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.service.DcsCryptographyService;
@@ -90,13 +90,16 @@ public class PassportHandler
             JWSObject preparedDcsPayload = preparePayload(passportFormRequest);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
-            DcsResponseItem dcsResponseItem =
-                    new DcsResponseItem(UUID.randomUUID().toString(), unwrappedDcsResponse);
-            passportService.persistDcsResponse(dcsResponseItem);
+            PassportCheckDao passportCheckDao =
+                    new PassportCheckDao(
+                            UUID.randomUUID().toString(),
+                            passportFormRequest,
+                            unwrappedDcsResponse);
+            passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
             authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), dcsResponseItem.getResourceId());
+                    authorizationCode.getValue(), passportCheckDao.getResourceId());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, Map.of("code", authorizationCode));

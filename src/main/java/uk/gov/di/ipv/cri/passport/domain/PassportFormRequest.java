@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.passport.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -10,17 +11,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+@DynamoDbBean
 public class PassportFormRequest {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIME_ZONE = "UTC";
-
-    public UUID getCorrelationId() {
-        return correlationId;
-    }
-
-    public UUID getRequestId() {
-        return requestId;
-    }
 
     @JsonProperty private final UUID correlationId;
     @JsonProperty private final UUID requestId;
@@ -52,5 +46,13 @@ public class PassportFormRequest {
         this.correlationId = UUID.randomUUID();
         this.requestId = UUID.randomUUID();
         this.timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+    }
+
+    public UUID getCorrelationId() {
+        return correlationId;
+    }
+
+    public UUID getRequestId() {
+        return requestId;
     }
 }

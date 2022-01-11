@@ -8,7 +8,7 @@ import org.apache.http.entity.StringEntity;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.helpers.HttpClientSetUp;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -19,13 +19,13 @@ import java.security.spec.InvalidKeySpecException;
 public class PassportService {
 
     private final ConfigurationService configurationService;
-    private final DataStore<DcsResponseItem> dataStore;
+    private final DataStore<PassportCheckDao> dataStore;
     private final HttpClient httpClient;
 
     public PassportService(
             HttpClient httpClient,
             ConfigurationService configurationService,
-            DataStore<DcsResponseItem> dataStore) {
+            DataStore<PassportCheckDao> dataStore) {
         this.httpClient = httpClient;
         this.configurationService = configurationService;
         this.dataStore = dataStore;
@@ -36,10 +36,10 @@ public class PassportService {
                     KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.dataStore =
-                new DataStore<DcsResponseItem>(
+                new DataStore<>(
                         configurationService.getDcsResponseTableName(),
-                        DcsResponseItem.class,
-                        DataStore.getClient());
+                        PassportCheckDao.class,
+                        DataStore.getClient(configurationService.getDynamoDbUri()));
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
@@ -57,7 +57,7 @@ public class PassportService {
         return new DcsSignedEncryptedResponse(response.toString());
     }
 
-    public void persistDcsResponse(DcsResponseItem responsePayload) {
+    public void persistDcsResponse(PassportCheckDao responsePayload) {
         dataStore.create(responsePayload);
     }
 }

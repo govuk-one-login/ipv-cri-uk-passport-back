@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 
 import java.util.UUID;
 
@@ -19,7 +21,11 @@ class DcsCredentialServiceTest {
 
     @Mock private ConfigurationService mockConfigurationService;
 
-    @Mock private DataStore<DcsResponseItem> mockDataStore;
+    @Mock private DataStore<PassportCheckDao> mockDataStore;
+
+    @Mock PassportFormRequest passportFormRequest;
+
+    @Mock DcsResponse dcsResponse;
 
     private DcsCredentialService dcsCredentialService;
 
@@ -30,15 +36,16 @@ class DcsCredentialServiceTest {
 
     @Test
     void shouldReturnCredentialsFromDataStore() {
-        DcsResponseItem dcsCredential = new DcsResponseItem();
-        dcsCredential.setResourceId(UUID.randomUUID().toString());
-        dcsCredential.setResourcePayload("test dcs resource payload");
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao(
+                        UUID.randomUUID().toString(), passportFormRequest, dcsResponse);
 
-        when(mockDataStore.getItem(anyString())).thenReturn(dcsCredential);
+        when(mockDataStore.getItem(anyString())).thenReturn(passportCheckDao);
 
-        DcsResponseItem credential = dcsCredentialService.getDcsCredential("dcs-credential-id-1");
+        PassportCheckDao credential = dcsCredentialService.getDcsCredential("dcs-credential-id-1");
 
-        assertEquals(dcsCredential.getResourceId(), credential.getResourceId());
-        assertEquals(dcsCredential.getResourcePayload(), credential.getResourcePayload());
+        assertEquals(passportCheckDao.getResourceId(), credential.getResourceId());
+        assertEquals(passportCheckDao.getPassportFormRequest(), passportFormRequest);
+        assertEquals(passportCheckDao.getDcsResponse(), dcsResponse);
     }
 }
