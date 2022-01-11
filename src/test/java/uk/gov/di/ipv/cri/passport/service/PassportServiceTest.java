@@ -12,11 +12,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -76,7 +78,10 @@ class PassportServiceTest {
 
     @Test
     void shouldCreateDcsResponseInDataStore() {
-        DcsResponseItem dcsResponse = new DcsResponseItem("UUID", "TEST_PAYLOAD");
+        UUID correlationId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        DcsResponse validDcsResponse = new DcsResponse(correlationId, requestId, false, true, null);
+        DcsResponseItem dcsResponse = new DcsResponseItem("UUID", validDcsResponse);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

@@ -15,7 +15,7 @@ import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.exceptions.HttpResponseExceptionWithErrorBody;
@@ -84,8 +84,8 @@ public class PassportHandler
 
         try {
             validateRequest(queryStringParameters);
-            DcsPayload parsedInputForDcs = parseDscPayloadFromInput(input.getBody());
-            JWSObject preparedDcsPayload = preparePayload(parsedInputForDcs);
+            PassportFormRequest passportFormRequest = parsePassportFormRequest(input.getBody());
+            JWSObject preparedDcsPayload = preparePayload(passportFormRequest);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
             DcsResponseItem unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
             passportService.persistDcsResponse(unwrappedDcsResponse);
@@ -131,20 +131,20 @@ public class PassportHandler
         }
     }
 
-    private DcsPayload parseDscPayloadFromInput(String input) throws HttpResponseExceptionWithErrorBody {
+    private PassportFormRequest parsePassportFormRequest(String input) throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Parsing passport form data into payload for DCS");
         try {
-            return objectMapper.readValue(input, DcsPayload.class);
+            return objectMapper.readValue(input, PassportFormRequest.class);
         } catch (JsonProcessingException e) {
             LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA);
         }
     }
 
-    private JWSObject preparePayload(DcsPayload dcsPayload) throws HttpResponseExceptionWithErrorBody {
+    private JWSObject preparePayload(PassportFormRequest passportFormRequest) throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Preparing payload for DCS");
         try {
-            return dcsCryptographyService.preparePayload(dcsPayload);
+            return dcsCryptographyService.preparePayload(passportFormRequest);
         } catch (CertificateException | NoSuchAlgorithmException | InvalidKeySpecException | JOSEException | JsonProcessingException e) {
             LOGGER.error(("Failed to prepare payload for DCS: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_PREPARE_DCS_PAYLOAD);
@@ -165,7 +165,7 @@ public class PassportHandler
         LOGGER.info("Unwrapping DCS response");
         try {
             return dcsCryptographyService.unwrapDcsResponse(response);
-        } catch (CertificateException | java.text.ParseException | JOSEException e) {
+        } catch (CertificateException | java.text.ParseException | JOSEException | JsonProcessingException e) {
             LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.FAILED_TO_UNWRAP_DCS_RESPONSE);
         }
