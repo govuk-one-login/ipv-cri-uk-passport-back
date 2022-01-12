@@ -41,6 +41,7 @@ public class PassportCheckDao {
         this.dcsResponse = dcsResponse;
     }
 
+    @DynamoDbConvertedBy(PassportFormRequestTypeConverter.class)
     public PassportFormRequest getPassportFormRequest() {
         return passportFormRequest;
     }
