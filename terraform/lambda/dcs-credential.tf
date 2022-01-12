@@ -17,7 +17,7 @@ module "dcs-credential" {
   dcs_response_table_policy_arn                    = aws_iam_policy.policy-dcs-response-table.arn
 
   env_vars = {
-    "DCS_RESPONSE_TABLE_NAME"    = aws_dynamodb_table.dcs-response.name
+    "DCS_RESPONSE_TABLE_NAME"               = aws_dynamodb_table.dcs-response.name
     "CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME" = aws_dynamodb_table.cri-passport-access-tokens.name
   }
 }
