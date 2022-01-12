@@ -9,13 +9,7 @@ import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
-import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
-import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
+import uk.gov.di.ipv.cri.passport.domain.*;
 import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
 
 import java.security.NoSuchAlgorithmException;
@@ -31,7 +25,6 @@ public class DcsCryptographyService {
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
-    private static final Logger LOGGER = LoggerFactory.getLogger(DcsCryptographyService.class);
 
     public DcsCryptographyService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
@@ -43,9 +36,7 @@ public class DcsCryptographyService {
         JWSObject signedPassportDetails =
                 createJWS(objectMapper.writeValueAsString(passportDetails));
         JWEObject encryptedPassportDetails = createJWE(signedPassportDetails.serialize());
-        JWSObject signedAndEncryptedPassportDetails =
-                createJWS(encryptedPassportDetails.serialize());
-        return signedAndEncryptedPassportDetails;
+        return createJWS(encryptedPassportDetails.serialize());
     }
 
     public DcsResponse unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse)

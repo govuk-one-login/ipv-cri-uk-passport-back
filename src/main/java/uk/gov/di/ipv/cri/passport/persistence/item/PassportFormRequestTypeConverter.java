@@ -19,8 +19,7 @@ public class PassportFormRequestTypeConverter implements AttributeConverter<Pass
                 Map.of(
                         "passportNumber",
                                 AttributeValue.builder().s(input.getPassportNumber()).build(),
-                        "surname",
-                                AttributeValue.builder().s(input.getSurname().toString()).build(),
+                        "surname", AttributeValue.builder().s(input.getSurname()).build(),
                         "forenames",
                                 AttributeValue.builder()
                                         .s(Arrays.toString(input.getForenames()))

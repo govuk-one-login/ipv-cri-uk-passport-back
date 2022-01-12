@@ -24,7 +24,6 @@ import uk.gov.di.ipv.cri.passport.serialization.LocalDateDeserializer;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -194,7 +193,7 @@ public class StubDcsHandler
 
     private static RSADecrypter getStubDcsDecrypter() {
         try {
-            return new RSADecrypter((PrivateKey) configService.getStubDcsEncryptionKey());
+            return new RSADecrypter(configService.getStubDcsEncryptionKey());
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -202,7 +201,7 @@ public class StubDcsHandler
 
     private static RSASSASigner getStubDcsSigner() {
         try {
-            return new RSASSASigner((PrivateKey) configService.getStubDcsSigningKey());
+            return new RSASSASigner(configService.getStubDcsSigningKey());
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new ExceptionInInitializerError(e);
         }

@@ -18,7 +18,6 @@ public class DcsResponse {
     private String[] errorMessage;
 
     public DcsResponse() {}
-    ;
 
     @JsonCreator
     public DcsResponse(
