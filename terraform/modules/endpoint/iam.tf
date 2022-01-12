@@ -11,8 +11,7 @@ data "aws_iam_policy_document" "lambda_can_assume_policy" {
     }
 
     actions = [
-      "sts:AssumeRole",
-      "ssm:GetParameter"
+      "sts:AssumeRole"
     ]
   }
 }
