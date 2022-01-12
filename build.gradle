@@ -81,3 +81,27 @@ spotless {
 		endWithNewline()
 	}
 }
+
+sourceSets {
+	integrationTest {
+		java {
+			srcDir 'src/integration-test/java'
+		}
+		resources {
+			srcDir 'src/integration-test/resources'
+		}
+		runtimeClasspath += sourceSets.main.runtimeClasspath
+		runtimeClasspath += sourceSets.test.runtimeClasspath
+		compileClasspath += sourceSets.main.compileClasspath
+		compileClasspath += sourceSets.test.compileClasspath
+	}
+}
+
+task intTest(type: Test) {
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath += sourceSets.integrationTest.runtimeClasspath
+	reports.junitXml.getOutputLocation().set(file("${project.buildDir}/int-test-results"))
+	reports.html.getOutputLocation().set(file("${project.buildDir}/int-test-reports"))
+	include 'uk/gov/di/ipv/cri/passport/integrationtest/**'
+}
