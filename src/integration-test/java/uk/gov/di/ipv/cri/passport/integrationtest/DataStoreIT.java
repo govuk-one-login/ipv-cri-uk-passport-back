@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.persistance;
+package uk.gov.di.ipv.cri.passport.integrationtest;
 
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -79,16 +79,18 @@ public class DataStoreIT {
 
         Map<String, Object> savedPassportRequest = savedPassportCheck.getMap("passportFormRequest");
         assertEquals(
-                passportFormRequest.passportNumber, savedPassportRequest.get("passportNumber"));
-        assertEquals(passportFormRequest.surname, savedPassportRequest.get("surname"));
+                passportFormRequest.getPassportNumber(),
+                savedPassportRequest.get("passportNumber"));
+        assertEquals(passportFormRequest.getSurname(), savedPassportRequest.get("surname"));
         assertEquals(
-                Arrays.toString(passportFormRequest.forenames),
+                Arrays.toString(passportFormRequest.getForenames()),
                 savedPassportRequest.get("forenames"));
         assertEquals(
-                passportFormRequest.dateOfBirth.toString(),
+                passportFormRequest.getDateOfBirth().toString(),
                 savedPassportRequest.get("dateOfBirth"));
         assertEquals(
-                passportFormRequest.expiryDate.toString(), savedPassportRequest.get("expiryDate"));
+                passportFormRequest.getExpiryDate().toString(),
+                savedPassportRequest.get("expiryDate"));
     }
 
     @Test

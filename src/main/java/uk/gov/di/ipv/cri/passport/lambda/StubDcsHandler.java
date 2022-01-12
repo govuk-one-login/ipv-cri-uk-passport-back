@@ -6,16 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWEAlgorithm;
-import com.nimbusds.jose.JWEHeader;
-import com.nimbusds.jose.JWEObject;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -24,7 +15,6 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
@@ -71,7 +61,7 @@ public class StubDcsHandler
             APIGatewayProxyRequestEvent input, Context context) {
 
         try {
-            DcsPayload incomingPayload = verifyAndDecryptAndVerify(input.getBody());
+            DcsResponse incomingPayload = verifyAndDecryptAndVerify(input.getBody());
 
             DcsResponse dcsResponse =
                     new DcsResponse(
@@ -98,7 +88,7 @@ public class StubDcsHandler
         return sign(encrypt(sign(gson.toJson(dcsResponse))));
     }
 
-    private DcsPayload verifyAndDecryptAndVerify(String dcsPayloadString) throws StubDcsException {
+    private DcsResponse verifyAndDecryptAndVerify(String dcsPayloadString) throws StubDcsException {
         JWSObject signedEncryptedSignedPayload;
         try {
             signedEncryptedSignedPayload = JWSObject.parse(dcsPayloadString);
@@ -129,7 +119,7 @@ public class StubDcsHandler
             throw new StubDcsException("Unable to verify inner signature of DCS Payload", e);
         }
 
-        return gson.fromJson(decryptedSignedPayload.getPayload().toString(), DcsPayload.class);
+        return gson.fromJson(decryptedSignedPayload.getPayload().toString(), DcsResponse.class);
     }
 
     private String sign(String stringToSign) throws StubDcsException {

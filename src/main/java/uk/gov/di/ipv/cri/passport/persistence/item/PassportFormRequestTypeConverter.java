@@ -17,16 +17,22 @@ public class PassportFormRequestTypeConverter implements AttributeConverter<Pass
 
         Map<String, AttributeValue> attributeValueMap =
                 Map.of(
-                        "passportNumber", AttributeValue.builder().s(input.passportNumber).build(),
-                        "surname", AttributeValue.builder().s(input.surname.toString()).build(),
+                        "passportNumber",
+                                AttributeValue.builder().s(input.getPassportNumber()).build(),
+                        "surname",
+                                AttributeValue.builder().s(input.getSurname().toString()).build(),
                         "forenames",
                                 AttributeValue.builder()
-                                        .s(Arrays.toString(input.forenames))
+                                        .s(Arrays.toString(input.getForenames()))
                                         .build(),
                         "dateOfBirth",
-                                AttributeValue.builder().s(input.dateOfBirth.toString()).build(),
+                                AttributeValue.builder()
+                                        .s(input.getDateOfBirth().toString())
+                                        .build(),
                         "expiryDate",
-                                AttributeValue.builder().s(input.expiryDate.toString()).build());
+                                AttributeValue.builder()
+                                        .s(input.getExpiryDate().toString())
+                                        .build());
 
         return AttributeValue.builder().m(attributeValueMap).build();
     }

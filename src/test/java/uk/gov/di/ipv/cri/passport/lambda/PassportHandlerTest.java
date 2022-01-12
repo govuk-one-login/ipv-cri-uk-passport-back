@@ -361,7 +361,7 @@ class PassportHandlerTest {
         verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
         assertEquals(
                 validPassportFormData.get("passportNumber"),
-                persistedPassportCheckDao.getValue().getPassportFormRequest().passportNumber);
+                persistedPassportCheckDao.getValue().getPassportFormRequest().getPassportNumber());
         assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getDcsResponse());
     }
 

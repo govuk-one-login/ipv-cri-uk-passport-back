@@ -16,20 +16,22 @@ public class PassportFormRequest {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIME_ZONE = "UTC";
 
-    @JsonProperty private final UUID correlationId;
-    @JsonProperty private final UUID requestId;
-    @JsonProperty private final String timestamp;
-    @JsonProperty private final String passportNumber;
-    @JsonProperty private final String surname;
+    @JsonProperty private UUID correlationId;
+    @JsonProperty private UUID requestId;
+    @JsonProperty private String timestamp;
+    @JsonProperty private String passportNumber;
+    @JsonProperty private String surname;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-    public final String[] forenames;
+    public String[] forenames;
 
     @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
-    public final LocalDate dateOfBirth;
+    public LocalDate dateOfBirth;
 
     @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
-    public final LocalDate expiryDate;
+    public LocalDate expiryDate;
+
+    public PassportFormRequest() {}
 
     @JsonCreator
     public PassportFormRequest(
@@ -54,5 +56,29 @@ public class PassportFormRequest {
 
     public UUID getRequestId() {
         return requestId;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public String getPassportNumber() {
+        return passportNumber;
+    }
+
+    public String getSurname() {
+        return surname;
+    }
+
+    public String[] getForenames() {
+        return forenames;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public LocalDate getExpiryDate() {
+        return expiryDate;
     }
 }

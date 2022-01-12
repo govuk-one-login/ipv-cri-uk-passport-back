@@ -137,11 +137,13 @@ public class ConfigurationService {
         };
     }
 
-    public PrivateKey getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getStubDcsSigningKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_SIGNING_KEY_PARAM");
     }
 
-    public PrivateKey getStubDcsEncryptionKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getStubDcsEncryptionKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_ENCRYPTION_KEY_PARAM");
     }
 
