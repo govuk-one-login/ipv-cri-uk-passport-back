@@ -1,6 +1,5 @@
 package uk.gov.di.ipv.cri.passport.persistence.item;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;

@@ -53,6 +53,7 @@ task buildZip(type: Zip) {
 }
 
 test {
+	exclude '**/*IT*'
 	useJUnitPlatform ()
 	finalizedBy jacocoTestReport
 }

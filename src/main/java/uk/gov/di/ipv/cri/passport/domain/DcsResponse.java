@@ -17,7 +17,8 @@ public class DcsResponse {
     private boolean valid;
     private String[] errorMessage;
 
-    public DcsResponse() {};
+    public DcsResponse() {}
+    ;
 
     @JsonCreator
     public DcsResponse(
