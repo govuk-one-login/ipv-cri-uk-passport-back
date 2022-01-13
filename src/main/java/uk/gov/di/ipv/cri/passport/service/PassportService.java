@@ -15,9 +15,12 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Optional;
 
 public class PassportService {
 
+    public static final String CONTENT_TYPE = "content-type";
+    public static final String APPLICATION_JOSE = "application/jose";
     private final ConfigurationService configurationService;
     private final DataStore<PassportCheckDao> dataStore;
     private final HttpClient httpClient;
@@ -43,18 +46,19 @@ public class PassportService {
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload) throws IOException {
+    public Optional<DcsSignedEncryptedResponse> dcsPassportCheck(JWSObject payload)
+            throws IOException {
         HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
-        request.addHeader("content-type", "application/jose");
+        request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
         request.setEntity(new StringEntity(payload.serialize()));
 
         HttpResponse response = httpClient.execute(request);
 
         if (response == null) {
-            throw new NullPointerException("Response from DCS is null");
+            return Optional.empty();
         }
 
-        return new DcsSignedEncryptedResponse(response.toString());
+        return Optional.of(new DcsSignedEncryptedResponse(response.toString()));
     }
 
     public void persistDcsResponse(PassportCheckDao responsePayload) {

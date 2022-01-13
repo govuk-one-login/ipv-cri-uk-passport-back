@@ -11,7 +11,8 @@ public enum ErrorResponse {
             1002, "Failed to parse oauth2-specific query string parameters"),
     FAILED_TO_PREPARE_DCS_PAYLOAD(1003, "Failed to prepare DCS payload"),
     ERROR_CONTACTING_DCS(1004, "Error when contacting DCS for passport check"),
-    FAILED_TO_UNWRAP_DCS_RESPONSE(1005, "Failed to unwrap Dcs response");
+    FAILED_TO_UNWRAP_DCS_RESPONSE(1005, "Failed to unwrap Dcs response"),
+    ERROR_GETTING_RESPONSE_FROM_DCS(1006, "No response was returned from DCS");
 
     private final int code;
     private final String message;

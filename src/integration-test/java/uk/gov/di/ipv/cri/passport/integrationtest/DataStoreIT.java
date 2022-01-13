@@ -45,12 +45,7 @@ public class DataStoreIT {
     @Test
     public void shouldPutPassportCheckIntoTable() {
         DcsResponse validDcsResponse =
-                new DcsResponse(
-                        UUID.randomUUID(),
-                        UUID.randomUUID(),
-                        false,
-                        true,
-                        new String[] {"No errors here"});
+                new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
         PassportFormRequest passportFormRequest =
                 new PassportFormRequest(
                         "passport_number",

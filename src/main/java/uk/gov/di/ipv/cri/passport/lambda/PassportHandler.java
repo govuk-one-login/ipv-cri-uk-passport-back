@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,7 @@ public class PassportHandler
 
     private static final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
+    public static final String AUTHORIZATION_CODE = "code";
 
     static {
         // Set the default synchronous HTTP client to UrlConnectionHttpClient
@@ -102,7 +104,7 @@ public class PassportHandler
                     authorizationCode.getValue(), passportCheckDao.getResourceId());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_OK, Map.of("code", authorizationCode));
+                    HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));
         } catch (HttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(), e.getErrorBody());
@@ -137,7 +139,7 @@ public class PassportHandler
         try {
             AuthenticationRequest.parse(queryStringParameters);
         } catch (ParseException e) {
-            LOGGER.error(("Failed to parse oath query string parameters: " + e.getMessage()));
+            LOGGER.error(("Failed to parse oauth query string parameters: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
@@ -177,7 +179,14 @@ public class PassportHandler
             throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Sending passport check to DCS");
         try {
-            return passportService.dcsPassportCheck(preparedPayload);
+            Optional<DcsSignedEncryptedResponse> dcsSignedEncryptedResponse =
+                    passportService.dcsPassportCheck(preparedPayload);
+            if (dcsSignedEncryptedResponse.isEmpty()) {
+                LOGGER.error("DCS returned an empty response");
+                throw new HttpResponseExceptionWithErrorBody(
+                        HttpStatus.SC_BAD_REQUEST, ErrorResponse.ERROR_GETTING_RESPONSE_FROM_DCS);
+            }
+            return dcsSignedEncryptedResponse.get();
         } catch (IOException e) {
             LOGGER.error(("Passport check with DCS failed: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(
