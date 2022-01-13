@@ -8,6 +8,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 
 import java.net.URI;
 import java.util.List;
@@ -28,15 +29,14 @@ public class DataStore<T> {
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
     }
 
-    public static DynamoDbEnhancedClient getClient(URI uri) {
-        DynamoDbClient client =
+    public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
+        DynamoDbClientBuilder clientBuilder =
                 DynamoDbClient.builder()
-                        .endpointOverride(uri)
+                        .endpointOverride(endpointOverride)
                         .httpClient(UrlConnectionHttpClient.create())
-                        .region(Region.EU_WEST_2)
-                        .build();
+                        .region(Region.EU_WEST_2);
 
-        return DynamoDbEnhancedClient.builder().dynamoDbClient(client).build();
+        return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
     }
 
     public void create(T item) {

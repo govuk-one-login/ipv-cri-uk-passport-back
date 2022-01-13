@@ -15,7 +15,7 @@ public class DcsCredentialService {
                 new DataStore<>(
                         configurationService.getDcsResponseTableName(),
                         PassportCheckDao.class,
-                        DataStore.getClient(configurationService.getDynamoDbUri()));
+                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
     }
 
     public DcsCredentialService(

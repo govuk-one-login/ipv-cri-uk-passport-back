@@ -173,10 +173,11 @@ public class ConfigurationService {
                 .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
     }
 
-    public URI getDynamoDbUri() {
-        URI defaultDynamoDbUri = URI.create(DEFAULT_DYNAMODB_URI);
-        return Optional.ofNullable(System.getenv("DYNAMODB_URI"))
-                .map(URI::create)
-                .orElse(defaultDynamoDbUri);
+    public URI getDynamoDbEndpointOverride() {
+        String dynamoDbEndpointOverride = System.getenv("DYNAMODB_ENDPOINT_OVERRIDE");
+        if (dynamoDbEndpointOverride != null && !dynamoDbEndpointOverride.isEmpty()) {
+            return URI.create(System.getenv("DYNAMODB_ENDPOINT_OVERRIDE"));
+        }
+        return null;
     }
 }

@@ -43,7 +43,7 @@ public class PassportService {
                 new DataStore<>(
                         configurationService.getDcsResponseTableName(),
                         PassportCheckDao.class,
-                        DataStore.getClient(configurationService.getDynamoDbUri()));
+                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
