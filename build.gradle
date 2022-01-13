@@ -97,11 +97,24 @@ sourceSets {
 	}
 }
 
+
+task setUpIntTestEnv(type: Exec) {
+	workingDir =  "$projectDir/integration-environment"
+	commandLine './setup-environment.sh'
+}
+
+task tearDownIntTestEnv(type: Exec) {
+	workingDir =  "$projectDir/integration-environment"
+	commandLine './tear-down-environment.sh'
+}
+
 task intTest(type: Test) {
+	dependsOn(tasks.setUpIntTestEnv)
 	useJUnitPlatform()
 	testClassesDirs = sourceSets.integrationTest.output.classesDirs
 	classpath += sourceSets.integrationTest.runtimeClasspath
 	reports.junitXml.getOutputLocation().set(file("${project.buildDir}/int-test-results"))
 	reports.html.getOutputLocation().set(file("${project.buildDir}/int-test-reports"))
 	include 'uk/gov/di/ipv/cri/passport/integrationtest/**'
+	finalizedBy("tearDownIntTestEnv")
 }
