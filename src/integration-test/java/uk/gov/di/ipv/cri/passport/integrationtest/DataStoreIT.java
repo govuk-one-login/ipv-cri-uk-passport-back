@@ -77,8 +77,8 @@ public class DataStoreIT {
         assertEquals(validDcsResponse.isValid(), savedDcsResponse.get("valid"));
         assertEquals(validDcsResponse.getError(), savedDcsResponse.get("error"));
         assertEquals(
-                Arrays.toString(validDcsResponse.getErrorMessage()),
-                savedDcsResponse.get("errorMessage").toString());
+                validDcsResponse.getErrorMessage(),
+                savedDcsResponse.get("errorMessage"));
         assertEquals(validDcsResponse.getRequestId().toString(), savedDcsResponse.get("requestId"));
         assertEquals(
                 validDcsResponse.getCorrelationId().toString(),
