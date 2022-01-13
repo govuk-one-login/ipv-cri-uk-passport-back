@@ -3,8 +3,11 @@ package uk.gov.di.ipv.cri.passport.service;
 import com.nimbusds.jose.JWSObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.helpers.HttpClientSetUp;
@@ -16,12 +19,12 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Optional;
 
 public class PassportService {
 
     public static final String CONTENT_TYPE = "content-type";
     public static final String APPLICATION_JOSE = "application/jose";
+    private static final Logger LOGGER = LoggerFactory.getLogger(PassportService.class);
     private final ConfigurationService configurationService;
     private final DataStore<PassportCheckDao> dataStore;
     private final HttpClient httpClient;
@@ -53,13 +56,22 @@ public class PassportService {
         request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
         request.setEntity(new StringEntity(payload.serialize()));
 
-        Optional<HttpResponse> response = Optional.ofNullable(httpClient.execute(request));
+        HttpResponse response = httpClient.execute(request);
 
-        if (response.isEmpty()) {
+        if (response == null) {
             throw new EmptyDcsResponseException("Response from DCS is empty");
         }
 
-        return new DcsSignedEncryptedResponse(response.get().toString());
+        if (response.getStatusLine().getStatusCode() != 200) {
+            LOGGER.error(
+                    String.format(
+                            "Response from DCS has status code: %d",
+                            response.getStatusLine().getStatusCode()));
+            throw new HttpResponseException(
+                    response.getStatusLine().getStatusCode(), "DCS responded with an error");
+        }
+
+        return new DcsSignedEncryptedResponse(response.toString());
     }
 
     public void persistDcsResponse(PassportCheckDao responsePayload) {
