@@ -33,6 +33,7 @@ resource "aws_ssm_parameter" "dcs_encryption_cert" {
   value       = var.dcs_encryption_cert
 }
 
+
 resource "aws_ssm_parameter" "dcs_tls_intermediate_cert" {
   name        = "/${var.environment}/dcs/tls-intermediate-certificate"
   description = "The DCS's tls certificate chain intermediate cert"

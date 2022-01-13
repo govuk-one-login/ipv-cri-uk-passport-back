@@ -5,35 +5,33 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.helpers.HttpClientSetUp;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.UUID;
+import java.util.Optional;
 
 public class PassportService {
 
+    public static final String CONTENT_TYPE = "content-type";
+    public static final String APPLICATION_JOSE = "application/jose";
     private final ConfigurationService configurationService;
-    private final DcsSigningService dcsSigningService;
-    private final DcsEncryptionService dcsEncryptionService;
-    private final DataStore<DcsResponseItem> dataStore;
+    private final DataStore<PassportCheckDao> dataStore;
     private final HttpClient httpClient;
 
     public PassportService(
             HttpClient httpClient,
             ConfigurationService configurationService,
-            DcsEncryptionService dcsEncryptionService,
-            DcsSigningService dcsSigningService,
-            DataStore<DcsResponseItem> dataStore) {
+            DataStore<PassportCheckDao> dataStore) {
         this.httpClient = httpClient;
         this.configurationService = configurationService;
-        this.dcsEncryptionService = dcsEncryptionService;
-        this.dcsSigningService = dcsSigningService;
         this.dataStore = dataStore;
     }
 
@@ -41,43 +39,30 @@ public class PassportService {
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
-        this.dcsSigningService = new DcsSigningService();
-        this.dcsEncryptionService = new DcsEncryptionService();
         this.dataStore =
                 new DataStore<>(
                         configurationService.getDcsResponseTableName(),
-                        DcsResponseItem.class,
-                        DataStore.getClient());
+                        PassportCheckDao.class,
+                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public String dcsPassportCheck(String payload) throws IOException {
-        try {
-            JWSObject signedPayload = dcsSigningService.signData(payload);
-            String encryptedPayload = dcsEncryptionService.encrypt(signedPayload.serialize());
-            String reSignedPayload = dcsSigningService.signData(encryptedPayload).serialize();
+    public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload)
+            throws IOException, EmptyDcsResponseException {
+        HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
+        request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
+        request.setEntity(new StringEntity(payload.serialize()));
 
-            var request = new HttpPost(configurationService.getDCSPostUrl());
-            request.addHeader("content-type", "application/jose");
-            request.setEntity(new StringEntity(reSignedPayload));
+        Optional<HttpResponse> response = Optional.ofNullable(httpClient.execute(request));
 
-            HttpResponse response = httpClient.execute(request);
-
-            if ((response != null)) {
-                return response.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (response.isEmpty()) {
+            throw new EmptyDcsResponseException("Response from DCS is empty");
         }
-        return null;
+
+        return new DcsSignedEncryptedResponse(response.get().toString());
     }
 
-    public DcsResponseItem persistDcsResponse(String responsePayload) {
-        DcsResponseItem dcsResponseItem = new DcsResponseItem();
-        dcsResponseItem.setResourceId(UUID.randomUUID().toString());
-        dcsResponseItem.setResourcePayload(responsePayload);
-
-        dataStore.create(dcsResponseItem);
-        return dcsResponseItem;
+    public void persistDcsResponse(PassportCheckDao responsePayload) {
+        dataStore.create(responsePayload);
     }
 }

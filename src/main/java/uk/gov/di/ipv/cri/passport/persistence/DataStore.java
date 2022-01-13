@@ -5,17 +5,16 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class DataStore<T> {
-
-    private static final String LOCALHOST_URI = "http://localhost:4567";
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final String tableName;
@@ -30,13 +29,14 @@ public class DataStore<T> {
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
     }
 
-    public static DynamoDbEnhancedClient getClient() {
-        DynamoDbClient client =
-                new ConfigurationService().isRunningLocally()
-                        ? createLocalDbClient()
-                        : DynamoDbClient.create();
+    public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
+        DynamoDbClientBuilder clientBuilder =
+                DynamoDbClient.builder()
+                        .endpointOverride(endpointOverride)
+                        .httpClient(UrlConnectionHttpClient.create())
+                        .region(Region.EU_WEST_2);
 
-        return DynamoDbEnhancedClient.builder().dynamoDbClient(client).build();
+        return DynamoDbEnhancedClient.builder().dynamoDbClient(clientBuilder.build()).build();
     }
 
     public void create(T item) {
@@ -72,13 +72,6 @@ public class DataStore<T> {
 
     public T delete(String partitionValue) {
         return delete(Key.builder().partitionValue(partitionValue).build());
-    }
-
-    private static DynamoDbClient createLocalDbClient() {
-        return DynamoDbClient.builder()
-                .endpointOverride(URI.create(LOCALHOST_URI))
-                .region(Region.EU_WEST_2)
-                .build();
     }
 
     private T getItemByKey(Key key) {

@@ -24,7 +24,6 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
@@ -34,7 +33,6 @@ import uk.gov.di.ipv.cri.passport.serialization.LocalDateDeserializer;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -71,7 +69,7 @@ public class StubDcsHandler
             APIGatewayProxyRequestEvent input, Context context) {
 
         try {
-            DcsPayload incomingPayload = verifyAndDecryptAndVerify(input.getBody());
+            DcsResponse incomingPayload = verifyAndDecryptAndVerify(input.getBody());
 
             DcsResponse dcsResponse =
                     new DcsResponse(
@@ -98,7 +96,7 @@ public class StubDcsHandler
         return sign(encrypt(sign(gson.toJson(dcsResponse))));
     }
 
-    private DcsPayload verifyAndDecryptAndVerify(String dcsPayloadString) throws StubDcsException {
+    private DcsResponse verifyAndDecryptAndVerify(String dcsPayloadString) throws StubDcsException {
         JWSObject signedEncryptedSignedPayload;
         try {
             signedEncryptedSignedPayload = JWSObject.parse(dcsPayloadString);
@@ -129,7 +127,7 @@ public class StubDcsHandler
             throw new StubDcsException("Unable to verify inner signature of DCS Payload", e);
         }
 
-        return gson.fromJson(decryptedSignedPayload.getPayload().toString(), DcsPayload.class);
+        return gson.fromJson(decryptedSignedPayload.getPayload().toString(), DcsResponse.class);
     }
 
     private String sign(String stringToSign) throws StubDcsException {
@@ -204,7 +202,7 @@ public class StubDcsHandler
 
     private static RSADecrypter getStubDcsDecrypter() {
         try {
-            return new RSADecrypter((PrivateKey) configService.getStubDcsEncryptionKey());
+            return new RSADecrypter(configService.getStubDcsEncryptionKey());
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -212,7 +210,7 @@ public class StubDcsHandler
 
     private static RSASSASigner getStubDcsSigner() {
         try {
-            return new RSASSASigner((PrivateKey) configService.getStubDcsSigningKey());
+            return new RSASSASigner(configService.getStubDcsSigningKey());
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new ExceptionInInitializerError(e);
         }

@@ -8,10 +8,10 @@ import uk.gov.di.ipv.cri.passport.domain.Thumbprints;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -28,6 +28,7 @@ public class ConfigurationService {
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
+    private static final String DEFAULT_DYNAMODB_URI = "http://localhost:4567";
 
     private final SSMProvider ssmProvider;
 
@@ -84,7 +85,7 @@ public class ConfigurationService {
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
-    private Key getKeyFromStoreUsingEnv(String environmentVariable)
+    private PrivateKey getKeyFromStoreUsingEnv(String environmentVariable)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] binaryKey =
                 Base64.getDecoder()
@@ -94,15 +95,15 @@ public class ConfigurationService {
         return factory.generatePrivate(privateKeySpec);
     }
 
-    public Certificate getDcsSigningCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("DCS_SIGNING_CERT_PARAM");
-    }
-
     public Certificate getDcsEncryptionCert() throws CertificateException {
         return getCertificateFromStoreUsingEnv("DCS_ENCRYPTION_CERT_PARAM");
     }
 
-    public Key getPassportCriEncryptionKey()
+    public Certificate getDcsSigningCert() throws CertificateException {
+        return getCertificateFromStoreUsingEnv("DCS_SIGNING_CERT_PARAM");
+    }
+
+    public PrivateKey getPassportCriPrivateKey()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
     }
@@ -111,11 +112,13 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_CERT_PARAM");
     }
 
-    public Key getPassportCriSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getPassportCriSigningKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
     }
 
-    public Key getPassportCriTlsKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getPassportCriTlsKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_TLS_KEY_PARAM");
     }
 
@@ -134,11 +137,13 @@ public class ConfigurationService {
         };
     }
 
-    public Key getStubDcsSigningKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getStubDcsSigningKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_SIGNING_KEY_PARAM");
     }
 
-    public Key getStubDcsEncryptionKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public PrivateKey getStubDcsEncryptionKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("STUB_DCS_ENCRYPTION_KEY_PARAM");
     }
 
@@ -166,5 +171,13 @@ public class ConfigurationService {
         return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
                 .map(Long::valueOf)
                 .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
+    }
+
+    public URI getDynamoDbEndpointOverride() {
+        String dynamoDbEndpointOverride = System.getenv("DYNAMODB_ENDPOINT_OVERRIDE");
+        if (dynamoDbEndpointOverride != null && !dynamoDbEndpointOverride.isEmpty()) {
+            return URI.create(System.getenv("DYNAMODB_ENDPOINT_OVERRIDE"));
+        }
+        return null;
     }
 }

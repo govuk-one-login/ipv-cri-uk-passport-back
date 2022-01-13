@@ -19,16 +19,4 @@ public class ProtectedHeader {
         this.sha1Thumbprint = sha1Thumbprint;
         this.sha256Thumbprint = sha256Thumbprint;
     }
-
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    public String getSha1Thumbprint() {
-        return sha1Thumbprint;
-    }
-
-    public String getSha256Thumbprint() {
-        return sha256Thumbprint;
-    }
 }

@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.helpers.RequestHelper;
-import uk.gov.di.ipv.cri.passport.persistence.item.DcsResponseItem;
+import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.service.DcsCredentialService;
 
@@ -69,7 +69,7 @@ public class DcsCredentialHandler
                                 .toJSONObject());
             }
 
-            DcsResponseItem credential = dcsCredentialService.getDcsCredential(resourceId);
+            PassportCheckDao credential = dcsCredentialService.getDcsCredential(resourceId);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, credential);
         } catch (ParseException e) {
