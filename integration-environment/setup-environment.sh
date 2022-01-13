@@ -28,7 +28,7 @@ docker run -d \
            --rm \
            --name localstack-integration-tests \
            --env SERVICES=dynamodb \
-           -p 4566:4566 \
+           -p "${LOCALSTACK_EXTERNAL_PORT}":4566 \
            -p 4571:4571 \
            localstack/localstack:0.13.0.4
 
@@ -40,12 +40,11 @@ terraform -chdir="${SCRIPT_DIR}" init
 for attempts in 1 2; do
   terraform -chdir="${SCRIPT_DIR}" \
             apply \
+            -var="environment=${INT_TEST_ENVIRONMENT}" \
             -target="module.cri-passport-lambda.aws_dynamodb_table.dcs-response" \
             -target="module.cri-passport-lambda.aws_dynamodb_table.cri-passport-auth-codes" \
             --auto-approve \
   && break
   echo "Retrying terraform apply"
 done
-
-
 

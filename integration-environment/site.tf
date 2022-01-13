@@ -29,7 +29,7 @@ provider "aws" {
 
 module "cri-passport-lambda" {
   source                             = "../terraform/lambda"
-  environment                        = "integration-test"
+  environment                        = var.environment
   use_localstack                     = true
   dcs_tls_root_cert                  = ""
   passport_tls_cert                  = ""
@@ -44,3 +44,6 @@ module "cri-passport-lambda" {
   stub_dcs_encryption_key            = ""
   dcs_tls_intermediate_cert          = ""
 }
+
+variable "environment" {}
+

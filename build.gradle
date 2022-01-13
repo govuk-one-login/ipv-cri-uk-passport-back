@@ -97,8 +97,11 @@ sourceSets {
 	}
 }
 
+apply from: 'integration-environment/integration.properties'
 
 task setUpIntTestEnv(type: Exec) {
+	environment "INT_TEST_ENVIRONMENT", integration_test_environment
+	environment "LOCALSTACK_EXTERNAL_PORT", localstack_external_port
 	workingDir =  "$projectDir/integration-environment"
 	commandLine './setup-environment.sh'
 }
@@ -109,6 +112,9 @@ task tearDownIntTestEnv(type: Exec) {
 }
 
 task intTest(type: Test) {
+	environment "INT_TEST_ENVIRONMENT", integration_test_environment
+	environment "INT_TEST_DYNAMO_DB_URL", "http://localhost:" + localstack_external_port
+
 	dependsOn(tasks.setUpIntTestEnv)
 	useJUnitPlatform()
 	testClassesDirs = sourceSets.integrationTest.output.classesDirs

@@ -28,11 +28,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(SystemStubsExtension.class)
 public class DataStoreIT {
 
-    private static final String dynamodbUrl = "http://localhost:4566";
+    private static final String dynamodbUrl = System.getenv("INT_TEST_DYNAMO_DB_URL");
     private static final URI endpoint = URI.create(dynamodbUrl);
-    private static final String DCS_RESPONSE_TABLE_NAME = "integration-test-dcs-response";
+    private static final String intTestEnvironment = System.getenv("INT_TEST_ENVIRONMENT");
+    private static final String DCS_RESPONSE_TABLE_NAME =
+            String.format("%s-dcs-response", intTestEnvironment);
     private static final String DCS_AUTHORIZATION_TABLE_NAME =
-            "integration-test-cri-passport-auth-codes";
+            String.format("%s-cri-passport-auth-codes", intTestEnvironment);
     private static final DataStore<PassportCheckDao> dcsResponseDataStore =
             new DataStore<>(
                     DCS_RESPONSE_TABLE_NAME, PassportCheckDao.class, DataStore.getClient(endpoint));
@@ -76,9 +78,7 @@ public class DataStoreIT {
         Map<String, Object> savedDcsResponse = savedPassportCheck.getMap("dcsResponse");
         assertEquals(validDcsResponse.isValid(), savedDcsResponse.get("valid"));
         assertEquals(validDcsResponse.getError(), savedDcsResponse.get("error"));
-        assertEquals(
-                validDcsResponse.getErrorMessage(),
-                savedDcsResponse.get("errorMessage"));
+        assertEquals(validDcsResponse.getErrorMessage(), savedDcsResponse.get("errorMessage"));
         assertEquals(validDcsResponse.getRequestId().toString(), savedDcsResponse.get("requestId"));
         assertEquals(
                 validDcsResponse.getCorrelationId().toString(),
