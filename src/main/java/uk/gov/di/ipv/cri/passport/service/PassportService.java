@@ -6,6 +6,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.helpers.HttpClientSetUp;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
@@ -46,19 +47,19 @@ public class PassportService {
         this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
     }
 
-    public Optional<DcsSignedEncryptedResponse> dcsPassportCheck(JWSObject payload)
-            throws IOException {
+    public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload)
+            throws IOException, EmptyDcsResponseException {
         HttpPost request = new HttpPost(configurationService.getDCSPostUrl());
         request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
         request.setEntity(new StringEntity(payload.serialize()));
 
-        HttpResponse response = httpClient.execute(request);
+        Optional<HttpResponse> response = Optional.ofNullable(httpClient.execute(request));
 
-        if (response == null) {
-            return Optional.empty();
+        if (response.isEmpty()) {
+            throw new EmptyDcsResponseException("Response from DCS is empty");
         }
 
-        return Optional.of(new DcsSignedEncryptedResponse(response.toString()));
+        return new DcsSignedEncryptedResponse(response.get().toString());
     }
 
     public void persistDcsResponse(PassportCheckDao responsePayload) {

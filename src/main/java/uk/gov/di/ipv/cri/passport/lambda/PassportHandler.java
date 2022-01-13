@@ -19,6 +19,7 @@ import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
@@ -36,7 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -179,15 +179,8 @@ public class PassportHandler
             throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Sending passport check to DCS");
         try {
-            Optional<DcsSignedEncryptedResponse> dcsSignedEncryptedResponse =
-                    passportService.dcsPassportCheck(preparedPayload);
-            if (dcsSignedEncryptedResponse.isEmpty()) {
-                LOGGER.error("DCS returned an empty response");
-                throw new HttpResponseExceptionWithErrorBody(
-                        HttpStatus.SC_BAD_REQUEST, ErrorResponse.ERROR_GETTING_RESPONSE_FROM_DCS);
-            }
-            return dcsSignedEncryptedResponse.get();
-        } catch (IOException e) {
+            return passportService.dcsPassportCheck(preparedPayload);
+        } catch (IOException | EmptyDcsResponseException e) {
             LOGGER.error(("Passport check with DCS failed: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.ERROR_CONTACTING_DCS);

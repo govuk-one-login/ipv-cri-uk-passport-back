@@ -15,16 +15,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,14 +51,14 @@ class PassportServiceTest {
     }
 
     @Test
-    void shouldPostToDcsEndpoint() throws IOException {
+    void shouldPostToDcsEndpoint() throws IOException, EmptyDcsResponseException {
         String expectedPayload = "Test";
         when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.toString()).thenReturn(EXPECTED_RESPONSE);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         when(jwsObject.serialize()).thenReturn(expectedPayload);
 
-        Optional<DcsSignedEncryptedResponse> actualResponse = underTest.dcsPassportCheck(jwsObject);
+        DcsSignedEncryptedResponse actualResponse = underTest.dcsPassportCheck(jwsObject);
 
         verify(httpClient, times(1)).execute(httpPost.capture());
 
@@ -67,16 +67,21 @@ class PassportServiceTest {
                 "application/jose", httpPost.getValue().getFirstHeader("content-type").getValue());
         assertEquals(expectedPayload, EntityUtils.toString(httpPost.getValue().getEntity()));
 
-        assertEquals(EXPECTED_RESPONSE, actualResponse.get().getPayload());
+        assertEquals(EXPECTED_RESPONSE, actualResponse.getPayload());
     }
 
     @Test
-    void shouldReturnOptionalOfEmptyWhenResponseFromDcsIsNull() throws IOException {
+    void shouldReturnThrowExceptionWhenResponseFromDcsIsEmpty() throws IOException {
         when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         when(jwsObject.serialize()).thenReturn("Test");
-        Optional<DcsSignedEncryptedResponse> result = underTest.dcsPassportCheck(jwsObject);
-        assertTrue(result.isEmpty());
+        EmptyDcsResponseException emptyDcsResponseException =
+                assertThrows(
+                        EmptyDcsResponseException.class,
+                        () -> {
+                            underTest.dcsPassportCheck(jwsObject);
+                        });
+        assertEquals("Response from DCS is empty", emptyDcsResponseException.getMessage());
     }
 
     @Test

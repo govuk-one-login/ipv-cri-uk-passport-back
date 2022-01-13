@@ -20,6 +20,7 @@ import uk.gov.di.ipv.cri.passport.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.service.ConfigurationService;
@@ -35,7 +36,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -97,11 +97,12 @@ class PassportHandlerTest {
     @Test
     void shouldReturn200WithCorrectFormData()
             throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException {
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(Optional.of(dcsSignedEncryptedResponse));
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
@@ -125,13 +126,14 @@ class PassportHandlerTest {
     @Test
     void shouldReturnAuthResponseOnSuccessfulOauthRequest()
             throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException {
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(Optional.of(dcsSignedEncryptedResponse));
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
@@ -333,11 +335,12 @@ class PassportHandlerTest {
     @Test
     void shouldPersistPassportCheckDao()
             throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException {
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(Optional.of(dcsSignedEncryptedResponse));
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
@@ -369,11 +372,12 @@ class PassportHandlerTest {
     @Test
     void shouldPersistAuthCode()
             throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException {
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(Optional.of(dcsSignedEncryptedResponse));
+                .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
                 .thenReturn(jwsObject);
         PassportCheckDao passportCheckDao =
