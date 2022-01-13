@@ -118,7 +118,8 @@ resource "aws_iam_role_policy" "get-parameters" {
           aws_ssm_parameter.dcs_encryption_cert.arn,
           aws_ssm_parameter.dcs_signing_cert.arn,
           aws_ssm_parameter.dcs_tls_intermediate_cert.arn,
-          aws_ssm_parameter.dcs_tls_root_cert.arn
+          aws_ssm_parameter.dcs_tls_root_cert.arn,
+          aws_ssm_parameter.dcs_post_url.arn
         ]
       }
     ]
