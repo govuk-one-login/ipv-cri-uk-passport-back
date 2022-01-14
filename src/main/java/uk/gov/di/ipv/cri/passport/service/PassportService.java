@@ -64,10 +64,8 @@ public class PassportService {
         }
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            LOGGER.error(
-                    String.format(
-                            "Response from DCS has status code: %d",
-                            response.getStatusLine().getStatusCode()));
+            int statusCode = response.getStatusLine().getStatusCode();
+            LOGGER.error("Response from DCS has status code: {}", statusCode);
             throw new HttpResponseException(
                     response.getStatusLine().getStatusCode(), "DCS responded with an error");
         }

@@ -20,8 +20,7 @@ public class ApiGatewayResponseGenerator {
 
     private ApiGatewayResponseGenerator() {}
 
-    public static <T> APIGatewayProxyResponseEvent proxyJoseResponse(
-            int statusCode, String payload) {
+    public static APIGatewayProxyResponseEvent proxyJoseResponse(int statusCode, String payload) {
         Map<String, String> responseHeaders = Map.of(HttpHeaders.CONTENT_TYPE, "application/jose");
         return proxyResponse(statusCode, payload, responseHeaders);
     }
