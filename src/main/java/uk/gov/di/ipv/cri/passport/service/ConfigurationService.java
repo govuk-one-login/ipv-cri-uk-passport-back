@@ -28,7 +28,6 @@ public class ConfigurationService {
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
-    private static final String DEFAULT_DYNAMODB_URI = "http://localhost:4567";
 
     private final SSMProvider ssmProvider;
 

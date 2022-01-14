@@ -34,6 +34,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,9 @@ public class PassportHandler
             JWSObject preparedDcsPayload = preparePayload(passportFormRequest);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
+
+            validateDcsResponse(unwrappedDcsResponse);
+
             PassportCheckDao passportCheckDao =
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
@@ -132,6 +136,16 @@ public class PassportHandler
                     HttpStatus.SC_BAD_REQUEST, ErrorResponse.MISSING_QUERY_PARAMETERS);
         }
         checkQueryStringCanBeParsedToAuthenticationRequest(queryStringParameters);
+    }
+
+    private void validateDcsResponse(DcsResponse dcsResponse)
+            throws HttpResponseExceptionWithErrorBody {
+        if (dcsResponse.isError()) {
+            String errorMessage = Arrays.toString(dcsResponse.getErrorMessage());
+            LOGGER.error("DCS encounterd error: {}", errorMessage);
+            throw new HttpResponseExceptionWithErrorBody(
+                    HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.DCS_RETURNED_AN_ERROR);
+        }
     }
 
     private void checkQueryStringCanBeParsedToAuthenticationRequest(

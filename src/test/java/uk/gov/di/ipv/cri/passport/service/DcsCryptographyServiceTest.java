@@ -129,7 +129,7 @@ class DcsCryptographyServiceTest {
 
         assertEquals(expectedDcsResponse.getCorrelationId(), actualDcsResponse.getCorrelationId());
         assertEquals(expectedDcsResponse.getRequestId(), actualDcsResponse.getRequestId());
-        assertEquals(expectedDcsResponse.getError(), actualDcsResponse.getError());
+        assertEquals(expectedDcsResponse.isError(), actualDcsResponse.isError());
         assertEquals(expectedDcsResponse.isValid(), actualDcsResponse.isValid());
     }
 

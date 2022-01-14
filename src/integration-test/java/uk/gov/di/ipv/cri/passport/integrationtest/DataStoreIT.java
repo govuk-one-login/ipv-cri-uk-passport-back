@@ -63,7 +63,7 @@ public class DataStoreIT {
 
         Map<String, Object> savedDcsResponse = savedPassportCheck.getMap("dcsResponse");
         assertEquals(validDcsResponse.isValid(), savedDcsResponse.get("valid"));
-        assertEquals(validDcsResponse.getError(), savedDcsResponse.get("error"));
+        assertEquals(validDcsResponse.isError(), savedDcsResponse.get("error"));
         assertEquals(
                 Arrays.toString(validDcsResponse.getErrorMessage()),
                 savedDcsResponse.get("errorMessage").toString());
