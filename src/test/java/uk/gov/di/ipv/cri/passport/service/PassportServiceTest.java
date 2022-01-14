@@ -1,9 +1,13 @@
 package uk.gov.di.ipv.cri.passport.service;
 
 import com.nimbusds.jose.JWSObject;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +44,8 @@ class PassportServiceTest {
     @Mock HttpClient httpClient;
     @Mock JWSObject jwsObject;
     @Mock HttpResponse httpResponse;
+    @Mock StatusLine statusLine;
+    @Mock HttpEntity entity;
 
     @Captor ArgumentCaptor<HttpPost> httpPost;
 
@@ -53,8 +59,11 @@ class PassportServiceTest {
     @Test
     void shouldPostToDcsEndpoint() throws IOException, EmptyDcsResponseException {
         String expectedPayload = "Test";
+        HttpEntity httpEntity = new StringEntity(expectedPayload);
         when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
-        when(httpResponse.toString()).thenReturn(EXPECTED_RESPONSE);
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(httpResponse.getEntity()).thenReturn(httpEntity);
+        when(statusLine.getStatusCode()).thenReturn(200);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         when(jwsObject.serialize()).thenReturn(expectedPayload);
 
@@ -67,7 +76,26 @@ class PassportServiceTest {
                 "application/jose", httpPost.getValue().getFirstHeader("content-type").getValue());
         assertEquals(expectedPayload, EntityUtils.toString(httpPost.getValue().getEntity()));
 
-        assertEquals(EXPECTED_RESPONSE, actualResponse.getPayload());
+        assertEquals(expectedPayload, actualResponse.getPayload());
+    }
+
+    @Test
+    void shouldReturnAnErrorWhenDCSRespondsWithNon200() throws IOException {
+        String expectedPayload = "Test";
+        when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(500);
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        when(jwsObject.serialize()).thenReturn(expectedPayload);
+
+        HttpResponseException httpResponseException =
+                assertThrows(
+                        HttpResponseException.class, () -> underTest.dcsPassportCheck(jwsObject));
+        verify(httpClient, times(1)).execute(httpPost.capture());
+        assertEquals(
+                "status code: 500, reason phrase: DCS responded with an error",
+                httpResponseException.getMessage());
+        assertEquals(500, httpResponseException.getStatusCode());
     }
 
     @Test

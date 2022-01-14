@@ -83,7 +83,7 @@ public class StubDcsHandler
                     dcsResponse.getCorrelationId(),
                     dcsResponse.getRequestId());
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
+            return ApiGatewayResponseGenerator.proxyJoseResponse(
                     HttpStatus.SC_OK, signAndEncryptAndSign(dcsResponse));
 
         } catch (StubDcsException e) {
