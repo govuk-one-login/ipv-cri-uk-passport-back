@@ -333,6 +333,43 @@ class PassportHandlerTest {
     }
 
     @Test
+    void shouldReturn500OnDcsErrorResponse() throws Exception {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
+        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+                .thenReturn(jwsObject);
+
+        DcsResponse errorDcsResponse =
+                new DcsResponse(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        true,
+                        false,
+                        new String[] {"Test DCS error message"});
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(errorDcsResponse);
+
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> params = new HashMap<>();
+        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
+        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
+        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
+        params.put(OAuth2RequestParams.SCOPE, "openid");
+        event.setQueryStringParameters(params);
+        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+
+        var response = underTest.handleRequest(event, context);
+
+        var responseBody = objectMapper.readValue(response.getBody(), Map.class);
+
+        assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(ErrorResponse.DCS_RETURNED_AN_ERROR.getCode(), responseBody.get("code"));
+        assertEquals(ErrorResponse.DCS_RETURNED_AN_ERROR.getMessage(), responseBody.get("message"));
+    }
+
+    @Test
     void shouldPersistPassportCheckDao()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,

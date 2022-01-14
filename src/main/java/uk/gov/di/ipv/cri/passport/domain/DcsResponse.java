@@ -23,8 +23,8 @@ public class DcsResponse {
     public DcsResponse(
             @JsonProperty(value = "correlationId", required = true) UUID correlationId,
             @JsonProperty(value = "requestId", required = true) UUID requestId,
-            @JsonProperty(value = "error", required = true) boolean error,
-            @JsonProperty(value = "valid", required = true) boolean valid,
+            @JsonProperty(value = "error", required = false) boolean error,
+            @JsonProperty(value = "valid", required = false) boolean valid,
             @JsonProperty(value = "errorMessage", required = false) String[] errorMessage) {
         this.correlationId = correlationId;
         this.requestId = requestId;
@@ -41,7 +41,7 @@ public class DcsResponse {
         return requestId;
     }
 
-    public boolean getError() {
+    public boolean isError() {
         return error;
     }
 

@@ -12,7 +12,8 @@ public enum ErrorResponse {
     FAILED_TO_PREPARE_DCS_PAYLOAD(1003, "Failed to prepare DCS payload"),
     ERROR_CONTACTING_DCS(1004, "Error when contacting DCS for passport check"),
     FAILED_TO_UNWRAP_DCS_RESPONSE(1005, "Failed to unwrap Dcs response"),
-    ERROR_GETTING_RESPONSE_FROM_DCS(1006, "No response was returned from DCS");
+    ERROR_GETTING_RESPONSE_FROM_DCS(1006, "No response was returned from DCS"),
+    DCS_RETURNED_AN_ERROR(1007, "DCS returned an error response");
 
     private final int code;
     private final String message;

@@ -23,7 +23,7 @@ public class DcsResponseTypeConverter implements AttributeConverter<DcsResponse>
                                         .build(),
                         "requestId",
                                 AttributeValue.builder().s(input.getRequestId().toString()).build(),
-                        "error", AttributeValue.builder().bool(input.getError()).build(),
+                        "error", AttributeValue.builder().bool(input.isError()).build(),
                         "valid", AttributeValue.builder().bool(input.isValid()).build(),
                         "errorMessage",
                                 Objects.isNull(input.getErrorMessage())
