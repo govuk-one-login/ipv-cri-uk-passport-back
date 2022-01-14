@@ -19,6 +19,7 @@ module "passport" {
 
   env_vars = {
     "DCS_ENCRYPTION_CERT_PARAM"                = "/${var.environment}/dcs/encryption-cert"
+    "DCS_SIGNING_CERT_PARAM"                   = "/${var.environment}/dcs/signing-cert"
     "PASSPORT_CRI_SIGNING_KEY_PARAM"           = "/${var.environment}/cri/passport/signing-key"
     "PASSPORT_CRI_ENCRYPTION_KEY_PARAM"        = "/${var.environment}/cri/passport/encryption-key"
     "PASSPORT_CRI_TLS_KEY_PARAM"               = "/${var.environment}/cri/passport/tls-key"

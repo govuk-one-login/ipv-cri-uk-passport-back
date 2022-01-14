@@ -7,6 +7,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,10 +59,11 @@ class PassportServiceTest {
     @Test
     void shouldPostToDcsEndpoint() throws IOException, EmptyDcsResponseException {
         String expectedPayload = "Test";
+        HttpEntity httpEntity = new StringEntity(expectedPayload);
         when(configurationService.getDCSPostUrl()).thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(httpResponse.getEntity()).thenReturn(httpEntity);
         when(statusLine.getStatusCode()).thenReturn(200);
-        when(httpResponse.toString()).thenReturn(EXPECTED_RESPONSE);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
         when(jwsObject.serialize()).thenReturn(expectedPayload);
 
@@ -74,7 +76,7 @@ class PassportServiceTest {
                 "application/jose", httpPost.getValue().getFirstHeader("content-type").getValue());
         assertEquals(expectedPayload, EntityUtils.toString(httpPost.getValue().getEntity()));
 
-        assertEquals(EXPECTED_RESPONSE, actualResponse.getPayload());
+        assertEquals(expectedPayload, actualResponse.getPayload());
     }
 
     @Test

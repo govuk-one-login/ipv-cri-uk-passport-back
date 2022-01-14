@@ -21,6 +21,7 @@ import uk.gov.di.ipv.cri.passport.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.exceptions.HttpResponseExceptionWithErrorBody;
+import uk.gov.di.ipv.cri.passport.exceptions.IpvCryptoException;
 import uk.gov.di.ipv.cri.passport.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.service.AuthorizationCodeService;
@@ -195,7 +196,8 @@ public class PassportHandler
         } catch (CertificateException
                 | java.text.ParseException
                 | JOSEException
-                | JsonProcessingException e) {
+                | JsonProcessingException
+                | IpvCryptoException e) {
             LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR,

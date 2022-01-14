@@ -6,6 +6,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.domain.DcsSignedEncryptedResponse;
@@ -71,7 +72,7 @@ public class PassportService {
                     response.getStatusLine().getStatusCode(), "DCS responded with an error");
         }
 
-        return new DcsSignedEncryptedResponse(response.toString());
+        return new DcsSignedEncryptedResponse(EntityUtils.toString(response.getEntity()));
     }
 
     public void persistDcsResponse(PassportCheckDao responsePayload) {
