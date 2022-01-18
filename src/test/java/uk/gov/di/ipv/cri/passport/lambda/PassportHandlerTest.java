@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
@@ -152,8 +153,9 @@ class PassportHandlerTest {
         var response = underTest.handleRequest(event, context);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
-        Map<String, String> authCode = (Map) responseBody.get("code");
+        Map<String, Map<String, String>> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+        Map<String, String> authCode = responseBody.get("code");
 
         ArgumentCaptor<PassportCheckDao> persistedDcsResponseItem =
                 ArgumentCaptor.forClass(PassportCheckDao.class);
@@ -178,7 +180,8 @@ class PassportHandlerTest {
         var response = underTest.handleRequest(event, context);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(
@@ -202,7 +205,8 @@ class PassportHandlerTest {
         var response = underTest.handleRequest(event, context);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(
@@ -226,7 +230,8 @@ class PassportHandlerTest {
         var response = underTest.handleRequest(event, context);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(
@@ -250,7 +255,8 @@ class PassportHandlerTest {
         var response = underTest.handleRequest(event, context);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(
@@ -270,7 +276,8 @@ class PassportHandlerTest {
         APIGatewayProxyResponseEvent response = underTest.handleRequest(event, context);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Map responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(), responseBody.get("code"));
