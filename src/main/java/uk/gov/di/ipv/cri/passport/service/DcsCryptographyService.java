@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -91,7 +92,10 @@ public class DcsCryptographyService {
         JWSObject jwsObject =
                 new JWSObject(
                         new JWSHeader.Builder(JWSAlgorithm.RS256)
-                                .customParams(gson.fromJson(jsonHeaders, Map.class))
+                                .customParams(
+                                        gson.fromJson(
+                                                jsonHeaders,
+                                                new TypeToken<Map<String, Object>>() {}.getType()))
                                 .build(),
                         new Payload(stringToSign));
 

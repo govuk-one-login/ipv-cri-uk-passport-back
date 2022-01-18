@@ -6,6 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -155,7 +156,10 @@ public class StubDcsHandler
         JWSObject jwsObject =
                 new JWSObject(
                         new JWSHeader.Builder(JWSAlgorithm.RS256)
-                                .customParams(gson.fromJson(jsonHeaders, Map.class))
+                                .customParams(
+                                        gson.fromJson(
+                                                jsonHeaders,
+                                                new TypeToken<Map<String, Object>>() {}.getType()))
                                 .build(),
                         new Payload(stringToSign));
 

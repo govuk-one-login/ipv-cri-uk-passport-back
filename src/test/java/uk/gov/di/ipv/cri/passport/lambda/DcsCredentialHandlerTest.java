@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
@@ -108,7 +109,8 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(dcsCredential.getResourceId(), responseBody.get("resourceId"));
         assertEquals(response.getBody(), objectMapper.writeValueAsString(dcsCredential));
@@ -122,7 +124,7 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(BearerTokenError.MISSING_TOKEN.getHTTPStatusCode(), response.getStatusCode());
         assertEquals(BearerTokenError.MISSING_TOKEN.getCode(), responseBody.get("error"));
@@ -139,7 +141,7 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(
                 BearerTokenError.INVALID_REQUEST.getHTTPStatusCode(), response.getStatusCode());
@@ -155,7 +157,7 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(BearerTokenError.MISSING_TOKEN.getHTTPStatusCode(), response.getStatusCode());
         assertEquals(BearerTokenError.MISSING_TOKEN.getCode(), responseBody.get("error"));
@@ -176,7 +178,8 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        Map<String, Object> responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(403, response.getStatusCode());
         assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
