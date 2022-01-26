@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
-import uk.gov.di.ipv.cri.passport.validation.ValidationResult;
+import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.util.Map;
 import java.util.UUID;
