@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ipv-cri-uk-passport-back
+
+Globals:
+  Function:
+    Timeout: 20
+
+Parameters:
+  Environment:
+    Type: String
+
+Resources:
+
+  IPVCriUKPassportAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: IPV CRI UK Passport API Gateway
+      StageName: !Sub ${Environment}
+
+  IPVDcsCredentialFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ipv-dcs-credential-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.lambda.DcsCredentialHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/dcscredential
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
+          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DCSResponseTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAccessTokensTable
+      Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /credential
+            Method: GET
+
+  IPVDcsAccessTokenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ipv-dcs-token-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.accesstoken.AccessTokenHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/accesstoken
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
+          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAuthCodesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAccessTokensTable
+      Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /token
+            Method: POST
+
+  IPVPassportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ipv-passport-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.passport.PassportHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/passport
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
+          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DCSResponseTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAccessTokensTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAuthCodesTable
+      Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /passport
+            Method: POST
+
+  IPVDcsStubFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ipv-stub-dcs-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.dcsstub.StubDcsHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/dcsstub
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          DCS_SIGNING_CERT_PARAM:
+          STUB_DCS_SIGNING_KEY_PARAM:
+          STUB_DCS_ENCRYPTION_KEY_PARAM:
+          PASSPORT_CRI_SIGNING_CERT_PARAM:
+          PASSPORT_CRI_ENCRYPTION_CERT_PARAM:
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DCSResponseTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAccessTokensTable
+      Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /stub-dcs-check-passport
+            Method: POST
+
+  DCSResponseTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "dcs-response-${Environment}"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "resourceId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "resourceId"
+          KeyType: "HASH"
+
+  CRIPassportAuthCodesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "cri-passport-auth-codes-${Environment}"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "authCode"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "authCode"
+          KeyType: "HASH"
+
+  CRIPassportAccessTokensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "cri-passport-access-tokens-${Environment}"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "accessToken"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "accessToken"
+          KeyType: "HASH"
+
