@@ -113,10 +113,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "ipv-stub-dcs-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.dcsstub.StubDcsHandler::handleRequest
+      Handler: uk.gov.di.ipv.cri.passport.stubdcs.StubDcsHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/dcsstub
+      CodeUri: ../lambdas/stubdcs
       Architectures:
         - x86_64
       MemorySize: 512
