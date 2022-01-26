@@ -112,6 +112,10 @@ Resources:
             TableName: !Ref CRIPassportAccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/dcs/*
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/cri/passport/*
       Events:
         IPVCriUKPassportAPI:
           Type: Api
@@ -144,6 +148,12 @@ Resources:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAccessTokensTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/dcs/signing-cert
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/stub-dcs/*
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/cri/passport/*
       Events:
         IPVCriUKPassportAPI:
           Type: Api
