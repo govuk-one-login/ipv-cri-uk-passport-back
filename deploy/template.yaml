@@ -23,7 +23,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "ipv-dcs-credential-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.lambda.DcsCredentialHandler::handleRequest
+      Handler: uk.gov.di.ipv.cri.passport.dcscredential.DcsCredentialHandler::handleRequest
       Runtime: java11
       PackageType: Zip
       CodeUri: ../lambdas/dcscredential
