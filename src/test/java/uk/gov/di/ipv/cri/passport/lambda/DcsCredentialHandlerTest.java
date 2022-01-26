@@ -115,7 +115,9 @@ class DcsCredentialHandlerTest {
         Map<String, Object> attributes = responseBody.get("attributes");
 
         assertEquals(dcsCredential.getResourceId(), attributes.get("resourceId"));
-        assertEquals(objectMapper.writeValueAsString(attributes), objectMapper.writeValueAsString(dcsCredential));
+        assertEquals(
+                objectMapper.writeValueAsString(attributes),
+                objectMapper.writeValueAsString(dcsCredential));
     }
 
     @Test
