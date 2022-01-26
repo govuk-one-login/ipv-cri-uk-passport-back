@@ -18,11 +18,14 @@ import uk.gov.di.ipv.cri.passport.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.service.DcsCredentialService;
 
+import java.util.Map;
+
 public class DcsCredentialHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DcsCredentialHandler.class);
     private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
+    private static final String ATTRIBUTES_PARAM = "attributes";
 
     private final DcsCredentialService dcsCredentialService;
     private final AccessTokenService accessTokenService;
@@ -71,7 +74,9 @@ public class DcsCredentialHandler
 
             PassportCheckDao credential = dcsCredentialService.getDcsCredential(resourceId);
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, credential);
+            Map<String, Object> credentialMap = Map.of(ATTRIBUTES_PARAM, credential);
+
+            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, credentialMap);
         } catch (ParseException e) {
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
