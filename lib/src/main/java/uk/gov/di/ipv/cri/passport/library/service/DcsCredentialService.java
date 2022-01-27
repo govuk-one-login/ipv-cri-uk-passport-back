@@ -5,12 +5,10 @@ import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 public class DcsCredentialService {
-    private final ConfigurationService configurationService;
     private final DataStore<PassportCheckDao> dataStore;
 
     @ExcludeFromGeneratedCoverageReport
-    public DcsCredentialService() {
-        this.configurationService = new ConfigurationService();
+    public DcsCredentialService(ConfigurationService configurationService) {
         this.dataStore =
                 new DataStore<>(
                         configurationService.getDcsResponseTableName(),
@@ -19,8 +17,7 @@ public class DcsCredentialService {
     }
 
     public DcsCredentialService(
-            ConfigurationService configurationService, DataStore<PassportCheckDao> dataStore) {
-        this.configurationService = configurationService;
+            DataStore<PassportCheckDao> dataStore) {
         this.dataStore = dataStore;
     }
 
