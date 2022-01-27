@@ -162,6 +162,28 @@ Resources:
             Path: /stub-dcs-check-passport
             Method: POST
 
+  IPVCriUKSharedAttributesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ipv-shared-attributes-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/sharedattributes
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+      Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /shared-attributes
+            Method: POST
+
   DCSResponseTable:
     Type: AWS::DynamoDB::Table
     Properties:
