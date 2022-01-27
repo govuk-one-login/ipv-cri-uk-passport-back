@@ -102,7 +102,7 @@ Resources:
           PASSPORT_CRI_SIGNING_CERT_PARAM: !Sub "/${Environment}/cri/passport/signing-cert"
           PASSPORT_CRI_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/cri/passport/encryption-cert"
           PASSPORT_CRI_TLS_CERT_PARAM: !Sub "/${Environment}/cri/passport/tls-cert"
-          DCS_POST_URL_PARAM": !Sub "/${Environment}/dcs/post-url"
+          DCS_POST_URL_PARAM: !Sub "/${Environment}/dcs/post-url"
           DCS_TLS_ROOT_CERT_PARAM: !Sub "/${Environment}/dcs/tls-root-certificate"
           DCS_TLS_INTERMEDIATE_CERT_PARAM: !Sub "/${Environment}/dcs/tls-intermediate-certificate"
       Policies:
