@@ -162,11 +162,11 @@ Resources:
             Path: /stub-dcs-check-passport
             Method: POST
 
-  IPVCriUKSharedAttributesFunction:
+  JwtVerification:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "ipv-shared-attributes-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler::handleRequest
+      Handler: uk.gov.di.ipv.cri.passport.sharedattributes.JwtVerification::handleRequest
       Runtime: java11
       PackageType: Zip
       CodeUri: ../lambdas/sharedattributes
@@ -181,7 +181,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportAPI
-            Path: /shared-attributes
+            Path: /jwt-verification
             Method: POST
 
   DCSResponseTable:
