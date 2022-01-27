@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.sharedattributes;
+package uk.gov.di.ipv.cri.passport.jwtverification;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -25,9 +25,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class SharedAttributesHandlerTest {
+class JwtVerificationHandlerTest {
 
-    private final SharedAttributesHandler underTest = new SharedAttributesHandler();
+    private final JwtVerificationHandler underTest = new JwtVerificationHandler();
 
     private SignedJWT signedJWT;
 
