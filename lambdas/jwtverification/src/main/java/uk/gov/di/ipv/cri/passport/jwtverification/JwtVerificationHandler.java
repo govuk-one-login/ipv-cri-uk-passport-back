@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.sharedattributes;
+package uk.gov.di.ipv.cri.passport.jwtverification;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -14,10 +14,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SharedAttributesHandler
+public class JwtVerificationHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final Logger LOGGER = Logger.getLogger(SharedAttributesHandler.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JwtVerificationHandler.class.getName());
     private static final Integer OK = 200;
     private static final Integer BAD_REQUEST = 400;
 
