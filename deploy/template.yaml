@@ -162,14 +162,14 @@ Resources:
             Path: /stub-dcs-check-passport
             Method: POST
 
-  JwtVerification:
+  JwtVerificationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "ipv-shared-attributes-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.sharedattributes.JwtVerification::handleRequest
+      FunctionName: !Sub "ipv-jwt-verification-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.jwtverification.JwtVerificationHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/sharedattributes
+      CodeUri: ../lambdas/jwtverification
       Architectures:
         - x86_64
       MemorySize: 512
