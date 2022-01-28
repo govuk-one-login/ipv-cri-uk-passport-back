@@ -219,4 +219,3 @@ Resources:
       KeySchema:
         - AttributeName: "accessToken"
           KeyType: "HASH"
-
