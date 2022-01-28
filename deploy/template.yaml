@@ -162,6 +162,28 @@ Resources:
             Path: /stub-dcs-check-passport
             Method: POST
 
+  JwtVerificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "ipv-jwt-verification-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.jwtverification.JwtVerificationHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/jwtverification
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+      Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /jwt-verification
+            Method: POST
+
   DCSResponseTable:
     Type: AWS::DynamoDB::Table
     Properties:
