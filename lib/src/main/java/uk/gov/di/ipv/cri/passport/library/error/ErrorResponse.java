@@ -13,7 +13,9 @@ public enum ErrorResponse {
     ERROR_CONTACTING_DCS(1004, "Error when contacting DCS for passport check"),
     FAILED_TO_UNWRAP_DCS_RESPONSE(1005, "Failed to unwrap Dcs response"),
     ERROR_GETTING_RESPONSE_FROM_DCS(1006, "No response was returned from DCS"),
-    DCS_RETURNED_AN_ERROR(1007, "DCS returned an error response");
+    DCS_RETURNED_AN_ERROR(1007, "DCS returned an error response"),
+    MISSING_SHARED_ATTRIBUTES_JWT(1008, "Missing shared attributes JWT from request body"),
+    FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT(1009, "Failed to parse shared attributes JWT");
 
     private final int code;
     private final String message;
