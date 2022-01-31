@@ -95,27 +95,6 @@ resource "aws_ssm_parameter" "local_only_passport_tls_key" {
   value       = var.local_only_passport_tls_key
 }
 
-resource "aws_ssm_parameter" "signing_cert_cli_1" {
-  name        = "/${var.environment}/cri/passport/config/client_1/signing_cert"
-  description = "The certificate used by Client_1"
-  type        = "String"
-  value       = var.signing_cert_cli_1
-}
-
-resource "aws_ssm_parameter" "signing_cert_cli_2" {
-  name        = "/${var.environment}/cri/passport/config/client_2/signing_cert"
-  description = "The certificate used by Client_2"
-  type        = "String"
-  value       = var.signing_cert_cli_2
-}
-
-resource "aws_ssm_parameter" "signing_cert_cli_3" {
-  name        = "/${var.environment}/cri/passport/config/client_3/signing_cert"
-  description = "The certificate used by Client_3"
-  type        = "String"
-  value       = var.signing_cert_cli_3
-}
-
 resource "aws_ssm_parameter" "signing_cert_test" {
   name        = "/${var.environment}/cri/passport/config/test/signing_cert"
   description = "The certificate used by Client_test"
@@ -149,10 +128,7 @@ resource "aws_iam_role_policy" "get-parameters" {
           aws_ssm_parameter.dcs_tls_intermediate_cert.arn,
           aws_ssm_parameter.dcs_tls_root_cert.arn,
           aws_ssm_parameter.dcs_post_url.arn,
-          aws_ssm_parameter.signing_cert_cli_1.arn,
-          aws_ssm_parameter.signing_cert_cli_2.arn,
-          aws_ssm_parameter.signing_cert_cli_3.arn,
-          aws_ssm_parameter.signing_cert_test
+          aws_ssm_parameter.signing_cert_test.arn
         ]
       }
     ]
