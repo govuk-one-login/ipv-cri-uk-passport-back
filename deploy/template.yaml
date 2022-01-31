@@ -162,7 +162,7 @@ Resources:
             Path: /stub-dcs-check-passport
             Method: POST
 
-  IPVJwtVerificationFunction:
+  JwtVerificationFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "ipv-jwt-verification-${Environment}"
