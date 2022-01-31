@@ -176,6 +176,9 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
+          CLIENT_1_SIGNING_CERT_PARAM: !Sub "/${Environment}/cri/passport/config/client_1/signing_cert"
+          CLIENT_2_SIGNING_CERT_PARAM: !Sub "/${Environment}/cri/passport/config/client_2/signing_cert"
+          CLIENT_3_SIGNING_CERT_PARAM: !Sub "/${Environment}/cri/passport/config/client_3/signing_cert"
       Events:
         IPVCriUKPassportAPI:
           Type: Api

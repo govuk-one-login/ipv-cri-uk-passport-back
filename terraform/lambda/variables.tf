@@ -21,6 +21,12 @@ variable "dcs_tls_intermediate_cert" { type = string }
 
 variable "dcs_tls_root_cert" { type = string }
 
+variable "signing_cert_cli_1" { type = string }
+
+variable "signing_cert_cli_2" { type = string }
+
+variable "signing_cert_cli_3" { type = string }
+
 variable "dcs_post_url" {
   type    = string
   default = ""
