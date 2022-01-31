@@ -176,6 +176,10 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
+          CLIENT_TEST_PARAM: !Sub "/${Environment}/cri/passport/config/test/signing_cert"
+      Policies:
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/cri/passport/config/*
       Events:
         IPVCriUKPassportAPI:
           Type: Api

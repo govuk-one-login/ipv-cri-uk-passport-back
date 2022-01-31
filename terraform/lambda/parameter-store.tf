@@ -95,6 +95,13 @@ resource "aws_ssm_parameter" "local_only_passport_tls_key" {
   value       = var.local_only_passport_tls_key
 }
 
+resource "aws_ssm_parameter" "signing_cert_test" {
+  name        = "/${var.environment}/cri/passport/config/test/signing_cert"
+  description = "The certificate used by Client_test"
+  type        = "String"
+  value       = var.signing_cert_test
+}
+
 resource "aws_iam_role_policy" "get-parameters" {
   name = "get-parameters"
   role = module.passport.iam_role_id
@@ -120,7 +127,8 @@ resource "aws_iam_role_policy" "get-parameters" {
           aws_ssm_parameter.dcs_signing_cert.arn,
           aws_ssm_parameter.dcs_tls_intermediate_cert.arn,
           aws_ssm_parameter.dcs_tls_root_cert.arn,
-          aws_ssm_parameter.dcs_post_url.arn
+          aws_ssm_parameter.dcs_post_url.arn,
+          aws_ssm_parameter.signing_cert_test.arn
         ]
       }
     ]
