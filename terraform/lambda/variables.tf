@@ -27,6 +27,8 @@ variable "signing_cert_cli_2" { type = string }
 
 variable "signing_cert_cli_3" { type = string }
 
+variable "signing_cert_test" { type = string }
+
 variable "dcs_post_url" {
   type    = string
   default = ""
