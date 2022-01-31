@@ -109,11 +109,15 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        Map<String, Object> responseBody =
+        Map<String, Map<String, Object>> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
-        assertEquals(dcsCredential.getResourceId(), responseBody.get("resourceId"));
-        assertEquals(response.getBody(), objectMapper.writeValueAsString(dcsCredential));
+        Map<String, Object> attributes = responseBody.get("attributes");
+
+        assertEquals(dcsCredential.getResourceId(), attributes.get("resourceId"));
+        assertEquals(
+                objectMapper.writeValueAsString(attributes),
+                objectMapper.writeValueAsString(dcsCredential));
     }
 
     @Test
