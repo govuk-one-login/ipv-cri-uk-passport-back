@@ -6,9 +6,15 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.logging.Level;
@@ -17,14 +23,41 @@ import java.util.logging.Logger;
 public class JwtVerificationHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
+    private final ConfigurationService configurationService;
+
     private static final Logger LOGGER = Logger.getLogger(JwtVerificationHandler.class.getName());
     private static final Integer OK = 200;
     private static final Integer BAD_REQUEST = 400;
+    private static final String CLIENT_ID = "client_id";
+
+    public JwtVerificationHandler(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
+    }
+
+    @ExcludeFromGeneratedCoverageReport
+    public JwtVerificationHandler() {
+        this.configurationService = new ConfigurationService();
+    }
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
+
+        String ClientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
+
+        if (StringUtils.isBlank(ClientId)) {
+            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.MISSING_CLIENT_QUERY_PARAMETERS);
+        }
+
         if (input.getBody() == null) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
+        }
+
+        try {
+            Certificate clientCert = configurationService.getClientCert(ClientId);
+
+        } catch (CertificateException e) {
+            LOGGER.log(Level.WARNING, "Failed to retrieve certificate");
+            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.FAILED_TO_RETRIEVE_CERTIFICATE);
         }
 
         try {
@@ -33,7 +66,7 @@ public class JwtVerificationHandler
             Map<String, Object> claims = claimsSet.toJSONObject();
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, claims);
-        } catch(ParseException e) {
+        } catch (ParseException e) {
             LOGGER.log(Level.WARNING, "Failed to parse the shared attributes JWT");
             return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT);
         }

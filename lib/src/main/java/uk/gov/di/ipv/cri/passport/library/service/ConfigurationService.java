@@ -1,5 +1,7 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
@@ -20,6 +22,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
 
 public class ConfigurationService {
@@ -130,9 +133,9 @@ public class ConfigurationService {
     }
 
     public Certificate[] getDcsTlsCertChain() throws CertificateException {
-        return new Certificate[] {
-            getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
-            getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
+        return new Certificate[]{
+                getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
+                getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
         };
     }
 
@@ -179,4 +182,15 @@ public class ConfigurationService {
         }
         return null;
     }
+
+    public Certificate getClientCert(String clientId) throws CertificateException {
+        String value = ssmProvider.get(
+                String.format("/%s/cri/passport/config/%s/signing_cert",
+                        System.getenv("ENVIRONMENT"), clientId));
+        if (StringUtils.isBlank(value)) {
+            throw new CertificateException(String.format("Unable to retrieve certificate for %s", clientId ));
+        }
+        return getCertificateFromStoreUsingEnv(String.format("CLIENT_%s_PARAM",clientId.toUpperCase()));
+    }
+
 }
