@@ -48,6 +48,13 @@ resource "aws_ssm_parameter" "dcs_tls_root_cert" {
   value       = var.dcs_tls_root_cert
 }
 
+resource "aws_ssm_parameter" "core_shared_attributes_signing_cert" {
+  name        = "/${var.environment}/core/shared-attributes-signing-cert"
+  description = "The IPV core's shared attributes signing certificate"
+  type        = "String"
+  value       = var.core_shared_attributes_signing_cert
+}
+
 resource "aws_ssm_parameter" "dcs_post_url" {
   name        = "/${var.environment}/dcs/post-url"
   description = "The DCS's url for passport valid check"

@@ -7,6 +7,8 @@ variable "use_localstack" {
   default = false
 }
 
+variable "core_shared_attributes_signing_cert" { type = string }
+
 variable "passport_tls_cert" { type = string }
 
 variable "passport_signing_cert" { type = string }
