@@ -50,8 +50,10 @@ class JwtVerificationHandlerTest {
     private static final String BASE64_CERT =
             "MIIDZzCCAk+gAwIBAgIBATANBgkqhkiG9w0BAQsFADB3MQswCQYDVQQGEwJVSzEXMBUGA1UECBMOR3JlYXRlciBMb25kb24xDzANBgNVBAcTBkxvbmRvbjEXMBUGA1UEChMOQ2FiaW5ldCBPZmZpY2UxDDAKBgNVBAsTA0dEUzEXMBUGA1UEAxMOTXkgY29tbW9uIG5hbWUwHhcNMjIwMTMxMTExNDM3WhcNMjMwMTMxMTExNDM3WjB3MQswCQYDVQQGEwJVSzEXMBUGA1UECBMOR3JlYXRlciBMb25kb24xDzANBgNVBAcTBkxvbmRvbjEXMBUGA1UEChMOQ2FiaW5ldCBPZmZpY2UxDDAKBgNVBAsTA0dEUzEXMBUGA1UEAxMOTXkgY29tbW9uIG5hbWUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDCRZHUZZOG6W9hrxx/qo8hl9c6rd/0HCed7Vd2DidJ2yRTjbMZ0q8S9OdxTO2H0Wrrt1r4k6RqRKDImdcRqsJKM8iamcS8kYnQHUdHaqnwcFkDtM29A/57V0by2H/fUJss5MqLCE6hBKnrNc/WrI5VCx2LNEe833yDM1fYDjh0CKJK8e0bXMRCTn1sl2wmmBucRaXIZa2msey6SpgxG7REuVsc+Y804yuZAOaTyFP485D8QMVjwl/KRGVich7XYaxTZI3N4KGpS0K9Ui0U+FwuCxsDDdABQ1B2acINZ1ookghLp3EsnpvUJlHw+rPvvqOd18D64TQIDm67O4jK+c4zAgMBAAEwDQYJKoZIhvcNAQELBQADggEBADVrL7p+L5Y38LSMkIJF+fNTXN2xb0cFwn6fHLiD1Jpvq2LoMU18P1lBT4ZFsPFM8OPk58m6Nid8GVJpp+Pz/8a7Uhx3PfpB2uKzmpwBktBu5xpdE+DS/omxnlY91vAnCJaA3NdBYaDGavbs3J0rCR5DpH56hXikmtR3IzGYgrX3TJJghl6vWXZsW/J9nG5+W62SOX9hQUzj3rkXYKfcugODRAsBSC72zOgOU8+7MyDJkX9ndS6UOA5owUDonv75rVEDHNV/vcKrIrs43gmmcQ+PnxU7RwbCsUAN/si4emkR8zAdCQVvi0VFh9woikHOZvlXwm/GGINiLDi8E3kxL10=";
 
+    //private static final String BASE64_CERT1=
+     //       "eyJhbGciOiJIUzI1NiJ9.eyJkYXRlT2ZCaXJ0aHMiOlsiMDFcLzAxXC8xOTgwIiwiMDJcLzAxXC8xOTgwIl0sImFkZHJlc3NlcyI6WyIxMjMgcmFuZG9tIHN0cmVldCwgTTEzIDdHRSJdLCJnaXZlbk5hbWVzIjpbIkRhbmllbCIsIkRhbiIsIkRhbm55Il19.9DhsBeDOad7UEqGcNH1lQn0MuPGJ9m4NcWJAL4HMSoM,";
     @BeforeEach
-    void setUp() throws JOSEException, CertificateException {
+    void setUp() throws JOSEException {
         List<String> givenNames = Arrays.asList("Daniel", "Dan", "Danny");
         List<String> dateOfBirths = Arrays.asList("01/01/1980", "02/01/1980");
         List<String> addresses = Collections.singletonList("123 random street, M13 7GE");
@@ -77,6 +79,7 @@ class JwtVerificationHandlerTest {
     @Test
     void shouldReturn200WhenGivenValidJWT() throws CertificateException {
         when(configurationService.getClientCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
+
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
