@@ -9,11 +9,9 @@ import java.util.Objects;
 
 public class AuthorizationCodeService {
     private final DataStore<AuthorizationCodeItem> dataStore;
-    private final ConfigurationService configurationService;
 
     @ExcludeFromGeneratedCoverageReport
-    public AuthorizationCodeService() {
-        this.configurationService = new ConfigurationService();
+    public AuthorizationCodeService(ConfigurationService configurationService) {
         this.dataStore =
                 new DataStore<>(
                         configurationService.getAuthCodesTableName(),
@@ -22,8 +20,7 @@ public class AuthorizationCodeService {
     }
 
     public AuthorizationCodeService(
-            DataStore<AuthorizationCodeItem> dataStore, ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+            DataStore<AuthorizationCodeItem> dataStore) {
         this.dataStore = dataStore;
     }
 

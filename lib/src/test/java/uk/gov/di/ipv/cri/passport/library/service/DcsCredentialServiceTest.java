@@ -31,7 +31,7 @@ class DcsCredentialServiceTest {
 
     @BeforeEach
     void setUp() {
-        dcsCredentialService = new DcsCredentialService(mockConfigurationService, mockDataStore);
+        dcsCredentialService = new DcsCredentialService(mockDataStore);
     }
 
     @Test

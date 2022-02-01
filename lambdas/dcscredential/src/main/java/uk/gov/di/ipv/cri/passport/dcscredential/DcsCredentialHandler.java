@@ -16,6 +16,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCredentialService;
 
 import java.util.Map;
@@ -29,24 +30,20 @@ public class DcsCredentialHandler
 
     private final DcsCredentialService dcsCredentialService;
     private final AccessTokenService accessTokenService;
-
-    static {
-        // Set the default synchronous HTTP client to UrlConnectionHttpClient
-        System.setProperty(
-                "software.amazon.awssdk.http.service.impl",
-                "software.amazon.awssdk.http.urlconnection.UrlConnectionSdkHttpService");
-    }
+    private final ConfigurationService configurationService;
 
     public DcsCredentialHandler(
-            DcsCredentialService dcsCredentialService, AccessTokenService accessTokenService) {
+            DcsCredentialService dcsCredentialService, AccessTokenService accessTokenService, ConfigurationService configurationService) {
+        this.configurationService = configurationService;
         this.dcsCredentialService = dcsCredentialService;
         this.accessTokenService = accessTokenService;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public DcsCredentialHandler() {
-        this.dcsCredentialService = new DcsCredentialService();
-        this.accessTokenService = new AccessTokenService();
+        this.configurationService = new ConfigurationService();
+        this.dcsCredentialService = new DcsCredentialService(configurationService);
+        this.accessTokenService = new AccessTokenService(configurationService);
     }
 
     @Override

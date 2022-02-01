@@ -39,16 +39,16 @@ public class PassportService {
         this.dataStore = dataStore;
     }
 
-    public PassportService()
+    public PassportService(ConfigurationService configurationService)
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
-        this.configurationService = new ConfigurationService();
+        this.configurationService = configurationService;
         this.dataStore =
                 new DataStore<>(
-                        configurationService.getDcsResponseTableName(),
+                        this.configurationService.getDcsResponseTableName(),
                         PassportCheckDao.class,
-                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
-        this.httpClient = HttpClientSetUp.generateHttpClient(configurationService);
+                        DataStore.getClient(this.configurationService.getDynamoDbEndpointOverride()));
+        this.httpClient = HttpClientSetUp.generateHttpClient(this.configurationService);
     }
 
     public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload)

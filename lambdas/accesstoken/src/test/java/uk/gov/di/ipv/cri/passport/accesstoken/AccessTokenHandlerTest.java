@@ -19,8 +19,12 @@ import com.nimbusds.oauth2.sdk.token.Tokens;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.util.Map;
@@ -28,34 +32,26 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class AccessTokenHandlerTest {
 
     private static final String TEST_RESOURCE_ID = UUID.randomUUID().toString();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private Context context;
-    private AccessTokenService mockAccessTokenService;
-    private AuthorizationCodeService mockAuthorizationCodeService;
+    @Mock private Context context;
+    @Mock private AccessTokenService mockAccessTokenService;
+    @Mock private AuthorizationCodeService mockAuthorizationCodeService;
+    @Mock private ConfigurationService mockConfigurationService;
 
     private AccessTokenHandler handler;
     private TokenResponse tokenResponse;
 
+
     @BeforeEach
     void setUp() {
-        AccessToken accessToken = new BearerAccessToken();
-        tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
-
-        mockAccessTokenService = mock(AccessTokenService.class);
-        when(mockAccessTokenService.generateAccessToken(any())).thenReturn(tokenResponse);
-
-        mockAuthorizationCodeService = mock(AuthorizationCodeService.class);
-
-        context = mock(Context.class);
-
-        handler = new AccessTokenHandler(mockAccessTokenService, mockAuthorizationCodeService);
+        handler = new AccessTokenHandler(mockAccessTokenService, mockAuthorizationCodeService, mockConfigurationService);
     }
 
     @Test
@@ -64,6 +60,10 @@ class AccessTokenHandlerTest {
         String tokenRequestBody =
                 "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
         event.setBody(tokenRequestBody);
+
+        AccessToken accessToken = new BearerAccessToken();
+        tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
+        when(mockAccessTokenService.generateAccessToken(any())).thenReturn(tokenResponse);
 
         when(mockAuthorizationCodeService.getResourceIdByAuthorizationCode("12345"))
                 .thenReturn(TEST_RESOURCE_ID);

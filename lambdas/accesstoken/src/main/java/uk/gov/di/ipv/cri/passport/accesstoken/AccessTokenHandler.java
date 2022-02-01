@@ -21,6 +21,7 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.net.URI;
@@ -33,24 +34,22 @@ public class AccessTokenHandler
     private final AccessTokenService accessTokenService;
     private final AuthorizationCodeService authorizationCodeService;
 
-    static {
-        // Set the default synchronous HTTP client to UrlConnectionHttpClient
-        System.setProperty(
-                "software.amazon.awssdk.http.service.impl",
-                "software.amazon.awssdk.http.urlconnection.UrlConnectionSdkHttpService");
-    }
+    private final ConfigurationService configurationService;
 
     public AccessTokenHandler(
             AccessTokenService accessTokenService,
-            AuthorizationCodeService authorizationCodeService) {
+            AuthorizationCodeService authorizationCodeService,
+            ConfigurationService configurationService) {
         this.accessTokenService = accessTokenService;
         this.authorizationCodeService = authorizationCodeService;
+        this.configurationService = configurationService;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public AccessTokenHandler() {
-        this.accessTokenService = new AccessTokenService();
-        this.authorizationCodeService = new AuthorizationCodeService();
+        this.configurationService = new ConfigurationService();
+        this.accessTokenService = new AccessTokenService(configurationService);
+        this.authorizationCodeService = new AuthorizationCodeService(configurationService);
     }
 
     @Override

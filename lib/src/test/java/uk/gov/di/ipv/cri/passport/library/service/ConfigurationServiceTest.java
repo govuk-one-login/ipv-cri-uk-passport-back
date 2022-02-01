@@ -57,10 +57,6 @@ class ConfigurationServiceTest {
         environmentVariables.set("IS_LOCAL", "true");
         environmentVariables.set("AWS_ACCESS_KEY_ID", "ASDFGHJKL");
         environmentVariables.set("AWS_SECRET_ACCESS_KEY", "1234567890987654321");
-
-        systemProperties.set(
-                "software.amazon.awssdk.http.service.impl",
-                "software.amazon.awssdk.http.urlconnection.UrlConnectionSdkHttpService");
     }
 
     @Test

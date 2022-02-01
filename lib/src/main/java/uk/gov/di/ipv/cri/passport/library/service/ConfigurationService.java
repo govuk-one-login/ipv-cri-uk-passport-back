@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
@@ -41,6 +42,7 @@ public class ConfigurationService {
                     ParamManager.getSsmProvider(
                             SsmClient.builder()
                                     .endpointOverride(URI.create(LOCALHOST_URI))
+                                    .httpClient(UrlConnectionHttpClient.create())
                                     .region(Region.EU_WEST_2)
                                     .build());
         } else {

@@ -51,13 +51,6 @@ public class PassportHandler
             new ObjectMapper().registerModule(new JavaTimeModule());
     public static final String AUTHORIZATION_CODE = "code";
 
-    static {
-        // Set the default synchronous HTTP client to UrlConnectionHttpClient
-        System.setProperty(
-                "software.amazon.awssdk.http.service.impl",
-                "software.amazon.awssdk.http.urlconnection.UrlConnectionSdkHttpService");
-    }
-
     private final PassportService passportService;
     private final AuthorizationCodeService authorizationCodeService;
     private final ConfigurationService configurationService;
@@ -77,9 +70,9 @@ public class PassportHandler
     public PassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
-        this.passportService = new PassportService();
-        this.authorizationCodeService = new AuthorizationCodeService();
         this.configurationService = new ConfigurationService();
+        this.passportService = new PassportService(configurationService);
+        this.authorizationCodeService = new AuthorizationCodeService(configurationService);
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
     }
 
