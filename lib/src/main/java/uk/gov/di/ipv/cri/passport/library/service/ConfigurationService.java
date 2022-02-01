@@ -184,13 +184,8 @@ public class ConfigurationService {
     }
 
     public Certificate getClientCert(String clientId) throws CertificateException {
-        String value = ssmProvider.get(
-                String.format("/%s/cri/passport/config/%s/signing_cert",
-                        System.getenv("ENVIRONMENT"), clientId));
-        if (StringUtils.isBlank(value)) {
-            throw new CertificateException(String.format("Unable to retrieve certificate for %s", clientId ));
-        }
-        return getCertificateFromStoreUsingEnv(String.format("CLIENT_%s_PARAM",clientId.toUpperCase()));
+        return getCertificateFromStoreUsingEnv(String.format("/%s/cri/passport/config/%s/signing_cert",
+                System.getenv("ENVIRONMENT"), clientId));
     }
 
 }

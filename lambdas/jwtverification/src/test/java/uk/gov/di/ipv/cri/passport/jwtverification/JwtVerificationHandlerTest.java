@@ -25,6 +25,7 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -139,10 +140,40 @@ class JwtVerificationHandlerTest {
         assertEquals(ErrorResponse.FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT.getMessage(), error.get("message"));
     }
 
+    @Test
+    void shouldReturn400IFClientIdIsNotSet() throws JsonProcessingException {
+        var event = new APIGatewayProxyRequestEvent();
+
+        var response = underTest.handleRequest(event, context);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> error = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+        assertEquals(400, response.getStatusCode());
+        assertEquals(ErrorResponse.MISSING_CLIENT_QUERY_PARAMETERS.getCode(), error.get("code"));
+        assertEquals(ErrorResponse.MISSING_CLIENT_QUERY_PARAMETERS.getMessage(), error.get("message"));
+    }
+
+    @Test
+    void shouldReturn200WithValidCertificate() throws CertificateException {
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> map = new HashMap<>();
+        map.put("client_id", "TEST");
+        event.setHeaders(map);
+        event.setBody(signedJWT.serialize());
+        when(configurationService.getClientCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
+
+        var response = underTest.handleRequest(event, context);
+
+        X509Certificate x509Certificate = (X509Certificate) getCertificate(BASE64_CERT);
+        assertEquals(configurationService.getClientCert("TEST"),getCertificate(BASE64_CERT));
+        assertEquals("CN=My common name, OU=GDS, O=Cabinet Office, L=London, ST=Greater London, C=UK",x509Certificate.getSubjectDN().getName());
+    }
+
     private Certificate getCertificate(String base64certificate) throws CertificateException {
         byte[] binaryCertificate = Base64.getDecoder().decode(base64certificate);
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
+
 }
 
