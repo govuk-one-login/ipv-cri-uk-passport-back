@@ -1,7 +1,6 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.oauth2.sdk.util.StringUtils;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
@@ -22,7 +21,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.Map;
 import java.util.Optional;
 
 public class ConfigurationService {
@@ -44,6 +42,7 @@ public class ConfigurationService {
                     ParamManager.getSsmProvider(
                             SsmClient.builder()
                                     .endpointOverride(URI.create(LOCALHOST_URI))
+                                    .httpClient(UrlConnectionHttpClient.create())
                                     .region(Region.EU_WEST_2)
                                     .build());
         } else {
@@ -133,9 +132,9 @@ public class ConfigurationService {
     }
 
     public Certificate[] getDcsTlsCertChain() throws CertificateException {
-        return new Certificate[]{
-                getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
-                getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
+        return new Certificate[] {
+            getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
+            getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
         };
     }
 

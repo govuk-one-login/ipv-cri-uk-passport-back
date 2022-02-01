@@ -20,6 +20,7 @@ import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCredentialService;
 
 import java.time.LocalDate;
@@ -48,6 +49,8 @@ class DcsCredentialHandlerTest {
 
     @Mock private AccessTokenService mockAccessTokenService;
 
+    @Mock private ConfigurationService mockConfigurationService;
+
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
     ;
@@ -74,7 +77,7 @@ class DcsCredentialHandlerTest {
         responseBody = new HashMap<>();
 
         dcsCredentialHandler =
-                new DcsCredentialHandler(mockDcsCredentialService, mockAccessTokenService);
+                new DcsCredentialHandler(mockDcsCredentialService, mockAccessTokenService, mockConfigurationService);
     }
 
     @Test

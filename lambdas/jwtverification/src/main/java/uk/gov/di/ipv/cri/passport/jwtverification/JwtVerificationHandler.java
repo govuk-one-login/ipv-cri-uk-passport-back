@@ -42,10 +42,10 @@ public class JwtVerificationHandler
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
 
-        String ClientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
+        String clientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
 
-        if (StringUtils.isBlank(ClientId)) {
-            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.MISSING_CLIENT_QUERY_PARAMETERS);
+        if (StringUtils.isBlank(clientId)) {
+            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.MISSING_CLIENT_ID_QUERY_PARAMETER);
         }
 
         if (input.getBody() == null) {
@@ -53,7 +53,7 @@ public class JwtVerificationHandler
         }
 
         try {
-            Certificate clientCert = configurationService.getClientCert(ClientId);
+            Certificate clientCert = configurationService.getClientCert(clientId);
 
         } catch (CertificateException e) {
             LOGGER.log(Level.WARNING, "Failed to retrieve certificate");
