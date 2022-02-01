@@ -15,10 +15,12 @@ repositories {
 dependencies {
 	implementation "com.amazonaws:aws-lambda-java-core:1.2.1",
 			"com.amazonaws:aws-lambda-java-events:3.11.0",
+			"com.nimbusds:oauth2-oidc-sdk:9.3.1",
 			"com.nimbusds:nimbus-jose-jwt:9.15.2",
 			project(":lib")
 
 	testImplementation "org.junit.jupiter:junit-jupiter:5.8.2",
+			"org.mockito:mockito-junit-jupiter:4.1.0",
 			"com.fasterxml.jackson.core:jackson-core:2.13.0",
 			"com.fasterxml.jackson.core:jackson-databind:2.13.0",
 			"org.mockito:mockito-core:4.1.0"
