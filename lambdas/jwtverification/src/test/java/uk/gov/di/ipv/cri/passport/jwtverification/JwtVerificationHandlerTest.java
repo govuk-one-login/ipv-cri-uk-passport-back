@@ -9,7 +9,6 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
@@ -26,7 +25,6 @@ import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import java.io.ByteArrayInputStream;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -112,7 +110,7 @@ class JwtVerificationHandlerTest {
     }
 
     @Test
-    void shouldReturn400IfMissingJWT() throws JsonProcessingException, CertificateException {
+    void shouldReturn400IfMissingJWT() throws JsonProcessingException {
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");

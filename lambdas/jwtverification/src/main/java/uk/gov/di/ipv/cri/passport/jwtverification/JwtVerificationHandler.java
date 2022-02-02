@@ -8,21 +8,18 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
-import com.nimbusds.oauth2.sdk.util.StringUtils;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
-import java.io.ByteArrayInputStream;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
-import java.util.Base64;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,7 +60,7 @@ public class JwtVerificationHandler
             SignedJWT signedJWT = SignedJWT.parse(input.getBody());
             Certificate clientCert = configurationService.getClientCert(clientId);
 
-            if (isInvalidSignature(SignedJWT.parse(input.getBody()), clientCert)) {
+            if (isInvalidSignature(signedJWT, clientCert)) {
                 LOGGER.log(Level.WARNING, "JWT signature is invalid");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.JWT_SIGNATURE_IS_INVALID);
             }
@@ -82,7 +79,7 @@ public class JwtVerificationHandler
     }
 
     private boolean isInvalidSignature(SignedJWT signedJWT, Certificate clientCertificate)
-            throws CertificateException, JOSEException {
+            throws JOSEException {
         PublicKey publicKey = clientCertificate.getPublicKey();
         RSASSAVerifier rsassaVerifier =
                 new RSASSAVerifier(
