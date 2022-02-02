@@ -74,6 +74,10 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv(environmentVariable));
     }
 
+    private String getParameterFromStore(String parameterName) {
+        return ssmProvider.get(parameterName);
+    }
+
     private String getDecryptedParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.withDecryption().get(System.getenv(environmentVariable));
     }
@@ -82,6 +86,14 @@ public class ConfigurationService {
             throws CertificateException {
         byte[] binaryCertificate =
                 Base64.getDecoder().decode(getParameterFromStoreUsingEnv(environmentVariable));
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
+    }
+
+    private Certificate getCertificateFromStore(String parameteraName)
+            throws CertificateException {
+        byte[] binaryCertificate =
+                Base64.getDecoder().decode(getParameterFromStore(parameteraName));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
@@ -183,7 +195,7 @@ public class ConfigurationService {
     }
 
     public Certificate getClientCert(String clientId) throws CertificateException {
-        return getCertificateFromStoreUsingEnv(String.format("/%s/cri/passport/config/%s/signing_cert",
+        return getCertificateFromStore(String.format("/%s/cri/passport/config/%s/signing_cert",
                 System.getenv("ENVIRONMENT"), clientId));
     }
 
