@@ -96,7 +96,7 @@ resource "aws_ssm_parameter" "local_only_passport_tls_key" {
 }
 
 resource "aws_ssm_parameter" "signing_cert_test" {
-  name        = "/${var.environment}/cri/passport/config/test/signing_cert"
+  name        = "/${var.environment}/cri/passport/config/ipv-core/signing_cert"
   description = "The certificate used by Client_test"
   type        = "String"
   value       = var.signing_cert_test
