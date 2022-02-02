@@ -9,6 +9,8 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
@@ -21,15 +23,13 @@ import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class JwtVerificationHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private final ConfigurationService configurationService;
 
-    private static final Logger LOGGER = Logger.getLogger(JwtVerificationHandler.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtVerificationHandler.class);
     private static final Integer OK = 200;
     private static final Integer BAD_REQUEST = 400;
     private static final String CLIENT_ID = "client_id";
@@ -61,7 +61,7 @@ public class JwtVerificationHandler
             Certificate clientCert = configurationService.getClientCert(clientId);
 
             if (isInvalidSignature(signedJWT, clientCert)) {
-                LOGGER.log(Level.WARNING, "JWT signature is invalid");
+                LOGGER.error("JWT signature is invalid");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.JWT_SIGNATURE_IS_INVALID);
             }
 
@@ -70,10 +70,10 @@ public class JwtVerificationHandler
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, claims);
         } catch (ParseException e) {
-            LOGGER.log(Level.WARNING, "Failed to parse the shared attributes JWT", e);
+            LOGGER.error("Failed to parse the shared attributes JWT", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT);
         } catch (CertificateException | JOSEException e) {
-            LOGGER.log(Level.WARNING, "Failed to verify the signature of the JWT", e);
+            LOGGER.error("Failed to verify the signature of the JWT", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.FAILED_TO_VERIFY_SIGNATURE);
         }
     }
