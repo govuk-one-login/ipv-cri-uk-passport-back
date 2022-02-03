@@ -22,7 +22,7 @@ public class PassportAttributesConverter implements AttributeConverter<PassportA
                         "surname", AttributeValue.builder().s(input.getSurname()).build(),
                         "forenames",
                                 AttributeValue.builder()
-                                        .s(Arrays.toString(input.getForenames()))
+                                        .ss(input.getForenames())
                                         .build(),
                         "dateOfBirth",
                                 AttributeValue.builder()
