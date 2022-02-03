@@ -4,16 +4,16 @@ import software.amazon.awssdk.enhanced.dynamodb.AttributeConverter;
 import software.amazon.awssdk.enhanced.dynamodb.AttributeValueType;
 import software.amazon.awssdk.enhanced.dynamodb.EnhancedType;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Map;
 
-public class PassportFormRequestTypeConverter implements AttributeConverter<PassportFormRequest> {
+public class PassportAttributesConverter implements AttributeConverter<PassportAttributes> {
 
     @Override
-    public AttributeValue transformFrom(PassportFormRequest input) {
+    public AttributeValue transformFrom(PassportAttributes input) {
 
         Map<String, AttributeValue> attributeValueMap =
                 Map.of(
@@ -37,9 +37,9 @@ public class PassportFormRequestTypeConverter implements AttributeConverter<Pass
     }
 
     @Override
-    public PassportFormRequest transformTo(AttributeValue input) {
+    public PassportAttributes transformTo(AttributeValue input) {
         Map<String, AttributeValue> attributeMap = input.m();
-        return new PassportFormRequest(
+        return new PassportAttributes(
                 attributeMap.get("passportNumber").s(),
                 attributeMap.get("surname").s(),
                 attributeMap.get("forenames").ss().toArray(new String[0]),
@@ -48,8 +48,8 @@ public class PassportFormRequestTypeConverter implements AttributeConverter<Pass
     }
 
     @Override
-    public EnhancedType<PassportFormRequest> type() {
-        return EnhancedType.of(PassportFormRequest.class);
+    public EnhancedType<PassportAttributes> type() {
+        return EnhancedType.of(PassportAttributes.class);
     }
 
     @Override

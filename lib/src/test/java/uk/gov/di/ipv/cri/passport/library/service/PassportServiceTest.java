@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -117,15 +117,15 @@ class PassportServiceTest {
         UUID correlationId = UUID.randomUUID();
         UUID requestId = UUID.randomUUID();
         DcsResponse validDcsResponse = new DcsResponse(correlationId, requestId, false, true, null);
-        PassportFormRequest passportFormRequest =
-                new PassportFormRequest(
+        PassportAttributes passportAttributes =
+                new PassportAttributes(
                         "PASSPORT_NUMBER",
                         "SURNAME",
                         new String[] {"FORENAMES"},
                         LocalDate.now(),
                         LocalDate.now());
         PassportCheckDao dcsResponse =
-                new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
+                new PassportCheckDao("UUID", passportAttributes);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

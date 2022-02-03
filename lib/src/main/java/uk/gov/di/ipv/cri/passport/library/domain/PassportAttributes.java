@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.DcsResponseTypeConverter;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -11,7 +13,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @DynamoDbBean
-public class PassportFormRequest {
+public class PassportAttributes {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIMESTAMP_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
@@ -22,6 +24,7 @@ public class PassportFormRequest {
     @JsonProperty private String timestamp;
     @JsonProperty private String passportNumber;
     @JsonProperty private String surname;
+    @JsonProperty private DcsResponse dcsResponse;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public String[] forenames;
@@ -32,10 +35,10 @@ public class PassportFormRequest {
     @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
     public LocalDate expiryDate;
 
-    public PassportFormRequest() {}
+    public PassportAttributes() {}
 
     @JsonCreator
-    public PassportFormRequest(
+    public PassportAttributes(
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "surname", required = true) String surname,
             @JsonProperty(value = "forenames", required = true) String[] forenames,
@@ -81,5 +84,14 @@ public class PassportFormRequest {
 
     public LocalDate getExpiryDate() {
         return expiryDate;
+    }
+
+    @DynamoDbConvertedBy(DcsResponseTypeConverter.class)
+    public DcsResponse getDcsResponse() {
+        return dcsResponse;
+    }
+
+    public void setDcsResponse(DcsResponse dcsResponse) {
+        this.dcsResponse = dcsResponse;
     }
 }

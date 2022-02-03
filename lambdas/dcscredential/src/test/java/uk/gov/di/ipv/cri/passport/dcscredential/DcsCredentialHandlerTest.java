@@ -17,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -53,7 +53,6 @@ class DcsCredentialHandlerTest {
 
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
-    ;
 
     private DcsCredentialHandler dcsCredentialHandler;
     private PassportCheckDao dcsCredential;
@@ -62,8 +61,8 @@ class DcsCredentialHandlerTest {
     private final DcsResponse validDcsResponse =
             new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
 
-    private final PassportFormRequest passportFormRequest =
-            new PassportFormRequest(
+    private final PassportAttributes attributes =
+            new PassportAttributes(
                     PASSPORT_NUMBER,
                     SURNAME,
                     FORENAMES,
@@ -73,7 +72,7 @@ class DcsCredentialHandlerTest {
     @BeforeEach
     void setUp() {
         dcsCredential =
-                new PassportCheckDao(TEST_RESOURCE_ID, passportFormRequest, validDcsResponse);
+                new PassportCheckDao(TEST_RESOURCE_ID, attributes);
         responseBody = new HashMap<>();
 
         dcsCredentialHandler =
@@ -112,15 +111,13 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-        Map<String, Map<String, Object>> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+       PassportCheckDao responseBody =
+                objectMapper.readValue(response.getBody(), PassportCheckDao.class);
 
-        Map<String, Object> attributes = responseBody.get("attributes");
+        PassportAttributes attributes = responseBody.getAttributes();
 
-        assertEquals(dcsCredential.getResourceId(), attributes.get("resourceId"));
-        assertEquals(
-                objectMapper.writeValueAsString(attributes),
-                objectMapper.writeValueAsString(dcsCredential));
+        assertEquals(dcsCredential.getResourceId(), responseBody.getResourceId());
+        assertEquals(objectMapper.writeValueAsString(dcsCredential), objectMapper.writeValueAsString(responseBody));
     }
 
     @Test

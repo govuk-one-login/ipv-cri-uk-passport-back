@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -65,8 +65,8 @@ class PassportHandlerTest {
     private final DcsResponse validDcsResponse =
             new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
 
-    private final PassportFormRequest passportFormRequest =
-            new PassportFormRequest(
+    private final PassportAttributes passportAttributes =
+            new PassportAttributes(
                     PASSPORT_NUMBER,
                     SURNAME,
                     FORENAMES,
@@ -104,7 +104,7 @@ class PassportHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
@@ -132,10 +132,10 @@ class PassportHandlerTest {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
+                new PassportCheckDao("UUID", passportAttributes);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
@@ -345,7 +345,7 @@ class PassportHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
 
         DcsResponse errorDcsResponse =
@@ -385,7 +385,7 @@ class PassportHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
@@ -409,8 +409,8 @@ class PassportHandlerTest {
         verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
         assertEquals(
                 validPassportFormData.get("passportNumber"),
-                persistedPassportCheckDao.getValue().getPassportFormRequest().getPassportNumber());
-        assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getDcsResponse());
+                persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
+        assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
     }
 
     @Test
@@ -422,10 +422,10 @@ class PassportHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportFormRequest.class)))
+        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao("UUID", passportFormRequest, validDcsResponse);
+                new PassportCheckDao("UUID", passportAttributes);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
 
