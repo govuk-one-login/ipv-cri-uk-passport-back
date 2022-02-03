@@ -94,17 +94,17 @@ Resources:
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
-          DCS_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/dcs/encryption-cert"
-          DCS_SIGNING_CERT_PARAM: !Sub "/${Environment}/dcs/signing-cert"
-          PASSPORT_CRI_SIGNING_KEY_PARAM: !Sub "/${Environment}/cri/passport/signing-key"
-          PASSPORT_CRI_ENCRYPTION_KEY_PARAM: !Sub "/${Environment}/cri/passport/encryption-key"
-          PASSPORT_CRI_TLS_KEY_PARAM: !Sub "/${Environment}/cri/passport/tls-key"
-          PASSPORT_CRI_SIGNING_CERT_PARAM: !Sub "/${Environment}/cri/passport/signing-cert"
-          PASSPORT_CRI_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/cri/passport/encryption-cert"
-          PASSPORT_CRI_TLS_CERT_PARAM: !Sub "/${Environment}/cri/passport/tls-cert"
-          DCS_POST_URL_PARAM: !Sub "/${Environment}/dcs/post-url"
-          DCS_TLS_ROOT_CERT_PARAM: !Sub "/${Environment}/dcs/tls-root-certificate"
-          DCS_TLS_INTERMEDIATE_CERT_PARAM: !Sub "/${Environment}/dcs/tls-intermediate-certificate"
+          DCS_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/encryptionCertForPassportToEncrypt"
+          DCS_SIGNING_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/signingCertForPassportToVerify"
+          PASSPORT_CRI_SIGNING_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/signingKeyForPassportToSign"
+          PASSPORT_CRI_ENCRYPTION_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"
+          PASSPORT_CRI_TLS_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/tlsKey"
+          PASSPORT_CRI_SIGNING_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/signingCertForDcsToVerify"
+          PASSPORT_CRI_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/encryptionCertForDcsToEncrypt"
+          PASSPORT_CRI_TLS_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/tlsCert"
+          DCS_POST_URL_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/postUrl"
+          DCS_TLS_ROOT_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsRootCertificate"
+          DCS_TLS_INTERMEDIATE_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsIntermediateCertificate"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
@@ -113,53 +113,13 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/dcs/*
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/cri/passport/*
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/*
       Events:
         IPVCriUKPassportAPI:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportAPI
             Path: /passport
-            Method: POST
-
-  IPVDcsStubFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub "ipv-stub-dcs-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.stubdcs.StubDcsHandler::handleRequest
-      Runtime: java11
-      PackageType: Zip
-      CodeUri: ../lambdas/stubdcs
-      Architectures:
-        - x86_64
-      MemorySize: 512
-      Environment:
-        Variables:
-          ENVIRONMENT: !Sub "${Environment}"
-          DCS_SIGNING_CERT_PARAM: !Sub "/${Environment}/dcs/signing-cert"
-          STUB_DCS_SIGNING_KEY_PARAM: !Sub "/${Environment}/stub-dcs/signing-key"
-          STUB_DCS_ENCRYPTION_KEY_PARAM: !Sub "/${Environment}/stub-dcs/encryption-key"
-          PASSPORT_CRI_SIGNING_CERT_PARAM: !Sub "/${Environment}/cri/passport/signing-cert"
-          PASSPORT_CRI_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/cri/passport/encryption-cert"
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DCSResponseTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportAccessTokensTable
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/dcs/signing-cert
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/stub-dcs/*
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/cri/passport/*
-      Events:
-        IPVCriUKPassportAPI:
-          Type: Api
-          Properties:
-            RestApiId: !Ref IPVCriUKPassportAPI
-            Path: /stub-dcs-check-passport
             Method: POST
 
   JwtVerificationFunction:
@@ -175,11 +135,10 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
-          ENVIRONMENT: !Sub "${Environment}"
-          CLIENT_TEST_PARAM: !Sub "/${Environment}/cri/passport/config/test/signing_cert"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "${Environment}/credentialIssuers/ukPassport/core/sharedAttributesJwtSigningCert/%s/"
       Policies:
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/cri/passport/config/*
+            ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/core/sharedAttributesJwtSigningCert/*"
       Events:
         IPVCriUKPassportAPI:
           Type: Api
