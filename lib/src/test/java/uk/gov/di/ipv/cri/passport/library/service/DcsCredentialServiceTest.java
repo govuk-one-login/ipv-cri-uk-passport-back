@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -23,7 +23,8 @@ class DcsCredentialServiceTest {
 
     @Mock private DataStore<PassportCheckDao> mockDataStore;
 
-    @Mock PassportFormRequest passportFormRequest;
+    @Mock
+    PassportAttributes passportAttributes;
 
     @Mock DcsResponse dcsResponse;
 
@@ -38,14 +39,14 @@ class DcsCredentialServiceTest {
     void shouldReturnCredentialsFromDataStore() {
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(
-                        UUID.randomUUID().toString(), passportFormRequest, dcsResponse);
+                        UUID.randomUUID().toString(), passportAttributes);
 
         when(mockDataStore.getItem(anyString())).thenReturn(passportCheckDao);
 
         PassportCheckDao credential = dcsCredentialService.getDcsCredential("dcs-credential-id-1");
 
         assertEquals(passportCheckDao.getResourceId(), credential.getResourceId());
-        assertEquals(passportCheckDao.getPassportFormRequest(), passportFormRequest);
-        assertEquals(passportCheckDao.getDcsResponse(), dcsResponse);
+        assertEquals(passportCheckDao.getAttributes(), credential.getAttributes());
+        assertEquals(passportCheckDao.getAttributes().getDcsResponse(), credential.getAttributes().getDcsResponse());
     }
 }

@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
@@ -83,18 +83,19 @@ public class PassportHandler
 
         try {
             validateRequest(queryStringParameters);
-            PassportFormRequest passportFormRequest = parsePassportFormRequest(input.getBody());
-            JWSObject preparedDcsPayload = preparePayload(passportFormRequest);
+            PassportAttributes passportAttributes = parsePassportFormRequest(input.getBody());
+            JWSObject preparedDcsPayload = preparePayload(passportAttributes);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
+            passportAttributes.setDcsResponse(unwrappedDcsResponse);
 
             validateDcsResponse(unwrappedDcsResponse);
 
             PassportCheckDao passportCheckDao =
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
-                            passportFormRequest,
-                            unwrappedDcsResponse);
+                            passportAttributes
+                    );
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
@@ -154,11 +155,11 @@ public class PassportHandler
         }
     }
 
-    private PassportFormRequest parsePassportFormRequest(String input)
+    private PassportAttributes parsePassportFormRequest(String input)
             throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Parsing passport form data into payload for DCS");
         try {
-            return objectMapper.readValue(input, PassportFormRequest.class);
+            return objectMapper.readValue(input, PassportAttributes.class);
         } catch (JsonProcessingException e) {
             LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(
@@ -166,11 +167,11 @@ public class PassportHandler
         }
     }
 
-    private JWSObject preparePayload(PassportFormRequest passportFormRequest)
+    private JWSObject preparePayload(PassportAttributes passportAttributes)
             throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Preparing payload for DCS");
         try {
-            return dcsCryptographyService.preparePayload(passportFormRequest);
+            return dcsCryptographyService.preparePayload(passportAttributes);
         } catch (CertificateException
                 | NoSuchAlgorithmException
                 | InvalidKeySpecException

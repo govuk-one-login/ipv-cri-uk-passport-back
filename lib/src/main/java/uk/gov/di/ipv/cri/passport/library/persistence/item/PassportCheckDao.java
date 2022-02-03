@@ -1,25 +1,25 @@
 package uk.gov.di.ipv.cri.passport.library.persistence.item;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportFormRequest;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 
 @DynamoDbBean
 public class PassportCheckDao {
 
     private String resourceId;
-    private DcsResponse dcsResponse;
-    private PassportFormRequest passportFormRequest;
+
+    @DynamoDBAttribute(attributeName = "attributes")
+    private PassportAttributes attributes;
 
     public PassportCheckDao() {}
 
     public PassportCheckDao(
-            String resourceId, PassportFormRequest passportFormRequest, DcsResponse dcsResponse) {
+            String resourceId, PassportAttributes attributes) {
         this.resourceId = resourceId;
-        this.passportFormRequest = passportFormRequest;
-        this.dcsResponse = dcsResponse;
+        this.attributes = attributes;
     }
 
     @DynamoDbPartitionKey
@@ -31,21 +31,12 @@ public class PassportCheckDao {
         this.resourceId = resourceId;
     }
 
-    @DynamoDbConvertedBy(DcsResponseTypeConverter.class)
-    public DcsResponse getDcsResponse() {
-        return dcsResponse;
+    @DynamoDbConvertedBy(PassportAttributesConverter.class)
+    public PassportAttributes getAttributes() {
+        return attributes;
     }
 
-    public void setDcsResponse(DcsResponse dcsResponse) {
-        this.dcsResponse = dcsResponse;
-    }
-
-    @DynamoDbConvertedBy(PassportFormRequestTypeConverter.class)
-    public PassportFormRequest getPassportFormRequest() {
-        return passportFormRequest;
-    }
-
-    public void setPassportFormRequest(PassportFormRequest passportFormRequest) {
-        this.passportFormRequest = passportFormRequest;
+    public void setAttributes(PassportAttributes passportAttributes) {
+        this.attributes = passportAttributes;
     }
 }
