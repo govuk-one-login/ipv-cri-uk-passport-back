@@ -24,7 +24,6 @@ public class DcsCredentialHandler
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DcsCredentialHandler.class);
     private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
-    private static final String ATTRIBUTES_PARAM = "attributes";
 
     private final DcsCredentialService dcsCredentialService;
     private final AccessTokenService accessTokenService;
