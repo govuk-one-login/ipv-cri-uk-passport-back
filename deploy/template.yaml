@@ -138,7 +138,7 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "${Environment}/credentialIssuers/ukPassport/clients/"
       Policies:
         - SSMParameterReadPolicy:
-            ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/core/sharedAttributesJwtSigningCert/*"
+            ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
       Events:
         IPVCriUKPassportAPI:
           Type: Api
