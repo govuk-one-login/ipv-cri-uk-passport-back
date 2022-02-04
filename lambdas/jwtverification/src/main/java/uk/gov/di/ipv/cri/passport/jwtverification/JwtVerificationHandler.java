@@ -58,7 +58,7 @@ public class JwtVerificationHandler
 
         try {
             SignedJWT signedJWT = SignedJWT.parse(input.getBody());
-            Certificate clientCert = configurationService.getClientCert(clientId);
+            Certificate clientCert = configurationService.getClientJwtSigningCert(clientId);
 
             if (isInvalidSignature(signedJWT, clientCert)) {
                 LOGGER.error("JWT signature is invalid");

@@ -135,7 +135,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
-          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "${Environment}/credentialIssuers/ukPassport/core/sharedAttributesJwtSigningCert/%s/"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "${Environment}/credentialIssuers/ukPassport/clients/"
       Policies:
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/core/sharedAttributesJwtSigningCert/*"
