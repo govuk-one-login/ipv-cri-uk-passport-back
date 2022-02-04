@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.dcscredential.domain.PassportCredentialIssuerResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -71,6 +72,7 @@ class DcsCredentialHandlerTest {
 
     @BeforeEach
     void setUp() {
+        attributes.setDcsResponse(validDcsResponse);
         dcsCredential =
                 new PassportCheckDao(TEST_RESOURCE_ID, attributes);
         responseBody = new HashMap<>();
@@ -111,13 +113,18 @@ class DcsCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
-       PassportCheckDao responseBody =
-                objectMapper.readValue(response.getBody(), PassportCheckDao.class);
-
-        PassportAttributes attributes = responseBody.getAttributes();
+        PassportCredentialIssuerResponse responseBody =
+                objectMapper.readValue(response.getBody(), PassportCredentialIssuerResponse.class);
 
         assertEquals(dcsCredential.getResourceId(), responseBody.getResourceId());
-        assertEquals(objectMapper.writeValueAsString(dcsCredential), objectMapper.writeValueAsString(responseBody));
+        assertEquals(dcsCredential.getAttributes().getSurname(), responseBody.getAttributes().getFamilyName());
+        assertEquals(dcsCredential.getAttributes().getForenames()[0], responseBody.getAttributes().getGivenNames()[0]);
+        assertEquals(dcsCredential.getAttributes().getPassportNumber(), responseBody.getAttributes().getPassportNumber());
+        assertEquals(dcsCredential.getAttributes().getDateOfBirth(), responseBody.getAttributes().getDateOfBirth());
+        assertEquals(dcsCredential.getAttributes().getExpiryDate(), responseBody.getAttributes().getExpiryDate());
+        assertEquals(dcsCredential.getAttributes().getRequestId(), responseBody.getAttributes().getRequestId());
+        assertEquals(dcsCredential.getAttributes().getCorrelationId(), responseBody.getAttributes().getCorrelationId());
+        assertEquals(dcsCredential.getAttributes().getDcsResponse().getRequestId(), responseBody.getAttributes().getDcsResponse().getRequestId());
     }
 
     @Test

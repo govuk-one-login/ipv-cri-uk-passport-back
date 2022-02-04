@@ -11,6 +11,7 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.di.ipv.cri.passport.dcscredential.domain.PassportCredentialIssuerResponse;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
@@ -69,7 +70,9 @@ public class DcsCredentialHandler
 
             PassportCheckDao credential = dcsCredentialService.getDcsCredential(resourceId);
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, credential);
+            PassportCredentialIssuerResponse passportCredentialIssuerResponse = PassportCredentialIssuerResponse.fromPassportCheckDao(credential);
+
+            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, passportCredentialIssuerResponse);
         } catch (ParseException e) {
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(

@@ -7,7 +7,6 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Map;
 
 public class PassportAttributesConverter implements AttributeConverter<PassportAttributes> {
