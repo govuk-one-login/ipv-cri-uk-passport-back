@@ -195,7 +195,7 @@ public class ConfigurationService {
     }
 
     public Certificate getClientJwtSigningCert(String clientId) throws CertificateException {
-        return getCertificateFromStore(String.format(System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX") + "%s/sharedAttributesJwtSigningCert", clientId));
+        return getCertificateFromStore(String.format(System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX") + "/%s/sharedAttributesJwtSigningCert", clientId));
     }
 
 }
