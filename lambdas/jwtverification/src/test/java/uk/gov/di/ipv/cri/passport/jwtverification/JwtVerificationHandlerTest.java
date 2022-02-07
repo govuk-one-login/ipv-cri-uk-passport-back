@@ -79,7 +79,7 @@ class JwtVerificationHandlerTest {
 
     @Test
     void shouldReturn200WhenGivenValidJWT() throws CertificateException {
-        when(configurationService.getClientCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
@@ -93,7 +93,7 @@ class JwtVerificationHandlerTest {
 
     @Test
     void shouldReturnClaimsAsJsonFromJWT() throws JsonProcessingException, CertificateException {
-        when(configurationService.getClientCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
@@ -159,7 +159,7 @@ class JwtVerificationHandlerTest {
 
     @Test
     void shouldReturn400WhenSignatureVerificationFails() throws JOSEException, JsonProcessingException, CertificateException {
-        when(configurationService.getClientCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate(BASE64_CERT));
 
         List<String> givenNames = Arrays.asList("Daniel", "Dan", "Danny");
         List<String> dateOfBirths = Arrays.asList("01/01/1980", "02/01/1980");
@@ -195,7 +195,7 @@ class JwtVerificationHandlerTest {
 
     @Test
     void shouldReturn400CertificateExceptionWhenGenerateCertificateFails() throws CertificateException, JsonProcessingException {
-        when(configurationService.getClientCert("TEST"))
+        when(configurationService.getClientJwtSigningCert("TEST"))
                 .thenThrow(new CertificateException("Failed to verify the signature of the JWT"));
 
         var event = new APIGatewayProxyRequestEvent();

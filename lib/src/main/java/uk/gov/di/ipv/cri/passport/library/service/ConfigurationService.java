@@ -194,9 +194,8 @@ public class ConfigurationService {
         return null;
     }
 
-    public Certificate getClientCert(String clientId) throws CertificateException {
-        return getCertificateFromStore(String.format("/%s/cri/passport/config/%s/signing_cert",
-                System.getenv("ENVIRONMENT"), clientId));
+    public Certificate getClientJwtSigningCert(String clientId) throws CertificateException {
+        return getCertificateFromStore(String.format(System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX") + "%s/sharedAttributesJwtSigningCert", clientId));
     }
 
 }
