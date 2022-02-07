@@ -29,8 +29,8 @@ class PassportCredentialIssuerResponseTest {
         PassportCredentialIssuerResponse passportCredentialIssuerResponse = PassportCredentialIssuerResponse.fromPassportCheckDao(passportCheckDao);
 
         assertEquals(RESOURCE_ID, passportCredentialIssuerResponse.getResourceId());
-        assertEquals(FAMILY_NAME, passportCredentialIssuerResponse.getAttributes().getFamilyName());
-        assertEquals(GIVEN_NAMES, passportCredentialIssuerResponse.getAttributes().getGivenNames());
+        assertEquals(FAMILY_NAME, passportCredentialIssuerResponse.getAttributes().getNames().getFamilyName());
+        assertEquals(GIVEN_NAMES, passportCredentialIssuerResponse.getAttributes().getNames().getGivenNames());
         assertEquals(PASSPORT_NUMBER, passportCredentialIssuerResponse.getAttributes().getPassportNumber());
         assertEquals(DATE_OF_BIRTH, passportCredentialIssuerResponse.getAttributes().getDateOfBirth());
         assertEquals(EXPIRY_DATE, passportCredentialIssuerResponse.getAttributes().getExpiryDate());

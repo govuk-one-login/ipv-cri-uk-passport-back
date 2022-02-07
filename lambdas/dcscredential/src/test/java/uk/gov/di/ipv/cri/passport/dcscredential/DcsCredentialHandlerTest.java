@@ -117,8 +117,8 @@ class DcsCredentialHandlerTest {
                 objectMapper.readValue(response.getBody(), PassportCredentialIssuerResponse.class);
 
         assertEquals(dcsCredential.getResourceId(), responseBody.getResourceId());
-        assertEquals(dcsCredential.getAttributes().getSurname(), responseBody.getAttributes().getFamilyName());
-        assertEquals(dcsCredential.getAttributes().getForenames()[0], responseBody.getAttributes().getGivenNames()[0]);
+        assertEquals(dcsCredential.getAttributes().getSurname(), responseBody.getAttributes().getNames().getFamilyName());
+        assertEquals(dcsCredential.getAttributes().getForenames()[0], responseBody.getAttributes().getNames().getGivenNames()[0]);
         assertEquals(dcsCredential.getAttributes().getPassportNumber(), responseBody.getAttributes().getPassportNumber());
         assertEquals(dcsCredential.getAttributes().getDateOfBirth(), responseBody.getAttributes().getDateOfBirth());
         assertEquals(dcsCredential.getAttributes().getExpiryDate(), responseBody.getAttributes().getExpiryDate());

@@ -24,8 +24,7 @@ public class PassportCredentialIssuerResponse {
             PassportCheckDao credential) {
         Attributes attributes =
                 new Attributes.Builder()
-                        .setFamilyName(credential.getAttributes().getSurname())
-                        .setGivenNames(credential.getAttributes().getForenames())
+                        .setNames(new Name(credential.getAttributes().getSurname(), credential.getAttributes().getForenames()))
                         .setPassportNumber(credential.getAttributes().getPassportNumber())
                         .setDateOfBirth(credential.getAttributes().getDateOfBirth())
                         .setExpiryDate(credential.getAttributes().getExpiryDate())
@@ -46,8 +45,7 @@ public class PassportCredentialIssuerResponse {
 
     public static class Attributes {
 
-        @JsonProperty private final String familyName;
-        @JsonProperty private final String[] givenNames;
+        @JsonProperty private final Name names;
         @JsonProperty private final String passportNumber;
         @JsonProperty private final LocalDate dateOfBirth;
         @JsonProperty private final LocalDate expiryDate;
@@ -57,16 +55,14 @@ public class PassportCredentialIssuerResponse {
 
         @JsonCreator
         public Attributes(
-                @JsonProperty(value = "familyName", required = true) String familyName,
-                @JsonProperty(value = "givenNames", required = true) String[] givenNames,
+                @JsonProperty(value = "names", required = true) Name names,
                 @JsonProperty(value = "passportNumber", required = true) String passportNumber,
                 @JsonProperty(value = "dateOfBirth", required = true) LocalDate dateOfBirth,
                 @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate,
                 @JsonProperty(value = "requestId", required = true) UUID requestId,
                 @JsonProperty(value = "correlationId", required = true) UUID correlationId,
                 @JsonProperty(value = "dcsResponse", required = true) DcsResponse dcsResponse) {
-            this.familyName = familyName;
-            this.givenNames = givenNames;
+            this.names = names;
             this.passportNumber = passportNumber;
             this.dateOfBirth = dateOfBirth;
             this.expiryDate = expiryDate;
@@ -75,12 +71,8 @@ public class PassportCredentialIssuerResponse {
             this.dcsResponse = dcsResponse;
         }
 
-        public String getFamilyName() {
-            return familyName;
-        }
-
-        public String[] getGivenNames() {
-            return givenNames;
+        public Name getNames() {
+            return names;
         }
 
         public String getPassportNumber() {
@@ -108,8 +100,7 @@ public class PassportCredentialIssuerResponse {
         }
 
         public static class Builder {
-            private String familyName;
-            private String[] givenNames;
+            private Name names;
             private String passportNumber;
             private LocalDate dateOfBirth;
             private LocalDate expiryDate;
@@ -117,13 +108,8 @@ public class PassportCredentialIssuerResponse {
             private UUID correlationId;
             private DcsResponse dcsResponse;
 
-            public Builder setFamilyName(String familyName) {
-                this.familyName = familyName;
-                return this;
-            }
-
-            public Builder setGivenNames(String[] givenNames) {
-                this.givenNames = givenNames;
+            public Builder setNames(Name names) {
+                this.names = names;
                 return this;
             }
 
@@ -159,8 +145,7 @@ public class PassportCredentialIssuerResponse {
 
             public Attributes build() {
                 return new Attributes(
-                        familyName,
-                        givenNames,
+                        names,
                         passportNumber,
                         dateOfBirth,
                         expiryDate,
