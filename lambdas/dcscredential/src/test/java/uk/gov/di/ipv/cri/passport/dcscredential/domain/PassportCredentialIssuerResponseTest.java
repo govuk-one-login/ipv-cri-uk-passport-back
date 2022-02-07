@@ -2,7 +2,9 @@ package uk.gov.di.ipv.cri.passport.dcscredential.domain;
 
 import org.junit.jupiter.api.Test;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.time.LocalDate;
@@ -23,8 +25,9 @@ class PassportCredentialIssuerResponseTest {
     void shouldConvertPassportCheckDaoToPassportCredentialIssuerResponse() {
 
         PassportAttributes attributes = new PassportAttributes(PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
+        PassportGpg45Score gpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
         attributes.setDcsResponse(new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), true, false, new String[]{}));
-        PassportCheckDao passportCheckDao = new PassportCheckDao(RESOURCE_ID, attributes);
+        PassportCheckDao passportCheckDao = new PassportCheckDao(RESOURCE_ID, attributes, gpg45Score);
 
         PassportCredentialIssuerResponse passportCredentialIssuerResponse = PassportCredentialIssuerResponse.fromPassportCheckDao(passportCheckDao);
 

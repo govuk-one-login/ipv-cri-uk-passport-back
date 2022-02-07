@@ -19,7 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -52,6 +54,9 @@ class PassportHandlerTest {
     public static final String[] FORENAMES = {"Tubbs"};
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
+    public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 4);
+    public static final Gpg45Evidence INVALID_GPG45_SCORE = new Gpg45Evidence(4, 0);
+
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
     private final Map<String, String> validPassportFormData =
@@ -65,6 +70,9 @@ class PassportHandlerTest {
     private final DcsResponse validDcsResponse =
             new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
 
+    private final DcsResponse invalidDcsResponse =
+            new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, false, null);
+
     private final PassportAttributes passportAttributes =
             new PassportAttributes(
                     PASSPORT_NUMBER,
@@ -72,6 +80,8 @@ class PassportHandlerTest {
                     FORENAMES,
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
+
+    private final PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -132,7 +142,7 @@ class PassportHandlerTest {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao("UUID", passportAttributes);
+                new PassportCheckDao("UUID", passportAttributes, passportGpg45Score);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
@@ -377,7 +387,7 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldPersistPassportCheckDao()
+    void shouldPersistPassportCheckDaoWithValidGpg45Score()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException {
@@ -410,7 +420,48 @@ class PassportHandlerTest {
         assertEquals(
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
+        assertEquals(VALID_GPG45_SCORE.getStrength(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+        assertEquals(VALID_GPG45_SCORE.getValidity(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
         assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+    }
+
+    @Test
+    void shouldPersistPassportCheckDaoWithInValidGpg45Score()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+            InvalidKeySpecException, JOSEException, ParseException,
+            EmptyDcsResponseException {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
+        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
+                .thenReturn(jwsObject);
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(invalidDcsResponse);
+
+        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
+
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> params = new HashMap<>();
+        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
+        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
+        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
+        params.put(OAuth2RequestParams.SCOPE, "openid");
+        event.setQueryStringParameters(params);
+        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+
+        underTest.handleRequest(event, context);
+
+        ArgumentCaptor<PassportCheckDao> persistedPassportCheckDao =
+                ArgumentCaptor.forClass(PassportCheckDao.class);
+
+        verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
+        assertEquals(
+                validPassportFormData.get("passportNumber"),
+                persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
+        assertEquals(INVALID_GPG45_SCORE.getStrength(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+        assertEquals(INVALID_GPG45_SCORE.getValidity(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+        assertEquals(invalidDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
     }
 
     @Test
@@ -425,7 +476,7 @@ class PassportHandlerTest {
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao("UUID", passportAttributes);
+                new PassportCheckDao("UUID", passportAttributes, passportGpg45Score);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
 

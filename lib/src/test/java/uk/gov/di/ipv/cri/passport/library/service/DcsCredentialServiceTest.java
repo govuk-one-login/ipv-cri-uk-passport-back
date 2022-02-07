@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -26,6 +27,9 @@ class DcsCredentialServiceTest {
     @Mock
     PassportAttributes passportAttributes;
 
+    @Mock
+    PassportGpg45Score gpg45Score;
+
     @Mock DcsResponse dcsResponse;
 
     private DcsCredentialService dcsCredentialService;
@@ -39,7 +43,9 @@ class DcsCredentialServiceTest {
     void shouldReturnCredentialsFromDataStore() {
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(
-                        UUID.randomUUID().toString(), passportAttributes);
+                        UUID.randomUUID().toString(),
+                        passportAttributes,
+                        gpg45Score);
 
         when(mockDataStore.getItem(anyString())).thenReturn(passportCheckDao);
 
