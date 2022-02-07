@@ -3,9 +3,12 @@ package uk.gov.di.ipv.cri.passport.library.persistence.item;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbFlatten;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.converter.PassportAttributesConverter;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.converter.PassportGpg45ScoreConverter;
 
 @DynamoDbBean
 public class PassportCheckDao {
@@ -41,12 +44,16 @@ public class PassportCheckDao {
         return attributes;
     }
 
+    public void setAttributes(PassportAttributes passportAttributes) {
+        this.attributes = passportAttributes;
+    }
+
     @DynamoDbConvertedBy(PassportGpg45ScoreConverter.class)
     public PassportGpg45Score getGpg45Score() {
         return gpg45Score;
     }
 
-    public void setAttributes(PassportAttributes passportAttributes) {
-        this.attributes = passportAttributes;
+    public void setGpg45Score(PassportGpg45Score gpg45Score) {
+        this.gpg45Score = gpg45Score;
     }
 }

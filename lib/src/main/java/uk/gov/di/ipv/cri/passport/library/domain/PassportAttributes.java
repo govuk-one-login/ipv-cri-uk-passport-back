@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.DcsResponseTypeConverter;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.converter.DcsResponseConverter;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -86,7 +86,7 @@ public class PassportAttributes {
         return expiryDate;
     }
 
-    @DynamoDbConvertedBy(DcsResponseTypeConverter.class)
+    @DynamoDbConvertedBy(DcsResponseConverter.class)
     public DcsResponse getDcsResponse() {
         return dcsResponse;
     }
