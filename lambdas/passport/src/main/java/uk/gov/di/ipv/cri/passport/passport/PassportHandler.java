@@ -17,7 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
@@ -46,9 +48,11 @@ public class PassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportHandler.class);
-
     private static final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final int MAX_GPG45_VALUE = 4;
+    private static final int MIN_GPG45_VALUE = 0;
+
     public static final String AUTHORIZATION_CODE = "code";
 
     private final PassportService passportService;
@@ -94,7 +98,8 @@ public class PassportHandler
             PassportCheckDao passportCheckDao =
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
-                            passportAttributes
+                            passportAttributes,
+                            generateGpg45Score(unwrappedDcsResponse)
                     );
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
@@ -140,6 +145,13 @@ public class PassportHandler
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.DCS_RETURNED_AN_ERROR);
         }
+    }
+
+    private PassportGpg45Score generateGpg45Score(DcsResponse dcsResponse) {
+        int validity = dcsResponse.isValid() ? MAX_GPG45_VALUE : MIN_GPG45_VALUE;
+        Gpg45Evidence gpg45Evidence = new Gpg45Evidence(MAX_GPG45_VALUE, validity);
+
+        return new PassportGpg45Score(gpg45Evidence);
     }
 
     private void checkQueryStringCanBeParsedToAuthenticationRequest(

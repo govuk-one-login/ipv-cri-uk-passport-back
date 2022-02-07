@@ -18,7 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.dcscredential.domain.PassportCredentialIssuerResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -70,11 +72,13 @@ class DcsCredentialHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
+    private final PassportGpg45Score gpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
+
     @BeforeEach
     void setUp() {
         attributes.setDcsResponse(validDcsResponse);
         dcsCredential =
-                new PassportCheckDao(TEST_RESOURCE_ID, attributes);
+                new PassportCheckDao(TEST_RESOURCE_ID, attributes, gpg45Score);
         responseBody = new HashMap<>();
 
         dcsCredentialHandler =
