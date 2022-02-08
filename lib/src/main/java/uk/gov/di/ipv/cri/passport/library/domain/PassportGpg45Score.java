@@ -8,7 +8,7 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 public class PassportGpg45Score {
     private Gpg45Evidence evidence;
 
-    public PassportGpg45Score(){}
+    public PassportGpg45Score() {}
 
     public PassportGpg45Score(Gpg45Evidence evidence) {
         this.evidence = evidence;
@@ -24,8 +24,6 @@ public class PassportGpg45Score {
 
     @Override
     public String toString() {
-        return "PassportGpg45Score{" +
-                "evidence=" + (evidence != null ? evidence : "empty") +
-                '}';
+        return "PassportGpg45Score{" + "evidence=" + (evidence != null ? evidence : "empty") + '}';
     }
 }

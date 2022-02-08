@@ -34,9 +34,6 @@ public class Gpg45Evidence {
 
     @Override
     public String toString() {
-        return "Gpg45Evidence{" +
-                "strength=" + strength +
-                ", validity=" + validity +
-                '}';
+        return "Gpg45Evidence{" + "strength=" + strength + ", validity=" + validity + '}';
     }
 }

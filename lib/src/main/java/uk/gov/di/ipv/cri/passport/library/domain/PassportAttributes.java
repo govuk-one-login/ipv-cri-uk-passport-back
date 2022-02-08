@@ -129,16 +129,28 @@ public class PassportAttributes {
 
     @Override
     public String toString() {
-        return "PassportAttributes{" +
-                "correlationId=" + correlationId +
-                ", requestId=" + requestId +
-                ", timestamp='" + timestamp + '\'' +
-                ", passportNumber='" + passportNumber + '\'' +
-                ", surname='" + surname + '\'' +
-                ", dcsResponse=" + (dcsResponse != null ? dcsResponse : "empty") +
-                ", forenames=" + forenames +
-                ", dateOfBirth=" + dateOfBirth +
-                ", expiryDate=" + expiryDate +
-                '}';
+        return "PassportAttributes{"
+                + "correlationId="
+                + correlationId
+                + ", requestId="
+                + requestId
+                + ", timestamp='"
+                + timestamp
+                + '\''
+                + ", passportNumber='"
+                + passportNumber
+                + '\''
+                + ", surname='"
+                + surname
+                + '\''
+                + ", dcsResponse="
+                + (dcsResponse != null ? dcsResponse : "empty")
+                + ", forenames="
+                + forenames
+                + ", dateOfBirth="
+                + dateOfBirth
+                + ", expiryDate="
+                + expiryDate
+                + '}';
     }
 }

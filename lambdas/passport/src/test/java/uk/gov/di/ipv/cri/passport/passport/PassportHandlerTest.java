@@ -36,7 +36,6 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -366,7 +365,7 @@ class PassportHandlerTest {
                         UUID.randomUUID(),
                         true,
                         false,
-                       List.of("Test DCS error message"));
+                        List.of("Test DCS error message"));
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(errorDcsResponse);
 

@@ -25,7 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DataStoreIT {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private static final ObjectMapper objectMapper =
+            new ObjectMapper().registerModule(new JavaTimeModule());
     private static final String DCS_RESPONSE_TABLE_NAME = "dcs-response-integration-test";
     private static final String RESOURCE_ID_PARAM = "resourceId";
     private static final String ATTRIBUTES_PARAM = "attributes";
@@ -35,14 +36,10 @@ public class DataStoreIT {
                     DCS_RESPONSE_TABLE_NAME, PassportCheckDao.class, DataStore.getClient(null));
 
     private static final AmazonDynamoDB independentClient =
-            AmazonDynamoDBClient
-                    .builder()
-                    .withRegion("eu-west-2")
-                    .build();
+            AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();
 
     private static final DynamoDB testClient = new DynamoDB(independentClient);
-    private static final Table testHarness =
-            testClient.getTable(DCS_RESPONSE_TABLE_NAME);
+    private static final Table testHarness = testClient.getTable(DCS_RESPONSE_TABLE_NAME);
 
     @Test
     void shouldPutPassportCheckIntoTable() throws JsonProcessingException {
@@ -50,17 +47,24 @@ public class DataStoreIT {
 
         dcsResponseDataStore.create(passportCheckDao);
 
-        Item savedPassportCheck = testHarness.getItem(RESOURCE_ID_PARAM, passportCheckDao.getResourceId());
+        Item savedPassportCheck =
+                testHarness.getItem(RESOURCE_ID_PARAM, passportCheckDao.getResourceId());
 
         assertEquals(passportCheckDao.getResourceId(), savedPassportCheck.get(RESOURCE_ID_PARAM));
 
-        String attributesJson = objectMapper.writeValueAsString(savedPassportCheck.get(ATTRIBUTES_PARAM));
-        PassportAttributes savedPassportAttributes = objectMapper.readValue(attributesJson, PassportAttributes.class);
-        assertEquals(passportCheckDao.getAttributes().toString(), savedPassportAttributes.toString());
+        String attributesJson =
+                objectMapper.writeValueAsString(savedPassportCheck.get(ATTRIBUTES_PARAM));
+        PassportAttributes savedPassportAttributes =
+                objectMapper.readValue(attributesJson, PassportAttributes.class);
+        assertEquals(
+                passportCheckDao.getAttributes().toString(), savedPassportAttributes.toString());
 
-        String gpg45ScoreJson = objectMapper.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
-        PassportGpg45Score savedPassportGpg45Score = objectMapper.readValue(gpg45ScoreJson, PassportGpg45Score.class);
-        assertEquals(passportCheckDao.getGpg45Score().toString(), savedPassportGpg45Score.toString());
+        String gpg45ScoreJson =
+                objectMapper.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
+        PassportGpg45Score savedPassportGpg45Score =
+                objectMapper.readValue(gpg45ScoreJson, PassportGpg45Score.class);
+        assertEquals(
+                passportCheckDao.getGpg45Score().toString(), savedPassportGpg45Score.toString());
 
         cleanUpEntry(passportCheckDao.getResourceId());
     }
@@ -74,16 +78,25 @@ public class DataStoreIT {
         PassportCheckDao result = dcsResponseDataStore.getItem(passportCheckDao.getResourceId());
 
         assertEquals(passportCheckDao.getResourceId(), result.getResourceId());
-        assertEquals(passportCheckDao.getAttributes().toString(), result.getAttributes().toString());
-        assertEquals(passportCheckDao.getGpg45Score().toString(), result.getGpg45Score().toString());
+        assertEquals(
+                passportCheckDao.getAttributes().toString(), result.getAttributes().toString());
+        assertEquals(
+                passportCheckDao.getGpg45Score().toString(), result.getGpg45Score().toString());
 
         cleanUpEntry(passportCheckDao.getResourceId());
     }
 
     private PassportCheckDao createPassportCheckDao() {
         String resourceId = UUID.randomUUID().toString();
-        DcsResponse dcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
-        PassportAttributes passportAttributes = new PassportAttributes("passport-number", "surname", List.of("family-name"), LocalDate.of(1900, 1, 1), LocalDate.of(2025, 2, 2));
+        DcsResponse dcsResponse =
+                new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+        PassportAttributes passportAttributes =
+                new PassportAttributes(
+                        "passport-number",
+                        "surname",
+                        List.of("family-name"),
+                        LocalDate.of(1900, 1, 1),
+                        LocalDate.of(2025, 2, 2));
         passportAttributes.setDcsResponse(dcsResponse);
         PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(5, 5));
         return new PassportCheckDao(resourceId, passportAttributes, passportGpg45Score);

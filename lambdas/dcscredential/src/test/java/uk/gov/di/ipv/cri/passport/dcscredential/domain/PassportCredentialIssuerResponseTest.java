@@ -32,7 +32,11 @@ class PassportCredentialIssuerResponseTest {
         PassportGpg45Score gpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
         attributes.setDcsResponse(
                 new DcsResponse(
-                        UUID.randomUUID(), UUID.randomUUID(), true, false, Collections.emptyList()));
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        true,
+                        false,
+                        Collections.emptyList()));
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(RESOURCE_ID, attributes, gpg45Score);
 

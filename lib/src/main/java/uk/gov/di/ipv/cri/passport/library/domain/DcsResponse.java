@@ -75,12 +75,17 @@ public class DcsResponse {
 
     @Override
     public String toString() {
-        return "DcsResponse{" +
-                "correlationId=" + correlationId +
-                ", requestId=" + requestId +
-                ", error=" + error +
-                ", valid=" + valid +
-                ", errorMessage=" + errorMessage +
-                '}';
+        return "DcsResponse{"
+                + "correlationId="
+                + correlationId
+                + ", requestId="
+                + requestId
+                + ", error="
+                + error
+                + ", valid="
+                + valid
+                + ", errorMessage="
+                + errorMessage
+                + '}';
     }
 }
