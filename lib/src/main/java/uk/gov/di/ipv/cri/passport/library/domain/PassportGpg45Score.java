@@ -11,6 +11,8 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.converter.Gpg45Eviden
 public class PassportGpg45Score {
     private Gpg45Evidence evidence;
 
+    public PassportGpg45Score(){}
+
     public PassportGpg45Score(Gpg45Evidence evidence) {
         this.evidence = evidence;
     }

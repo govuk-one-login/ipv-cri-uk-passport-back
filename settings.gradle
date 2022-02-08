@@ -5,4 +5,5 @@ include "lib",
 		"lambdas:dcscredential",
 		"lambdas:passport",
 		"lambdas:stubdcs",
-		"lambdas:jwtverification"
+		"lambdas:jwtverification",
+		"integration-test"

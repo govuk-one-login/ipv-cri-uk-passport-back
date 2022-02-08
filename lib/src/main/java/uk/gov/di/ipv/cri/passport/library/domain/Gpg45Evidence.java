@@ -6,8 +6,10 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 @ExcludeFromGeneratedCoverageReport
 @DynamoDbBean
 public class Gpg45Evidence {
-    private final int strength;
-    private final int validity;
+    private int strength;
+    private int validity;
+
+    public Gpg45Evidence() {}
 
     public Gpg45Evidence(int strength, int validity) {
         this.strength = strength;
