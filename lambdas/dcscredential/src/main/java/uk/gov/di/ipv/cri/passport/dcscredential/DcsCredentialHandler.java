@@ -31,7 +31,9 @@ public class DcsCredentialHandler
     private final ConfigurationService configurationService;
 
     public DcsCredentialHandler(
-            DcsCredentialService dcsCredentialService, AccessTokenService accessTokenService, ConfigurationService configurationService) {
+            DcsCredentialService dcsCredentialService,
+            AccessTokenService accessTokenService,
+            ConfigurationService configurationService) {
         this.configurationService = configurationService;
         this.dcsCredentialService = dcsCredentialService;
         this.accessTokenService = accessTokenService;
@@ -69,9 +71,11 @@ public class DcsCredentialHandler
 
             PassportCheckDao credential = dcsCredentialService.getDcsCredential(resourceId);
 
-            PassportCredentialIssuerResponse passportCredentialIssuerResponse = PassportCredentialIssuerResponse.fromPassportCheckDao(credential);
+            PassportCredentialIssuerResponse passportCredentialIssuerResponse =
+                    PassportCredentialIssuerResponse.fromPassportCheckDao(credential);
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, passportCredentialIssuerResponse);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_OK, passportCredentialIssuerResponse);
         } catch (ParseException e) {
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(

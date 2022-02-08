@@ -24,11 +24,9 @@ class DcsCredentialServiceTest {
 
     @Mock private DataStore<PassportCheckDao> mockDataStore;
 
-    @Mock
-    PassportAttributes passportAttributes;
+    @Mock PassportAttributes passportAttributes;
 
-    @Mock
-    PassportGpg45Score gpg45Score;
+    @Mock PassportGpg45Score gpg45Score;
 
     @Mock DcsResponse dcsResponse;
 
@@ -42,10 +40,7 @@ class DcsCredentialServiceTest {
     @Test
     void shouldReturnCredentialsFromDataStore() {
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao(
-                        UUID.randomUUID().toString(),
-                        passportAttributes,
-                        gpg45Score);
+                new PassportCheckDao(UUID.randomUUID().toString(), passportAttributes, gpg45Score);
 
         when(mockDataStore.getItem(anyString())).thenReturn(passportCheckDao);
 
@@ -53,6 +48,8 @@ class DcsCredentialServiceTest {
 
         assertEquals(passportCheckDao.getResourceId(), credential.getResourceId());
         assertEquals(passportCheckDao.getAttributes(), credential.getAttributes());
-        assertEquals(passportCheckDao.getAttributes().getDcsResponse(), credential.getAttributes().getDcsResponse());
+        assertEquals(
+                passportCheckDao.getAttributes().getDcsResponse(),
+                credential.getAttributes().getDcsResponse());
     }
 }

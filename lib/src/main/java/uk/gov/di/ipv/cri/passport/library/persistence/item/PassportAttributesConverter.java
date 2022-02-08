@@ -19,10 +19,7 @@ public class PassportAttributesConverter implements AttributeConverter<PassportA
                         "passportNumber",
                                 AttributeValue.builder().s(input.getPassportNumber()).build(),
                         "surname", AttributeValue.builder().s(input.getSurname()).build(),
-                        "forenames",
-                                AttributeValue.builder()
-                                        .ss(input.getForenames())
-                                        .build(),
+                        "forenames", AttributeValue.builder().ss(input.getForenames()).build(),
                         "dateOfBirth",
                                 AttributeValue.builder()
                                         .s(input.getDateOfBirth().toString())

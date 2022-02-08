@@ -77,12 +77,12 @@ class DcsCredentialHandlerTest {
     @BeforeEach
     void setUp() {
         attributes.setDcsResponse(validDcsResponse);
-        dcsCredential =
-                new PassportCheckDao(TEST_RESOURCE_ID, attributes, gpg45Score);
+        dcsCredential = new PassportCheckDao(TEST_RESOURCE_ID, attributes, gpg45Score);
         responseBody = new HashMap<>();
 
         dcsCredentialHandler =
-                new DcsCredentialHandler(mockDcsCredentialService, mockAccessTokenService, mockConfigurationService);
+                new DcsCredentialHandler(
+                        mockDcsCredentialService, mockAccessTokenService, mockConfigurationService);
     }
 
     @Test
@@ -121,14 +121,30 @@ class DcsCredentialHandlerTest {
                 objectMapper.readValue(response.getBody(), PassportCredentialIssuerResponse.class);
 
         assertEquals(dcsCredential.getResourceId(), responseBody.getResourceId());
-        assertEquals(dcsCredential.getAttributes().getSurname(), responseBody.getAttributes().getNames().getFamilyName());
-        assertEquals(dcsCredential.getAttributes().getForenames()[0], responseBody.getAttributes().getNames().getGivenNames()[0]);
-        assertEquals(dcsCredential.getAttributes().getPassportNumber(), responseBody.getAttributes().getPassportNumber());
-        assertEquals(dcsCredential.getAttributes().getDateOfBirth(), responseBody.getAttributes().getDateOfBirth());
-        assertEquals(dcsCredential.getAttributes().getExpiryDate(), responseBody.getAttributes().getExpiryDate());
-        assertEquals(dcsCredential.getAttributes().getRequestId(), responseBody.getAttributes().getRequestId());
-        assertEquals(dcsCredential.getAttributes().getCorrelationId(), responseBody.getAttributes().getCorrelationId());
-        assertEquals(dcsCredential.getAttributes().getDcsResponse().getRequestId(), responseBody.getAttributes().getDcsResponse().getRequestId());
+        assertEquals(
+                dcsCredential.getAttributes().getSurname(),
+                responseBody.getAttributes().getNames().getFamilyName());
+        assertEquals(
+                dcsCredential.getAttributes().getForenames()[0],
+                responseBody.getAttributes().getNames().getGivenNames()[0]);
+        assertEquals(
+                dcsCredential.getAttributes().getPassportNumber(),
+                responseBody.getAttributes().getPassportNumber());
+        assertEquals(
+                dcsCredential.getAttributes().getDateOfBirth(),
+                responseBody.getAttributes().getDateOfBirth());
+        assertEquals(
+                dcsCredential.getAttributes().getExpiryDate(),
+                responseBody.getAttributes().getExpiryDate());
+        assertEquals(
+                dcsCredential.getAttributes().getRequestId(),
+                responseBody.getAttributes().getRequestId());
+        assertEquals(
+                dcsCredential.getAttributes().getCorrelationId(),
+                responseBody.getAttributes().getCorrelationId());
+        assertEquals(
+                dcsCredential.getAttributes().getDcsResponse().getRequestId(),
+                responseBody.getAttributes().getDcsResponse().getRequestId());
     }
 
     @Test

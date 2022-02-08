@@ -24,7 +24,10 @@ public class PassportCredentialIssuerResponse {
             PassportCheckDao credential) {
         Attributes attributes =
                 new Attributes.Builder()
-                        .setNames(new Name(credential.getAttributes().getSurname(), credential.getAttributes().getForenames()))
+                        .setNames(
+                                new Name(
+                                        credential.getAttributes().getSurname(),
+                                        credential.getAttributes().getForenames()))
                         .setPassportNumber(credential.getAttributes().getPassportNumber())
                         .setDateOfBirth(credential.getAttributes().getDateOfBirth())
                         .setExpiryDate(credential.getAttributes().getExpiryDate())
