@@ -366,7 +366,7 @@ class PassportHandlerTest {
                         UUID.randomUUID(),
                         true,
                         false,
-                        new String[] {"Test DCS error message"});
+                       List.of("Test DCS error message"));
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(errorDcsResponse);
 
