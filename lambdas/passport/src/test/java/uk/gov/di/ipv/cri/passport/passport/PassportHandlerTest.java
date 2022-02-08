@@ -38,6 +38,7 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -51,7 +52,7 @@ class PassportHandlerTest {
 
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
-    public static final String[] FORENAMES = {"Tubbs"};
+    public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
     public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 2);
@@ -63,7 +64,7 @@ class PassportHandlerTest {
             Map.of(
                     "passportNumber", PASSPORT_NUMBER,
                     "surname", SURNAME,
-                    "forenames", Arrays.toString(FORENAMES),
+                    "forenames", FORENAMES.toString(),
                     "dateOfBirth", DATE_OF_BIRTH,
                     "expiryDate", EXPIRY_DATE);
 

@@ -140,7 +140,7 @@ public class PassportHandler
     private void validateDcsResponse(DcsResponse dcsResponse)
             throws HttpResponseExceptionWithErrorBody {
         if (dcsResponse.isError()) {
-            String errorMessage = Arrays.toString(dcsResponse.getErrorMessage());
+            String errorMessage = dcsResponse.getErrorMessage().toString();
             LOGGER.error("DCS encounterd error: {}", errorMessage);
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.DCS_RETURNED_AN_ERROR);

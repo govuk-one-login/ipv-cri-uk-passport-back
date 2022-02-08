@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
+import java.util.List;
 import java.util.UUID;
 
 @ExcludeFromGeneratedCoverageReport
@@ -15,7 +16,7 @@ public class DcsResponse {
     private UUID requestId;
     private boolean error;
     private boolean valid;
-    private String[] errorMessage;
+    private List<String> errorMessage;
 
     public DcsResponse() {}
 
@@ -25,7 +26,7 @@ public class DcsResponse {
             @JsonProperty(value = "requestId", required = true) UUID requestId,
             @JsonProperty(value = "error", required = false) boolean error,
             @JsonProperty(value = "valid", required = false) boolean valid,
-            @JsonProperty(value = "errorMessage", required = false) String[] errorMessage) {
+            @JsonProperty(value = "errorMessage", required = false) List<String> errorMessage) {
         this.correlationId = correlationId;
         this.requestId = requestId;
         this.error = error;
@@ -49,7 +50,7 @@ public class DcsResponse {
         return valid;
     }
 
-    public String[] getErrorMessage() {
+    public List<String> getErrorMessage() {
         return errorMessage;
     }
 }

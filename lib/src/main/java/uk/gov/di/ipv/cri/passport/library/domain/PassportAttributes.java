@@ -10,6 +10,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.converter.DcsResponse
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @DynamoDbBean
@@ -27,7 +28,7 @@ public class PassportAttributes {
     @JsonProperty private DcsResponse dcsResponse;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-    public String[] forenames;
+    public List<String> forenames;
 
     @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
     public LocalDate dateOfBirth;
@@ -41,7 +42,7 @@ public class PassportAttributes {
     public PassportAttributes(
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "surname", required = true) String surname,
-            @JsonProperty(value = "forenames", required = true) String[] forenames,
+            @JsonProperty(value = "forenames", required = true) List<String> forenames,
             @JsonProperty(value = "dateOfBirth", required = true) LocalDate dateOfBirth,
             @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate) {
         this.passportNumber = passportNumber;
@@ -74,7 +75,7 @@ public class PassportAttributes {
         return surname;
     }
 
-    public String[] getForenames() {
+    public List<String> getForenames() {
         return forenames;
     }
 

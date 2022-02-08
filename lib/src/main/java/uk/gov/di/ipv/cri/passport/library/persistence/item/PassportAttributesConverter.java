@@ -38,7 +38,7 @@ public class PassportAttributesConverter implements AttributeConverter<PassportA
         return new PassportAttributes(
                 attributeMap.get("passportNumber").s(),
                 attributeMap.get("surname").s(),
-                attributeMap.get("forenames").ss().toArray(new String[0]),
+                attributeMap.get("forenames").ss(),
                 LocalDate.parse(attributeMap.get("dateOfBirth").s()),
                 LocalDate.parse(attributeMap.get("expiryDate").s()));
     }

@@ -19,6 +19,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,7 +47,7 @@ public class DataStoreIT {
         String resourceId = UUID.randomUUID().toString();
 
         DcsResponse dcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
-        PassportAttributes passportAttributes = new PassportAttributes("passport-number", "surname", new String[]{"family-name"}, LocalDate.of(1900, 1, 1), LocalDate.of(2025, 2, 2));
+        PassportAttributes passportAttributes = new PassportAttributes("passport-number", "surname", List.of("family-name"), LocalDate.of(1900, 1, 1), LocalDate.of(2025, 2, 2));
         passportAttributes.setDcsResponse(dcsResponse);
         Gpg45Evidence gpg45Evidence = new Gpg45Evidence(5, 5);
         PassportCheckDao passportCheckDao = new PassportCheckDao(resourceId, passportAttributes, new PassportGpg45Score(gpg45Evidence));
@@ -61,7 +62,7 @@ public class DataStoreIT {
         assertEquals(passportAttributes.getPassportNumber(), savedPassportAttributes.getPassportNumber());
         assertEquals(passportAttributes.getCorrelationId(), savedPassportAttributes.getCorrelationId());
         assertEquals(passportAttributes.getDateOfBirth(), savedPassportAttributes.getDateOfBirth());
-        assertEquals(Arrays.toString(passportAttributes.getForenames()), Arrays.toString(savedPassportAttributes.getForenames()));
+        assertEquals(passportAttributes.getForenames().toString(), savedPassportAttributes.getForenames().toString());
         assertEquals(passportAttributes.getExpiryDate(), savedPassportAttributes.getExpiryDate());
         assertEquals(passportAttributes.getTimestamp(), savedPassportAttributes.getTimestamp());
         assertEquals(passportAttributes.getSurname(), savedPassportAttributes.getSurname());
