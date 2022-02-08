@@ -58,7 +58,9 @@ public class DataStoreIT {
 
         assertEquals(resourceId, savedPassportCheck.get("resourceId"));
 
-        PassportAttributes savedPassportAttributes = objectMapper.readValue(savedPassportCheck.get("attributes").toString(), PassportAttributes.class);
+        String attributesJson = objectMapper.writeValueAsString(savedPassportCheck.get("attributes"));
+
+        PassportAttributes savedPassportAttributes = objectMapper.readValue(attributesJson, PassportAttributes.class);
         assertEquals(passportAttributes.getPassportNumber(), savedPassportAttributes.getPassportNumber());
         assertEquals(passportAttributes.getCorrelationId(), savedPassportAttributes.getCorrelationId());
         assertEquals(passportAttributes.getDateOfBirth(), savedPassportAttributes.getDateOfBirth());

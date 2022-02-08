@@ -8,10 +8,9 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 import java.util.List;
 import java.util.UUID;
 
-@ExcludeFromGeneratedCoverageReport
 @DynamoDbBean
+@ExcludeFromGeneratedCoverageReport
 public class DcsResponse {
-
     private UUID correlationId;
     private UUID requestId;
     private boolean error;
@@ -38,19 +37,39 @@ public class DcsResponse {
         return correlationId;
     }
 
+    public void setCorrelationId(UUID correlationId) {
+        this.correlationId = correlationId;
+    }
+
     public UUID getRequestId() {
         return requestId;
+    }
+
+    public void setRequestId(UUID requestId) {
+        this.requestId = requestId;
     }
 
     public boolean isError() {
         return error;
     }
 
+    public void setError(boolean error) {
+        this.error = error;
+    }
+
     public boolean isValid() {
         return valid;
     }
 
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
     public List<String> getErrorMessage() {
         return errorMessage;
+    }
+
+    public void setErrorMessage(List<String> errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }
