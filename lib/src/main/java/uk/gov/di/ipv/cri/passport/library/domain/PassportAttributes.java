@@ -126,4 +126,19 @@ public class PassportAttributes {
     public void setExpiryDate(LocalDate expiryDate) {
         this.expiryDate = expiryDate;
     }
+
+    @Override
+    public String toString() {
+        return "PassportAttributes{" +
+                "correlationId=" + correlationId +
+                ", requestId=" + requestId +
+                ", timestamp='" + timestamp + '\'' +
+                ", passportNumber='" + passportNumber + '\'' +
+                ", surname='" + surname + '\'' +
+                ", dcsResponse=" + (dcsResponse != null ? dcsResponse : "empty") +
+                ", forenames=" + forenames +
+                ", dateOfBirth=" + dateOfBirth +
+                ", expiryDate=" + expiryDate +
+                '}';
+    }
 }

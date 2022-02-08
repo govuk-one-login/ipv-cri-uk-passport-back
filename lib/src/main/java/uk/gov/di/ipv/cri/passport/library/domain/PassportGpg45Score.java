@@ -21,4 +21,11 @@ public class PassportGpg45Score {
     public void setEvidence(Gpg45Evidence evidence) {
         this.evidence = evidence;
     }
+
+    @Override
+    public String toString() {
+        return "PassportGpg45Score{" +
+                "evidence=" + (evidence != null ? evidence : "empty") +
+                '}';
+    }
 }

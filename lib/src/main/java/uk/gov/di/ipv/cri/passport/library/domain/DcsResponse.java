@@ -72,4 +72,15 @@ public class DcsResponse {
     public void setErrorMessage(List<String> errorMessage) {
         this.errorMessage = errorMessage;
     }
+
+    @Override
+    public String toString() {
+        return "DcsResponse{" +
+                "correlationId=" + correlationId +
+                ", requestId=" + requestId +
+                ", error=" + error +
+                ", valid=" + valid +
+                ", errorMessage=" + errorMessage +
+                '}';
+    }
 }

@@ -18,7 +18,6 @@ import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +27,9 @@ public class DataStoreIT {
 
     private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private static final String DCS_RESPONSE_TABLE_NAME = "dcs-response-integration-test";
+    private static final String RESOURCE_ID_PARAM = "resourceId";
+    private static final String ATTRIBUTES_PARAM = "attributes";
+    private static final String GPG45_SCORE_PARAM = "gpg45Score";
     private static final DataStore<PassportCheckDao> dcsResponseDataStore =
             new DataStore<>(
                     DCS_RESPONSE_TABLE_NAME, PassportCheckDao.class, DataStore.getClient(null));
@@ -43,36 +45,33 @@ public class DataStoreIT {
             testClient.getTable(DCS_RESPONSE_TABLE_NAME);
 
     @Test
-    public void shouldPutPassportCheckIntoTable() throws JsonProcessingException {
+    void shouldPutPassportCheckIntoTable() throws JsonProcessingException {
         String resourceId = UUID.randomUUID().toString();
 
         DcsResponse dcsResponse = new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
         PassportAttributes passportAttributes = new PassportAttributes("passport-number", "surname", List.of("family-name"), LocalDate.of(1900, 1, 1), LocalDate.of(2025, 2, 2));
         passportAttributes.setDcsResponse(dcsResponse);
-        Gpg45Evidence gpg45Evidence = new Gpg45Evidence(5, 5);
-        PassportCheckDao passportCheckDao = new PassportCheckDao(resourceId, passportAttributes, new PassportGpg45Score(gpg45Evidence));
+        PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(5, 5));
+        PassportCheckDao passportCheckDao = new PassportCheckDao(resourceId, passportAttributes, passportGpg45Score);
 
         dcsResponseDataStore.create(passportCheckDao);
 
-        Item savedPassportCheck = testHarness.getItem("resourceId", resourceId);
+        Item savedPassportCheck = testHarness.getItem(RESOURCE_ID_PARAM, resourceId);
 
-        assertEquals(resourceId, savedPassportCheck.get("resourceId"));
+        assertEquals(resourceId, savedPassportCheck.get(RESOURCE_ID_PARAM));
 
-        String attributesJson = objectMapper.writeValueAsString(savedPassportCheck.get("attributes"));
-
+        String attributesJson = objectMapper.writeValueAsString(savedPassportCheck.get(ATTRIBUTES_PARAM));
         PassportAttributes savedPassportAttributes = objectMapper.readValue(attributesJson, PassportAttributes.class);
-        assertEquals(passportAttributes.getPassportNumber(), savedPassportAttributes.getPassportNumber());
-        assertEquals(passportAttributes.getCorrelationId(), savedPassportAttributes.getCorrelationId());
-        assertEquals(passportAttributes.getDateOfBirth(), savedPassportAttributes.getDateOfBirth());
-        assertEquals(passportAttributes.getForenames().toString(), savedPassportAttributes.getForenames().toString());
-        assertEquals(passportAttributes.getExpiryDate(), savedPassportAttributes.getExpiryDate());
-        assertEquals(passportAttributes.getTimestamp(), savedPassportAttributes.getTimestamp());
-        assertEquals(passportAttributes.getSurname(), savedPassportAttributes.getSurname());
+        assertEquals(passportAttributes.toString(), savedPassportAttributes.toString());
+
+        String gpg45ScoreJson = objectMapper.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
+        PassportGpg45Score savedPassportGpg45Score = objectMapper.readValue(gpg45ScoreJson, PassportGpg45Score.class);
+        assertEquals(passportGpg45Score.toString(), savedPassportGpg45Score.toString());
 
         cleanUpEntry(resourceId);
     }
 
     private void cleanUpEntry(String resourceId) {
-        testHarness.deleteItem(new PrimaryKey("resourceId", resourceId));
+        testHarness.deleteItem(new PrimaryKey(RESOURCE_ID_PARAM, resourceId));
     }
 }
