@@ -81,7 +81,8 @@ class PassportHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
-    private final PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
+    private final PassportGpg45Score passportGpg45Score =
+            new PassportGpg45Score(new Gpg45Evidence(4, 4));
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -420,16 +421,22 @@ class PassportHandlerTest {
         assertEquals(
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
-        assertEquals(VALID_GPG45_SCORE.getStrength(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
-        assertEquals(VALID_GPG45_SCORE.getValidity(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
-        assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+        assertEquals(
+                VALID_GPG45_SCORE.getStrength(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+        assertEquals(
+                VALID_GPG45_SCORE.getValidity(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+        assertEquals(
+                validDcsResponse,
+                persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
     }
 
     @Test
     void shouldPersistPassportCheckDaoWithInValidGpg45Score()
             throws IOException, CertificateException, NoSuchAlgorithmException,
-            InvalidKeySpecException, JOSEException, ParseException,
-            EmptyDcsResponseException {
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
@@ -459,9 +466,15 @@ class PassportHandlerTest {
         assertEquals(
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
-        assertEquals(INVALID_GPG45_SCORE.getStrength(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
-        assertEquals(INVALID_GPG45_SCORE.getValidity(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
-        assertEquals(invalidDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+        assertEquals(
+                INVALID_GPG45_SCORE.getStrength(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+        assertEquals(
+                INVALID_GPG45_SCORE.getValidity(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+        assertEquals(
+                invalidDcsResponse,
+                persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
     }
 
     @Test

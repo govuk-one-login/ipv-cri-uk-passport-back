@@ -15,13 +15,19 @@ import java.util.Map;
 @ExcludeFromGeneratedCoverageReport
 public class PassportGpg45ScoreConverter implements AttributeConverter<PassportGpg45Score> {
     ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public AttributeValue transformFrom(PassportGpg45Score input) {
         Map<String, AttributeValue> attributeValueMap =
                 Map.of(
                         "evidence",
-                        AttributeValue.builder().m(objectMapper.convertValue(input.getEvidence(), new TypeReference<Map<String, AttributeValue>>() {
-                        })).build());
+                        AttributeValue.builder()
+                                .m(
+                                        objectMapper.convertValue(
+                                                input.getEvidence(),
+                                                new TypeReference<
+                                                        Map<String, AttributeValue>>() {}))
+                                .build());
 
         return AttributeValue.builder().m(attributeValueMap).build();
     }
@@ -31,7 +37,10 @@ public class PassportGpg45ScoreConverter implements AttributeConverter<PassportG
         Map<String, AttributeValue> attributeMap = input.m();
 
         Map<String, AttributeValue> evidenceMap = attributeMap.get("evidence").m();
-        Gpg45Evidence evidence = new Gpg45Evidence(Integer.parseInt(evidenceMap.get("strength").s()), Integer.parseInt(evidenceMap.get("validity").s()));
+        Gpg45Evidence evidence =
+                new Gpg45Evidence(
+                        Integer.parseInt(evidenceMap.get("strength").s()),
+                        Integer.parseInt(evidenceMap.get("validity").s()));
 
         return new PassportGpg45Score(evidence);
     }

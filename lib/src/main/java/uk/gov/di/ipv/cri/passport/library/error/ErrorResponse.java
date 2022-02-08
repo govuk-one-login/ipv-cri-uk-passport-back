@@ -18,8 +18,8 @@ public enum ErrorResponse {
     FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT(1009, "Failed to parse shared attributes JWT"),
     MISSING_CLIENT_ID_QUERY_PARAMETER(1010, "Missing client_id query parameter"),
     FAILED_TO_RETRIEVE_CERTIFICATE(1011, "Failed to retrieve client certificate from SSM"),
-    FAILED_TO_VERIFY_SIGNATURE(1012,"Failed to verify the signature of the JWT"),
-    JWT_SIGNATURE_IS_INVALID(1013,"Signature of the shared attribute JWT is invalid");
+    FAILED_TO_VERIFY_SIGNATURE(1012, "Failed to verify the signature of the JWT"),
+    JWT_SIGNATURE_IS_INVALID(1013, "Signature of the shared attribute JWT is invalid");
 
     private final int code;
     private final String message;

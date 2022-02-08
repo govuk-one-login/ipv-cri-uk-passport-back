@@ -17,7 +17,8 @@ public class Gpg45EvidenceConverter implements AttributeConverter<Gpg45Evidence>
                 Map.of(
                         "strength",
                         AttributeValue.builder().s(Integer.toString(input.getStrength())).build(),
-                        "validity", AttributeValue.builder().s(Integer.toString(input.getValidity())).build());
+                        "validity",
+                        AttributeValue.builder().s(Integer.toString(input.getValidity())).build());
 
         return AttributeValue.builder().m(attributeValueMap).build();
     }

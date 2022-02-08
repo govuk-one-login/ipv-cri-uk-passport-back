@@ -127,8 +127,7 @@ class PassportServiceTest {
                         LocalDate.now(),
                         LocalDate.now());
         PassportGpg45Score gpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
-        PassportCheckDao dcsResponse =
-                new PassportCheckDao("UUID", passportAttributes, gpg45Score);
+        PassportCheckDao dcsResponse = new PassportCheckDao("UUID", passportAttributes, gpg45Score);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

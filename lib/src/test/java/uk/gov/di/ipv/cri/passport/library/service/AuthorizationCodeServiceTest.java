@@ -26,8 +26,7 @@ class AuthorizationCodeServiceTest {
 
     @BeforeEach
     void setUp() {
-        authorizationCodeService =
-                new AuthorizationCodeService(mockDataStore);
+        authorizationCodeService = new AuthorizationCodeService(mockDataStore);
     }
 
     @Test

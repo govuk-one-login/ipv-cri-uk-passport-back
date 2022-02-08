@@ -99,8 +99,7 @@ public class PassportHandler
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
                             passportAttributes,
-                            generateGpg45Score(unwrappedDcsResponse)
-                    );
+                            generateGpg45Score(unwrappedDcsResponse));
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();

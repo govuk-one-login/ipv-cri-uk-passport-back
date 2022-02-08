@@ -19,8 +19,7 @@ public class AuthorizationCodeService {
                         DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
     }
 
-    public AuthorizationCodeService(
-            DataStore<AuthorizationCodeItem> dataStore) {
+    public AuthorizationCodeService(DataStore<AuthorizationCodeItem> dataStore) {
         this.dataStore = dataStore;
     }
 
