@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.passport.dcscredential.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
@@ -59,8 +60,15 @@ public class PassportCredentialIssuerResponse {
 
         @JsonProperty private final Name names;
         @JsonProperty private final String passportNumber;
-        @JsonProperty private final LocalDate dateOfBirth;
-        @JsonProperty private final LocalDate expiryDate;
+
+        @JsonProperty
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private final LocalDate dateOfBirth;
+
+        @JsonProperty
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private final LocalDate expiryDate;
+
         @JsonProperty private final UUID requestId;
         @JsonProperty private final UUID correlationId;
         @JsonProperty private final DcsResponse dcsResponse;
