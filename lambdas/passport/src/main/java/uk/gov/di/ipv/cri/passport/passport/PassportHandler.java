@@ -147,8 +147,12 @@ public class PassportHandler
     }
 
     private PassportGpg45Score generateGpg45Score(DcsResponse dcsResponse) {
-        int validity = dcsResponse.isValid() ? MAX_PASSPORT_GPG45_VALIDITY_VALUE : MIN_PASSPORT_GPG45_VALUE;
-        Gpg45Evidence gpg45Evidence = new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
+        int validity =
+                dcsResponse.isValid()
+                        ? MAX_PASSPORT_GPG45_VALIDITY_VALUE
+                        : MIN_PASSPORT_GPG45_VALUE;
+        Gpg45Evidence gpg45Evidence =
+                new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
 
         return new PassportGpg45Score(gpg45Evidence);
     }
