@@ -50,8 +50,9 @@ public class PassportHandler
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportHandler.class);
     private static final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
-    private static final int MAX_GPG45_VALUE = 4;
-    private static final int MIN_GPG45_VALUE = 0;
+    private static final int MAX_PASSPORT_GPG45_STRENGTH_VALUE = 4;
+    private static final int MAX_PASSPORT_GPG45_VALIDITY_VALUE = 2;
+    private static final int MIN_PASSPORT_GPG45_VALUE = 0;
 
     public static final String AUTHORIZATION_CODE = "code";
 
@@ -147,8 +148,8 @@ public class PassportHandler
     }
 
     private PassportGpg45Score generateGpg45Score(DcsResponse dcsResponse) {
-        int validity = dcsResponse.isValid() ? MAX_GPG45_VALUE : MIN_GPG45_VALUE;
-        Gpg45Evidence gpg45Evidence = new Gpg45Evidence(MAX_GPG45_VALUE, validity);
+        int validity = dcsResponse.isValid() ? MAX_PASSPORT_GPG45_VALIDITY_VALUE : MIN_PASSPORT_GPG45_VALUE;
+        Gpg45Evidence gpg45Evidence = new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
 
         return new PassportGpg45Score(gpg45Evidence);
     }

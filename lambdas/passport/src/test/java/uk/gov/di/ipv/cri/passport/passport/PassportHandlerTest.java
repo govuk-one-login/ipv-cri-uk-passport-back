@@ -54,7 +54,7 @@ class PassportHandlerTest {
     public static final String[] FORENAMES = {"Tubbs"};
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
-    public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 4);
+    public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 2);
     public static final Gpg45Evidence INVALID_GPG45_SCORE = new Gpg45Evidence(4, 0);
 
     private final ObjectMapper objectMapper =
