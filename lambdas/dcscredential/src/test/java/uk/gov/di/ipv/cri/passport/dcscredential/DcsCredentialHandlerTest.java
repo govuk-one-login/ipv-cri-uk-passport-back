@@ -146,6 +146,12 @@ class DcsCredentialHandlerTest {
         assertEquals(
                 dcsCredential.getAttributes().getDcsResponse().getRequestId(),
                 responseBody.getAttributes().getDcsResponse().getRequestId());
+        assertEquals(
+                dcsCredential.getGpg45Score().getEvidence().getStrength(),
+                responseBody.getGpg45Score().getEvidence().getStrength());
+        assertEquals(
+                dcsCredential.getGpg45Score().getEvidence().getValidity(),
+                responseBody.getGpg45Score().getEvidence().getValidity());
     }
 
     @Test
