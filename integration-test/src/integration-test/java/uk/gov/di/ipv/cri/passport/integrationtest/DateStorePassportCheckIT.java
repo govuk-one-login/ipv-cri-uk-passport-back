@@ -4,12 +4,15 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
+import com.amazonaws.services.dynamodbv2.document.KeyAttribute;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
@@ -18,13 +21,15 @@ import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DataStoreIT {
+public class DateStorePassportCheckIT {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DateStorePassportCheckIT.class);
     private static final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
     private static final String DCS_RESPONSE_TABLE_NAME = "dcs-response-integration-test";
@@ -35,11 +40,26 @@ public class DataStoreIT {
             new DataStore<>(
                     DCS_RESPONSE_TABLE_NAME, PassportCheckDao.class, DataStore.getClient(null));
 
+    private static List<String> createdItemIds = new ArrayList<>();
+
     private static final AmazonDynamoDB independentClient =
             AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();
 
     private static final DynamoDB testClient = new DynamoDB(independentClient);
-    private static final Table testHarness = testClient.getTable(DCS_RESPONSE_TABLE_NAME);
+    private static final Table tableTestHarness = testClient.getTable(DCS_RESPONSE_TABLE_NAME);
+
+    @AfterAll
+    public static void deleteTestItems() {
+        for (String id : createdItemIds) {
+            try {
+                tableTestHarness.deleteItem(new KeyAttribute(RESOURCE_ID_PARAM, id));
+            } catch (Exception e) {
+                LOGGER.warn(
+                        String.format(
+                                "Failed to delete test data with %s of %s", RESOURCE_ID_PARAM, id));
+            }
+        }
+    }
 
     @Test
     void shouldPutPassportCheckIntoTable() throws JsonProcessingException {
@@ -48,7 +68,7 @@ public class DataStoreIT {
         dcsResponseDataStore.create(passportCheckDao);
 
         Item savedPassportCheck =
-                testHarness.getItem(RESOURCE_ID_PARAM, passportCheckDao.getResourceId());
+                tableTestHarness.getItem(RESOURCE_ID_PARAM, passportCheckDao.getResourceId());
 
         assertEquals(passportCheckDao.getResourceId(), savedPassportCheck.get(RESOURCE_ID_PARAM));
 
@@ -65,15 +85,13 @@ public class DataStoreIT {
                 objectMapper.readValue(gpg45ScoreJson, PassportGpg45Score.class);
         assertEquals(
                 passportCheckDao.getGpg45Score().toString(), savedPassportGpg45Score.toString());
-
-        cleanUpEntry(passportCheckDao.getResourceId());
     }
 
     @Test
     void shouldGetPassportCheckDaoFromTable() throws JsonProcessingException {
         PassportCheckDao passportCheckDao = createPassportCheckDao();
         Item item = Item.fromJSON(objectMapper.writeValueAsString(passportCheckDao));
-        testHarness.putItem(item);
+        tableTestHarness.putItem(item);
 
         PassportCheckDao result = dcsResponseDataStore.getItem(passportCheckDao.getResourceId());
 
@@ -82,8 +100,6 @@ public class DataStoreIT {
                 passportCheckDao.getAttributes().toString(), result.getAttributes().toString());
         assertEquals(
                 passportCheckDao.getGpg45Score().toString(), result.getGpg45Score().toString());
-
-        cleanUpEntry(passportCheckDao.getResourceId());
     }
 
     private PassportCheckDao createPassportCheckDao() {
@@ -99,10 +115,8 @@ public class DataStoreIT {
                         LocalDate.of(2025, 2, 2));
         passportAttributes.setDcsResponse(dcsResponse);
         PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(5, 5));
-        return new PassportCheckDao(resourceId, passportAttributes, passportGpg45Score);
-    }
+        createdItemIds.add(resourceId);
 
-    private void cleanUpEntry(String resourceId) {
-        testHarness.deleteItem(new PrimaryKey(RESOURCE_ID_PARAM, resourceId));
+        return new PassportCheckDao(resourceId, passportAttributes, passportGpg45Score);
     }
 }
