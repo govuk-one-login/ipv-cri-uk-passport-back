@@ -8,7 +8,7 @@ Resources:
   DCSResponseTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "dcs-response-integration-test"
+      TableName: "dcs-response-integration-test"
       AttributeDefinitions:
         - AttributeName: "resourceId"
           AttributeType: "S"
