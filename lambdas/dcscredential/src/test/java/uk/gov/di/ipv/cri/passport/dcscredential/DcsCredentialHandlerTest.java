@@ -29,6 +29,7 @@ import uk.gov.di.ipv.cri.passport.library.service.DcsCredentialService;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ class DcsCredentialHandlerTest {
     private static final String TEST_RESOURCE_ID = UUID.randomUUID().toString();
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
-    public static final String[] FORENAMES = {"Tubbs"};
+    public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
 
@@ -125,8 +126,8 @@ class DcsCredentialHandlerTest {
                 dcsCredential.getAttributes().getSurname(),
                 responseBody.getAttributes().getNames().getFamilyName());
         assertEquals(
-                dcsCredential.getAttributes().getForenames()[0],
-                responseBody.getAttributes().getNames().getGivenNames()[0]);
+                dcsCredential.getAttributes().getForenames().get(0),
+                responseBody.getAttributes().getNames().getGivenNames().get(0));
         assertEquals(
                 dcsCredential.getAttributes().getPassportNumber(),
                 responseBody.getAttributes().getPassportNumber());

@@ -47,6 +47,7 @@ import java.security.spec.RSAPublicKeySpec;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,7 +93,7 @@ class DcsCryptographyServiceTest {
                 new PassportAttributes(
                         "PASSPORT_NUMBER",
                         "SURNAME",
-                        new String[] {"FORENAMES"},
+                        List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
         JWSObject preparedPayload = underTest.preparePayload(passportAttributes);
