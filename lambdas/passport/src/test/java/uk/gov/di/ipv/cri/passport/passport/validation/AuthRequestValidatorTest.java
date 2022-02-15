@@ -1,6 +1,5 @@
 package uk.gov.di.ipv.cri.passport.passport.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -115,32 +114,5 @@ class AuthRequestValidatorTest {
         assertEquals(
                 ErrorResponse.INVALID_REDIRECT_URL.getMessage(),
                 validationResult.getError().getMessage());
-    }
-
-    @Test
-    void validateRequestReturnsErrorIfCanNotParseAuthRequestFromQueryStringParams()
-            throws JsonProcessingException {
-        when(mockConfigurationService.getClientRedirectUrls("12345"))
-                .thenReturn(List.of("http://example.com"));
-        List<String> paramsToRemove =
-                List.of(
-                        OAuth2RequestParams.REDIRECT_URI,
-                        OAuth2RequestParams.CLIENT_ID,
-                        OAuth2RequestParams.RESPONSE_TYPE,
-                        OAuth2RequestParams.SCOPE);
-        for (String param : paramsToRemove) {
-            Map<String, List<String>> unparseableParams = new HashMap<>(VALID_QUERY_STRING_PARAMS);
-            unparseableParams.remove(param);
-
-            var validationResult = validator.validateRequest(unparseableParams);
-
-            assertFalse(validationResult.isValid());
-            assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                    validationResult.getError().getCode());
-            assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                    validationResult.getError().getMessage());
-        }
     }
 }

@@ -10,6 +10,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +96,8 @@ public class PassportHandler
                         HttpStatus.SC_BAD_REQUEST, validationResult.getError());
             }
 
+            AuthenticationRequest.parse(queryStringParameters);
+
             PassportAttributes passportAttributes = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(passportAttributes);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
@@ -118,6 +122,11 @@ public class PassportHandler
         } catch (HttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(), e.getErrorBody());
+        } catch (ParseException e) {
+            LOGGER.error("Authentication request could not be parsed", e);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_BAD_REQUEST,
+                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
         }
     }
 

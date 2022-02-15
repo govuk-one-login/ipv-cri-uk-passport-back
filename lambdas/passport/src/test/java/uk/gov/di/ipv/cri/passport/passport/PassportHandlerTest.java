@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.passport.passport;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +53,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PassportHandlerTest {
-
+    private static final Map<String, String> TEST_EVENT_HEADERS = Map.of("ipv-session-id", "12345");
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
     public static final List<String> FORENAMES = List.of("Tubbs");
@@ -60,6 +61,12 @@ class PassportHandlerTest {
     public static final String EXPIRY_DATE = "2024-09-03";
     public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 2);
     public static final Gpg45Evidence INVALID_GPG45_SCORE = new Gpg45Evidence(4, 0);
+    private static final Map<String, String> VALID_QUERY_PARAMS =
+            Map.of(
+                    OAuth2RequestParams.REDIRECT_URI, "http://example.com",
+                    OAuth2RequestParams.CLIENT_ID, "12345",
+                    OAuth2RequestParams.RESPONSE_TYPE, "code",
+                    OAuth2RequestParams.SCOPE, "openid");
 
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
@@ -445,5 +452,41 @@ class PassportHandlerTest {
         assertEquals(
                 dcsResponseItemArgumentCaptor.getValue().getResourceId(),
                 resourceIdArgumentCaptor.getValue());
+    }
+
+    @Test
+    void shouldReturn400IfCanNotParseAuthRequestFromQueryStringParams()
+            throws JsonProcessingException {
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
+
+        List<String> paramsToRemove =
+                List.of(
+                        OAuth2RequestParams.REDIRECT_URI,
+                        OAuth2RequestParams.CLIENT_ID,
+                        OAuth2RequestParams.RESPONSE_TYPE,
+                        OAuth2RequestParams.SCOPE);
+        for (String param : paramsToRemove) {
+            Map<String, String> unparseableParams = new HashMap<>(VALID_QUERY_PARAMS);
+            unparseableParams.remove(param);
+
+            APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+            event.setQueryStringParameters(unparseableParams);
+            event.setHeaders(TEST_EVENT_HEADERS);
+
+            APIGatewayProxyResponseEvent response = underTest.handleRequest(event, context);
+
+            Map<String, Object> responseBody =
+                    objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+            assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
+            assertEquals(
+                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
+                    responseBody.get("code"));
+            assertEquals(
+                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
+                    responseBody.get("message"));
+            verify(authorizationCodeService, never())
+                    .persistAuthorizationCode(anyString(), anyString());
+        }
     }
 }

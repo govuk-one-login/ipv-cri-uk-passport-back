@@ -1,7 +1,5 @@
 package uk.gov.di.ipv.cri.passport.passport.validation;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
@@ -37,11 +35,6 @@ public class AuthRequestValidator {
             return new ValidationResult<>(false, redirectErrorResult.get());
         }
 
-        var authParamsErrorResult = validateQueryStringParams(queryStringParameters);
-        if (authParamsErrorResult.isPresent()) {
-            return new ValidationResult<>(false, authParamsErrorResult.get());
-        }
-
         return ValidationResult.createValidResult();
     }
 
@@ -67,17 +60,6 @@ public class AuthRequestValidator {
             return Optional.empty();
         } catch (IllegalArgumentException e) {
             LOGGER.error(e.getMessage());
-            return Optional.of(ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
-        }
-    }
-
-    private Optional<ErrorResponse> validateQueryStringParams(
-            Map<String, List<String>> queryStringParameters) {
-        try {
-            AuthenticationRequest.parse(queryStringParameters);
-            return Optional.empty();
-        } catch (ParseException e) {
-            LOGGER.error(("Failed to parse oauth query string parameters: " + e.getMessage()));
             return Optional.of(ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
         }
     }
