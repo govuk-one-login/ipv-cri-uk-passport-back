@@ -40,7 +40,7 @@ public class DateStorePassportCheckIT {
             new DataStore<>(
                     DCS_RESPONSE_TABLE_NAME, PassportCheckDao.class, DataStore.getClient(null));
 
-    private static List<String> createdItemIds = new ArrayList<>();
+    private static final List<String> createdItemIds = new ArrayList<>();
 
     private static final AmazonDynamoDB independentClient =
             AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();

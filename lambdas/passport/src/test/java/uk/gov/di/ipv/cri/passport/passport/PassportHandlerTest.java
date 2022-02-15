@@ -21,7 +21,6 @@ import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -35,7 +34,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,17 +70,6 @@ class PassportHandlerTest {
 
     private final DcsResponse invalidDcsResponse =
             new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, false, null);
-
-    private final PassportAttributes passportAttributes =
-            new PassportAttributes(
-                    PASSPORT_NUMBER,
-                    SURNAME,
-                    FORENAMES,
-                    LocalDate.parse(DATE_OF_BIRTH),
-                    LocalDate.parse(EXPIRY_DATE));
-
-    private final PassportGpg45Score passportGpg45Score =
-            new PassportGpg45Score(new Gpg45Evidence(4, 4));
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -142,8 +129,6 @@ class PassportHandlerTest {
                     EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        PassportCheckDao passportCheckDao =
-                new PassportCheckDao("UUID", passportAttributes, passportGpg45Score);
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
@@ -488,8 +473,6 @@ class PassportHandlerTest {
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
-        PassportCheckDao passportCheckDao =
-                new PassportCheckDao("UUID", passportAttributes, passportGpg45Score);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
 

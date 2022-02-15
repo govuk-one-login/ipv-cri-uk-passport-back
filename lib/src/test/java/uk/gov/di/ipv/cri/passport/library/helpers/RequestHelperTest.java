@@ -9,12 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class RequestHelperTest {
 
-    Map<String, String> headers =
-            Map.of(
-                    "foo", "bar",
-                    "Foo", "bar",
-                    "baz", "bar");
-
     @Test
     void getHeaderByKeyShouldReturnHeaderIfMatchFound() {
         assertEquals("toyou", RequestHelper.getHeaderByKey(Map.of("tome", "toyou"), "tome"));

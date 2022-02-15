@@ -90,9 +90,8 @@ public class ConfigurationService {
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
-    private Certificate getCertificateFromStore(String parameteraName) throws CertificateException {
-        byte[] binaryCertificate =
-                Base64.getDecoder().decode(getParameterFromStore(parameteraName));
+    private Certificate getCertificateFromStore(String parameterName) throws CertificateException {
+        byte[] binaryCertificate = Base64.getDecoder().decode(getParameterFromStore(parameterName));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }

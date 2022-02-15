@@ -16,7 +16,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
@@ -28,7 +27,6 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,7 +37,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PassportServiceTest {
-    public static final String EXPECTED_RESPONSE = "Expected Response";
     public static final String CHECK_PASSPORT_URI = "https://localhost/check/passport";
 
     @Mock ConfigurationService configurationService;
@@ -48,7 +45,6 @@ class PassportServiceTest {
     @Mock JWSObject jwsObject;
     @Mock HttpResponse httpResponse;
     @Mock StatusLine statusLine;
-    @Mock HttpEntity entity;
 
     @Captor ArgumentCaptor<HttpPost> httpPost;
 
@@ -109,17 +105,12 @@ class PassportServiceTest {
         EmptyDcsResponseException emptyDcsResponseException =
                 assertThrows(
                         EmptyDcsResponseException.class,
-                        () -> {
-                            underTest.dcsPassportCheck(jwsObject);
-                        });
+                        () -> underTest.dcsPassportCheck(jwsObject));
         assertEquals("Response from DCS is empty", emptyDcsResponseException.getMessage());
     }
 
     @Test
     void shouldCreateDcsResponseInDataStore() {
-        UUID correlationId = UUID.randomUUID();
-        UUID requestId = UUID.randomUUID();
-        DcsResponse validDcsResponse = new DcsResponse(correlationId, requestId, false, true, null);
         PassportAttributes passportAttributes =
                 new PassportAttributes(
                         "PASSPORT_NUMBER",

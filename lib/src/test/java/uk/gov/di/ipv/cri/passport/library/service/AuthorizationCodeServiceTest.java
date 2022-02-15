@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 class AuthorizationCodeServiceTest {
 
     @Mock private DataStore<AuthorizationCodeItem> mockDataStore;
-    @Mock private ConfigurationService mockConfigurationService;
 
     private AuthorizationCodeService authorizationCodeService;
 
