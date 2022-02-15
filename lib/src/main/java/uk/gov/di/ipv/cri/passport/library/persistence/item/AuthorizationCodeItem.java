@@ -8,12 +8,14 @@ public class AuthorizationCodeItem {
 
     private String authCode;
     private String resourceId;
+    private String redirectUrl;
 
     public AuthorizationCodeItem() {}
 
-    public AuthorizationCodeItem(String authCode, String resourceId) {
+    public AuthorizationCodeItem(String authCode, String resourceId, String redirectUrl) {
         this.authCode = authCode;
         this.resourceId = resourceId;
+        this.redirectUrl = redirectUrl;
     }
 
     @DynamoDbPartitionKey
@@ -31,5 +33,13 @@ public class AuthorizationCodeItem {
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
+    }
+
+    public String getRedirectUrl() {
+        return redirectUrl;
+    }
+
+    public void setRedirectUrl(String redirectUrl) {
+        this.redirectUrl = redirectUrl;
     }
 }

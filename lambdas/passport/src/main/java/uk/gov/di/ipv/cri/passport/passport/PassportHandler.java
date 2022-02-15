@@ -96,7 +96,8 @@ public class PassportHandler
                         HttpStatus.SC_BAD_REQUEST, validationResult.get());
             }
 
-            AuthenticationRequest.parse(queryStringParameters);
+            AuthenticationRequest authenticationRequest =
+                    AuthenticationRequest.parse(queryStringParameters);
 
             PassportAttributes passportAttributes = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(passportAttributes);
@@ -115,7 +116,9 @@ public class PassportHandler
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
             authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), passportCheckDao.getResourceId());
+                    authorizationCode.getValue(),
+                    passportCheckDao.getResourceId(),
+                    authenticationRequest.getRedirectionURI().toString());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));

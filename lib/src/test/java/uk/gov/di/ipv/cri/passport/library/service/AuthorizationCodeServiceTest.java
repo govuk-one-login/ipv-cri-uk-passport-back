@@ -40,7 +40,9 @@ class AuthorizationCodeServiceTest {
     void shouldCreateAuthorizationCodeInDataStore() {
         AuthorizationCode testCode = new AuthorizationCode();
         String resourceId = "resource-12345";
-        authorizationCodeService.persistAuthorizationCode(testCode.getValue(), resourceId);
+        String redirectUrl = "http://example.com";
+        authorizationCodeService.persistAuthorizationCode(
+                testCode.getValue(), resourceId, redirectUrl);
 
         ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
                 ArgumentCaptor.forClass(AuthorizationCodeItem.class);
@@ -48,6 +50,7 @@ class AuthorizationCodeServiceTest {
         assertEquals(resourceId, authorizationCodeItemArgumentCaptor.getValue().getResourceId());
         assertEquals(
                 testCode.getValue(), authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
+        assertEquals(redirectUrl, authorizationCodeItemArgumentCaptor.getValue().getRedirectUrl());
     }
 
     @Test
@@ -57,14 +60,18 @@ class AuthorizationCodeServiceTest {
 
         AuthorizationCodeItem testItem = new AuthorizationCodeItem();
         testItem.setResourceId(resourceId);
+        testItem.setAuthCode(new AuthorizationCode().getValue());
+        testItem.setRedirectUrl("http://example.com");
 
         when(mockDataStore.getItem(testCode.getValue())).thenReturn(testItem);
 
-        String resultResourceId =
-                authorizationCodeService.getResourceIdByAuthorizationCode(testCode.getValue());
+        AuthorizationCodeItem resultAuthCodeItem =
+                authorizationCodeService.getAuthCodeItem(testCode.getValue());
 
         verify(mockDataStore).getItem(testCode.getValue());
-        assertEquals(resourceId, resultResourceId);
+        assertEquals(resourceId, resultAuthCodeItem.getResourceId());
+        assertEquals(testItem.getAuthCode(), resultAuthCodeItem.getAuthCode());
+        assertEquals(testItem.getRedirectUrl(), resultAuthCodeItem.getRedirectUrl());
     }
 
     @Test
@@ -73,11 +80,11 @@ class AuthorizationCodeServiceTest {
 
         when(mockDataStore.getItem(testCode.getValue())).thenReturn(null);
 
-        String resultResourceId =
-                authorizationCodeService.getResourceIdByAuthorizationCode(testCode.getValue());
+        AuthorizationCodeItem resultAuthCodeItem =
+                authorizationCodeService.getAuthCodeItem(testCode.getValue());
 
         verify(mockDataStore).getItem(testCode.getValue());
-        assertNull(resultResourceId);
+        assertNull(resultAuthCodeItem);
     }
 
     @Test

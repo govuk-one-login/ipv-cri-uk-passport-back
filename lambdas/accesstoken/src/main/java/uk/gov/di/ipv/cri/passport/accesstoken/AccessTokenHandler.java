@@ -13,18 +13,19 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.TokenRequest;
 import com.nimbusds.oauth2.sdk.TokenResponse;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
-import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.net.URI;
+import java.util.Objects;
 
 public class AccessTokenHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -69,16 +70,14 @@ public class AccessTokenHandler
                         validationResult.getError().toJSONObject());
             }
 
-            String authorizationCodeFromRequest =
-                    ((AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant())
-                            .getAuthorizationCode()
-                            .getValue();
+            AuthorizationCodeGrant authorizationCodeGrant =
+                    (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
 
-            String resourceId =
-                    authorizationCodeService.getResourceIdByAuthorizationCode(
-                            authorizationCodeFromRequest);
+            AuthorizationCodeItem authorizationCodeItem =
+                    authorizationCodeService.getAuthCodeItem(
+                            authorizationCodeGrant.getAuthorizationCode().getValue());
 
-            if (StringUtils.isBlank(resourceId)) {
+            if (authorizationCodeItem == null) {
                 LOGGER.error(
                         "Access Token could not be issued. The supplied authorization code was not found in the database.");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -86,12 +85,22 @@ public class AccessTokenHandler
                         OAuth2Error.INVALID_GRANT.toJSONObject());
             }
 
+            if (redirectUrlsDoNotMatch(authorizationCodeItem, authorizationCodeGrant)) {
+                LOGGER.error(
+                        "Redirect URL in token request does not match that received in auth code request. Resource ID: {}",
+                        authorizationCodeItem.getResourceId());
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        OAuth2Error.INVALID_REQUEST.getHTTPStatusCode(),
+                        OAuth2Error.INVALID_REQUEST.toJSONObject());
+            }
+
             TokenResponse tokenResponse = accessTokenService.generateAccessToken(tokenRequest);
             AccessTokenResponse accessTokenResponse = tokenResponse.toSuccessResponse();
 
-            accessTokenService.persistAccessToken(accessTokenResponse, resourceId);
+            accessTokenService.persistAccessToken(
+                    accessTokenResponse, authorizationCodeItem.getResourceId());
 
-            authorizationCodeService.revokeAuthorizationCode(authorizationCodeFromRequest);
+            authorizationCodeService.revokeAuthorizationCode(authorizationCodeItem.getAuthCode());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, accessTokenResponse.toJSONObject());
@@ -119,5 +128,25 @@ public class AccessTokenHandler
         return errorObject.getHTTPStatusCode() > 0
                 ? errorObject.getHTTPStatusCode()
                 : HttpStatus.SC_BAD_REQUEST;
+    }
+
+    private boolean redirectUrlsDoNotMatch(
+            AuthorizationCodeItem authorizationCodeItem,
+            AuthorizationCodeGrant authorizationGrant) {
+
+        if (Objects.isNull(authorizationCodeItem.getRedirectUrl())
+                && Objects.isNull(authorizationGrant.getRedirectionURI())) {
+            return false;
+        }
+
+        if (Objects.isNull(authorizationCodeItem.getRedirectUrl())
+                || Objects.isNull(authorizationGrant.getRedirectionURI())) {
+            return true;
+        }
+
+        return !authorizationGrant
+                .getRedirectionURI()
+                .toString()
+                .equals(authorizationCodeItem.getRedirectUrl());
     }
 }
