@@ -183,3 +183,7 @@ Resources:
         - AttributeName: "accessToken"
           KeyType: "HASH"
 
+Outputs:
+  IPVCriUkPassportAPIGatewayID:
+    Value: !Ref IPVCriUKPassportAPI
+    Description: CRI UK Passport API Gateway ID
