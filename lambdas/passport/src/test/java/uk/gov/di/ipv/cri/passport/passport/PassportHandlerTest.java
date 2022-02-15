@@ -2,7 +2,6 @@ package uk.gov.di.ipv.cri.passport.passport;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +28,8 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
+import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
+import uk.gov.di.ipv.cri.passport.passport.validation.AuthRequestValidator;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -43,6 +44,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -89,6 +93,7 @@ class PassportHandlerTest {
     @Mock AuthorizationCodeService authorizationCodeService;
     @Mock ConfigurationService configurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
+    @Mock AuthRequestValidator authRequestValidator;
     @Mock JWSObject jwsObject;
 
     private PassportHandler underTest;
@@ -103,7 +108,8 @@ class PassportHandlerTest {
                         passportService,
                         authorizationCodeService,
                         configurationService,
-                        dcsCryptographyService);
+                        dcsCryptographyService,
+                        authRequestValidator);
     }
 
     @Test
@@ -120,6 +126,8 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
+        when(authRequestValidator.validateRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -151,6 +159,8 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
+        when(authRequestValidator.validateRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -179,13 +189,12 @@ class PassportHandlerTest {
     }
 
     @Test
-    void shouldReturn400OnMissingRedirectUriParam() throws Exception {
+    void shouldReturn400IfRequestFailsValidation() throws Exception {
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(new ValidationResult<>(false, ErrorResponse.MISSING_QUERY_PARAMETERS));
+
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
+        event.setQueryStringParameters(new HashMap<>());
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -194,110 +203,18 @@ class PassportHandlerTest {
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
-        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                responseBody.get("code"));
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                responseBody.get("message"));
-    }
-
-    @Test
-    void shouldReturn400OnMissingClientIdParam() throws Exception {
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        var response = underTest.handleRequest(event, context);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
-        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                responseBody.get("code"));
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                responseBody.get("message"));
-    }
-
-    @Test
-    void shouldReturn400OnMissingResponseTypeParam() throws Exception {
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        var response = underTest.handleRequest(event, context);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
-        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                responseBody.get("code"));
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                responseBody.get("message"));
-    }
-
-    @Test
-    void shouldReturn400OnMissingScopeParam() throws Exception {
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        event.setQueryStringParameters(params);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        var response = underTest.handleRequest(event, context);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
-        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                responseBody.get("code"));
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                responseBody.get("message"));
-    }
-
-    @Test
-    void shouldReturn400OnMissingQueryParameters() throws Exception {
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        APIGatewayProxyResponseEvent response = underTest.handleRequest(event, context);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
-        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(), responseBody.get("code"));
         assertEquals(
                 ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(), responseBody.get("message"));
+
+        verify(authorizationCodeService, never())
+                .persistAuthorizationCode(anyString(), anyString());
     }
 
     @Test
     void shouldReturn400IfDataIsMissing() throws JsonProcessingException {
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
         var formFields = validPassportFormData.keySet();
         for (String keyToRemove : formFields) {
             var event = new APIGatewayProxyRequestEvent();
@@ -326,6 +243,9 @@ class PassportHandlerTest {
 
     @Test
     void shouldReturn400IfDateStringsAreWrongFormat() throws JsonProcessingException {
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
+
         var mangledDateInput = new HashMap<>(validPassportFormData);
         mangledDateInput.put("dateOfBirth", "28-09-1984");
 
@@ -358,6 +278,8 @@ class PassportHandlerTest {
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
 
         DcsResponse errorDcsResponse =
                 new DcsResponse(
@@ -400,8 +322,9 @@ class PassportHandlerTest {
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
-
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -445,8 +368,9 @@ class PassportHandlerTest {
                 .thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(invalidDcsResponse);
-
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -492,8 +416,9 @@ class PassportHandlerTest {
                 new PassportCheckDao("UUID", passportAttributes, passportGpg45Score);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
-
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
+        when(authRequestValidator.validateRequest(anyMap()))
+                .thenReturn(ValidationResult.createValidResult());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();

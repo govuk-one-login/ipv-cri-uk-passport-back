@@ -10,8 +10,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +28,7 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
+import uk.gov.di.ipv.cri.passport.passport.validation.AuthRequestValidator;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -39,7 +38,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -59,16 +57,19 @@ public class PassportHandler
     private final AuthorizationCodeService authorizationCodeService;
     private final ConfigurationService configurationService;
     private final DcsCryptographyService dcsCryptographyService;
+    private final AuthRequestValidator authRequestValidator;
 
     public PassportHandler(
             PassportService passportService,
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
-            DcsCryptographyService dcsCryptographyService) {
+            DcsCryptographyService dcsCryptographyService,
+            AuthRequestValidator authRequestValidator) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
+        this.authRequestValidator = authRequestValidator;
     }
 
     public PassportHandler()
@@ -78,6 +79,7 @@ public class PassportHandler
         this.passportService = new PassportService(configurationService);
         this.authorizationCodeService = new AuthorizationCodeService(configurationService);
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
+        this.authRequestValidator = new AuthRequestValidator(configurationService);
     }
 
     @Override
@@ -86,7 +88,12 @@ public class PassportHandler
         Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
 
         try {
-            validateRequest(queryStringParameters);
+            var validationResult = authRequestValidator.validateRequest(queryStringParameters);
+            if (!validationResult.isValid()) {
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        HttpStatus.SC_BAD_REQUEST, validationResult.getError());
+            }
+
             PassportAttributes passportAttributes = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(passportAttributes);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
@@ -125,17 +132,6 @@ public class PassportHandler
         return Collections.emptyMap();
     }
 
-    private void validateRequest(Map<String, List<String>> queryStringParameters)
-            throws HttpResponseExceptionWithErrorBody {
-
-        LOGGER.info("Validating input query string parameters");
-        if (Objects.isNull(queryStringParameters) || queryStringParameters.isEmpty()) {
-            throw new HttpResponseExceptionWithErrorBody(
-                    HttpStatus.SC_BAD_REQUEST, ErrorResponse.MISSING_QUERY_PARAMETERS);
-        }
-        checkQueryStringCanBeParsedToAuthenticationRequest(queryStringParameters);
-    }
-
     private void validateDcsResponse(DcsResponse dcsResponse)
             throws HttpResponseExceptionWithErrorBody {
         if (dcsResponse.isError()) {
@@ -155,19 +151,6 @@ public class PassportHandler
                 new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
 
         return new PassportGpg45Score(gpg45Evidence);
-    }
-
-    private void checkQueryStringCanBeParsedToAuthenticationRequest(
-            Map<String, List<String>> queryStringParameters)
-            throws HttpResponseExceptionWithErrorBody {
-        try {
-            AuthenticationRequest.parse(queryStringParameters);
-        } catch (ParseException e) {
-            LOGGER.error(("Failed to parse oauth query string parameters: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(
-                    HttpStatus.SC_BAD_REQUEST,
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
-        }
     }
 
     private PassportAttributes parsePassportFormRequest(String input)
