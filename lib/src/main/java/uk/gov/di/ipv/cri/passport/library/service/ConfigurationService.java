@@ -213,7 +213,6 @@ public class ConfigurationService {
                                                 + "/%s/jwtAuthentication/validRedirectUrls",
                                         clientId)));
 
-
         return Arrays.asList(
                 redirectUrlStrings
                         .orElseThrow(
