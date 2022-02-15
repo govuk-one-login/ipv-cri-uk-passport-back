@@ -6,6 +6,7 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
+import uk.gov.di.ipv.cri.passport.library.exceptions.UnknownClientException;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -204,7 +205,7 @@ public class ConfigurationService {
                         clientId));
     }
 
-    public List<String> getClientRedirectUrls(String clientId) {
+    public List<String> getClientRedirectUrls(String clientId) throws UnknownClientException {
         Optional<String> redirectUrlStrings =
                 Optional.ofNullable(
                         ssmProvider.get(
@@ -217,7 +218,7 @@ public class ConfigurationService {
                 redirectUrlStrings
                         .orElseThrow(
                                 () ->
-                                        new IllegalArgumentException(
+                                        new UnknownClientException(
                                                 String.format(
                                                         "Client redirect URLs are not set in parameter store for client ID '%s'",
                                                         clientId)))

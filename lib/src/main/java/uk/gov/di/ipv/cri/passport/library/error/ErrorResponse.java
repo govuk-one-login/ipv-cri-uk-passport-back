@@ -20,7 +20,9 @@ public enum ErrorResponse {
     FAILED_TO_RETRIEVE_CERTIFICATE(1011, "Failed to retrieve client certificate from SSM"),
     FAILED_TO_VERIFY_SIGNATURE(1012, "Failed to verify the signature of the JWT"),
     JWT_SIGNATURE_IS_INVALID(1013, "Signature of the shared attribute JWT is invalid"),
-    INVALID_REDIRECT_URL(1014, "Provided redirect URL is not in those configured for client");
+    INVALID_REDIRECT_URL(1014, "Provided redirect URL is not in those configured for client"),
+    UNKNOWN_CLIENT_ID(1015, "Unknown client id provided in request params"),
+    INVALID_REQUEST_PARAM(1016, "Invalid request param");
 
     private final int code;
     private final String message;

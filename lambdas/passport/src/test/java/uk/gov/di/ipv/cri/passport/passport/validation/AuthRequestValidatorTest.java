@@ -7,13 +7,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 import uk.gov.di.ipv.cri.passport.passport.OAuth2RequestParams;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -46,33 +46,31 @@ class AuthRequestValidatorTest {
 
         var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS);
 
-        assertTrue(validationResult.isValid());
+        assertFalse(validationResult.isPresent());
     }
 
     @Test
     void validateRequestReturnsErrorResponseForNullParams() {
         var validationResult = validator.validateRequest(null);
 
-        assertFalse(validationResult.isValid());
+        assertTrue(validationResult.isPresent());
         assertEquals(
-                ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(),
-                validationResult.getError().getCode());
+                ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(), validationResult.get().getCode());
         assertEquals(
                 ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(),
-                validationResult.getError().getMessage());
+                validationResult.get().getMessage());
     }
 
     @Test
     void validateRequestReturnsErrorResponseForEmptyParameters() {
         var validationResult = validator.validateRequest(Collections.emptyMap());
 
-        assertFalse(validationResult.isValid());
+        assertTrue(validationResult.isPresent());
         assertEquals(
-                ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(),
-                validationResult.getError().getCode());
+                ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(), validationResult.get().getCode());
         assertEquals(
                 ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(),
-                validationResult.getError().getMessage());
+                validationResult.get().getMessage());
     }
 
     @Test
@@ -82,16 +80,16 @@ class AuthRequestValidatorTest {
             var invalidQueryStringParams = new HashMap<>(VALID_QUERY_STRING_PARAMS);
             invalidQueryStringParams.remove(paramToTest);
 
-            ValidationResult<ErrorResponse> validationResult =
+            Optional<ErrorResponse> validationResult =
                     validator.validateRequest(invalidQueryStringParams);
 
-            assertFalse(validationResult.isValid());
+            assertTrue(validationResult.isPresent());
             assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                    validationResult.getError().getCode());
+                    ErrorResponse.INVALID_REQUEST_PARAM.getCode(),
+                    validationResult.get().getCode());
             assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                    validationResult.getError().getMessage());
+                    ErrorResponse.INVALID_REQUEST_PARAM.getMessage(),
+                    validationResult.get().getMessage());
         }
     }
 
@@ -107,12 +105,11 @@ class AuthRequestValidatorTest {
 
         var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS);
 
-        assertFalse(validationResult.isValid());
+        assertTrue(validationResult.isPresent());
         assertEquals(
-                ErrorResponse.INVALID_REDIRECT_URL.getCode(),
-                validationResult.getError().getCode());
+                ErrorResponse.INVALID_REDIRECT_URL.getCode(), validationResult.get().getCode());
         assertEquals(
                 ErrorResponse.INVALID_REDIRECT_URL.getMessage(),
-                validationResult.getError().getMessage());
+                validationResult.get().getMessage());
     }
 }

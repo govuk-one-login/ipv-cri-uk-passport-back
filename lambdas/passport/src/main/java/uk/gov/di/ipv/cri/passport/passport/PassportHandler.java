@@ -91,9 +91,9 @@ public class PassportHandler
 
         try {
             var validationResult = authRequestValidator.validateRequest(queryStringParameters);
-            if (!validationResult.isValid()) {
+            if (validationResult.isPresent()) {
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
-                        HttpStatus.SC_BAD_REQUEST, validationResult.getError());
+                        HttpStatus.SC_BAD_REQUEST, validationResult.get());
             }
 
             AuthenticationRequest.parse(queryStringParameters);

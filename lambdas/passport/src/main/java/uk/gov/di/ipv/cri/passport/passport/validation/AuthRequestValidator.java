@@ -3,8 +3,8 @@ package uk.gov.di.ipv.cri.passport.passport.validation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.library.exceptions.UnknownClientException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.util.List;
 import java.util.Map;
@@ -23,19 +23,14 @@ public class AuthRequestValidator {
         this.configurationService = configurationService;
     }
 
-    public ValidationResult<ErrorResponse> validateRequest(
+    public Optional<ErrorResponse> validateRequest(
             Map<String, List<String>> queryStringParameters) {
         if (queryStringParamsMissing(queryStringParameters)) {
             LOGGER.error("Missing required query parameters for authorisation request");
-            return new ValidationResult<>(false, ErrorResponse.MISSING_QUERY_PARAMETERS);
+            return Optional.of(ErrorResponse.MISSING_QUERY_PARAMETERS);
         }
 
-        var redirectErrorResult = validateRedirectUrl(queryStringParameters);
-        if (redirectErrorResult.isPresent()) {
-            return new ValidationResult<>(false, redirectErrorResult.get());
-        }
-
-        return ValidationResult.createValidResult();
+        return validateRedirectUrl(queryStringParameters);
     }
 
     private boolean queryStringParamsMissing(Map<String, List<String>> queryStringParameters) {
@@ -58,9 +53,12 @@ public class AuthRequestValidator {
                 return Optional.of(ErrorResponse.INVALID_REDIRECT_URL);
             }
             return Optional.empty();
+        } catch (UnknownClientException e) {
+            LOGGER.error(e.getMessage());
+            return Optional.of(ErrorResponse.UNKNOWN_CLIENT_ID);
         } catch (IllegalArgumentException e) {
             LOGGER.error(e.getMessage());
-            return Optional.of(ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
+            return Optional.of(ErrorResponse.INVALID_REQUEST_PARAM);
         }
     }
 

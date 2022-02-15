@@ -29,7 +29,6 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
-import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 import uk.gov.di.ipv.cri.passport.passport.validation.AuthRequestValidator;
 
 import java.io.IOException;
@@ -41,6 +40,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -133,8 +133,7 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(any()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(any())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -166,8 +165,7 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(any()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(any())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -198,7 +196,7 @@ class PassportHandlerTest {
     @Test
     void shouldReturn400IfRequestFailsValidation() throws Exception {
         when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(new ValidationResult<>(false, ErrorResponse.MISSING_QUERY_PARAMETERS));
+                .thenReturn(Optional.of(ErrorResponse.MISSING_QUERY_PARAMETERS));
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setQueryStringParameters(new HashMap<>());
@@ -220,8 +218,7 @@ class PassportHandlerTest {
 
     @Test
     void shouldReturn400IfDataIsMissing() throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
         var formFields = validPassportFormData.keySet();
         for (String keyToRemove : formFields) {
             var event = new APIGatewayProxyRequestEvent();
@@ -250,8 +247,7 @@ class PassportHandlerTest {
 
     @Test
     void shouldReturn400IfDateStringsAreWrongFormat() throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
 
         var mangledDateInput = new HashMap<>(validPassportFormData);
         mangledDateInput.put("dateOfBirth", "28-09-1984");
@@ -285,8 +281,7 @@ class PassportHandlerTest {
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
 
         DcsResponse errorDcsResponse =
                 new DcsResponse(
@@ -330,8 +325,7 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -376,8 +370,7 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(invalidDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -424,8 +417,7 @@ class PassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -457,8 +449,7 @@ class PassportHandlerTest {
     @Test
     void shouldReturn400IfCanNotParseAuthRequestFromQueryStringParams()
             throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap()))
-                .thenReturn(ValidationResult.createValidResult());
+        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
 
         List<String> paramsToRemove =
                 List.of(
