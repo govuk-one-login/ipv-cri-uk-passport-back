@@ -105,6 +105,7 @@ Resources:
           DCS_POST_URL_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/postUrl"
           DCS_TLS_ROOT_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsRootCertificate"
           DCS_TLS_INTERMEDIATE_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsIntermediateCertificate"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable

@@ -209,8 +209,10 @@ public class ConfigurationService {
                 Optional.ofNullable(
                         ssmProvider.get(
                                 String.format(
-                                        "/%s/credentialIssuers/ukPassport/clients/%s/jwtAuthentication/validRedirectUrls",
-                                        System.getenv("ENVIRONMENT"), clientId)));
+                                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
+                                                + "/%s/jwtAuthentication/validRedirectUrls",
+                                        clientId)));
+
 
         return Arrays.asList(
                 redirectUrlStrings
