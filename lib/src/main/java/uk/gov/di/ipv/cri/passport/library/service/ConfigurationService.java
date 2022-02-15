@@ -90,8 +90,7 @@ public class ConfigurationService {
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
-    private Certificate getCertificateFromStore(String parameteraName)
-            throws CertificateException {
+    private Certificate getCertificateFromStore(String parameteraName) throws CertificateException {
         byte[] binaryCertificate =
                 Base64.getDecoder().decode(getParameterFromStore(parameteraName));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
@@ -195,7 +194,10 @@ public class ConfigurationService {
     }
 
     public Certificate getClientJwtSigningCert(String clientId) throws CertificateException {
-        return getCertificateFromStore(String.format(System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX") + "/%s/sharedAttributesJwtSigningCert", clientId));
+        return getCertificateFromStore(
+                String.format(
+                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
+                                + "/%s/sharedAttributesJwtSigningCert",
+                        clientId));
     }
-
 }

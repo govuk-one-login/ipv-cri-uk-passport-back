@@ -36,7 +36,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +49,9 @@ public class PassportHandler
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportHandler.class);
     private static final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
-    private static final int MAX_GPG45_VALUE = 4;
-    private static final int MIN_GPG45_VALUE = 0;
+    private static final int MAX_PASSPORT_GPG45_STRENGTH_VALUE = 4;
+    private static final int MAX_PASSPORT_GPG45_VALIDITY_VALUE = 2;
+    private static final int MIN_PASSPORT_GPG45_VALUE = 0;
 
     public static final String AUTHORIZATION_CODE = "code";
 
@@ -99,8 +99,7 @@ public class PassportHandler
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
                             passportAttributes,
-                            generateGpg45Score(unwrappedDcsResponse)
-                    );
+                            generateGpg45Score(unwrappedDcsResponse));
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
@@ -140,7 +139,7 @@ public class PassportHandler
     private void validateDcsResponse(DcsResponse dcsResponse)
             throws HttpResponseExceptionWithErrorBody {
         if (dcsResponse.isError()) {
-            String errorMessage = Arrays.toString(dcsResponse.getErrorMessage());
+            String errorMessage = dcsResponse.getErrorMessage().toString();
             LOGGER.error("DCS encounterd error: {}", errorMessage);
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.DCS_RETURNED_AN_ERROR);
@@ -148,8 +147,12 @@ public class PassportHandler
     }
 
     private PassportGpg45Score generateGpg45Score(DcsResponse dcsResponse) {
-        int validity = dcsResponse.isValid() ? MAX_GPG45_VALUE : MIN_GPG45_VALUE;
-        Gpg45Evidence gpg45Evidence = new Gpg45Evidence(MAX_GPG45_VALUE, validity);
+        int validity =
+                dcsResponse.isValid()
+                        ? MAX_PASSPORT_GPG45_VALIDITY_VALUE
+                        : MIN_PASSPORT_GPG45_VALUE;
+        Gpg45Evidence gpg45Evidence =
+                new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
 
         return new PassportGpg45Score(gpg45Evidence);
     }

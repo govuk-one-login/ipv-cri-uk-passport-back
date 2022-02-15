@@ -5,17 +5,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
+import java.util.List;
 import java.util.UUID;
 
-@ExcludeFromGeneratedCoverageReport
 @DynamoDbBean
+@ExcludeFromGeneratedCoverageReport
 public class DcsResponse {
-
     private UUID correlationId;
     private UUID requestId;
     private boolean error;
     private boolean valid;
-    private String[] errorMessage;
+    private List<String> errorMessage;
 
     public DcsResponse() {}
 
@@ -25,7 +25,7 @@ public class DcsResponse {
             @JsonProperty(value = "requestId", required = true) UUID requestId,
             @JsonProperty(value = "error", required = false) boolean error,
             @JsonProperty(value = "valid", required = false) boolean valid,
-            @JsonProperty(value = "errorMessage", required = false) String[] errorMessage) {
+            @JsonProperty(value = "errorMessage", required = false) List<String> errorMessage) {
         this.correlationId = correlationId;
         this.requestId = requestId;
         this.error = error;
@@ -37,19 +37,55 @@ public class DcsResponse {
         return correlationId;
     }
 
+    public void setCorrelationId(UUID correlationId) {
+        this.correlationId = correlationId;
+    }
+
     public UUID getRequestId() {
         return requestId;
+    }
+
+    public void setRequestId(UUID requestId) {
+        this.requestId = requestId;
     }
 
     public boolean isError() {
         return error;
     }
 
+    public void setError(boolean error) {
+        this.error = error;
+    }
+
     public boolean isValid() {
         return valid;
     }
 
-    public String[] getErrorMessage() {
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    public List<String> getErrorMessage() {
         return errorMessage;
+    }
+
+    public void setErrorMessage(List<String> errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    @Override
+    public String toString() {
+        return "DcsResponse{"
+                + "correlationId="
+                + correlationId
+                + ", requestId="
+                + requestId
+                + ", error="
+                + error
+                + ", valid="
+                + valid
+                + ", errorMessage="
+                + errorMessage
+                + '}';
     }
 }

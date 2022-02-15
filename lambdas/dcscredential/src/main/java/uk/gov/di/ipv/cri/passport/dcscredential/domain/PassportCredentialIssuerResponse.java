@@ -1,8 +1,10 @@
 package uk.gov.di.ipv.cri.passport.dcscredential.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.time.LocalDate;
@@ -10,21 +12,27 @@ import java.util.UUID;
 
 public class PassportCredentialIssuerResponse {
 
-    @JsonProperty private Attributes attributes;
     @JsonProperty private String resourceId;
+    @JsonProperty private Attributes attributes;
+    @JsonProperty private PassportGpg45Score gpg45Score;
 
     public PassportCredentialIssuerResponse() {}
 
-    public PassportCredentialIssuerResponse(String resourceId, Attributes attributes) {
+    public PassportCredentialIssuerResponse(
+            String resourceId, Attributes attributes, PassportGpg45Score gpg45Score) {
         this.resourceId = resourceId;
         this.attributes = attributes;
+        this.gpg45Score = gpg45Score;
     }
 
     public static PassportCredentialIssuerResponse fromPassportCheckDao(
             PassportCheckDao credential) {
         Attributes attributes =
                 new Attributes.Builder()
-                        .setNames(new Name(credential.getAttributes().getSurname(), credential.getAttributes().getForenames()))
+                        .setNames(
+                                new Name(
+                                        credential.getAttributes().getSurname(),
+                                        credential.getAttributes().getForenames()))
                         .setPassportNumber(credential.getAttributes().getPassportNumber())
                         .setDateOfBirth(credential.getAttributes().getDateOfBirth())
                         .setExpiryDate(credential.getAttributes().getExpiryDate())
@@ -32,23 +40,35 @@ public class PassportCredentialIssuerResponse {
                         .setCorrelationId(credential.getAttributes().getCorrelationId())
                         .setDcsResponse(credential.getAttributes().getDcsResponse())
                         .build();
-        return new PassportCredentialIssuerResponse(credential.getResourceId(), attributes);
-    }
-
-    public Attributes getAttributes() {
-        return attributes;
+        return new PassportCredentialIssuerResponse(
+                credential.getResourceId(), attributes, credential.getGpg45Score());
     }
 
     public String getResourceId() {
         return resourceId;
     }
 
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public PassportGpg45Score getGpg45Score() {
+        return gpg45Score;
+    }
+
     public static class Attributes {
 
         @JsonProperty private final Name names;
         @JsonProperty private final String passportNumber;
-        @JsonProperty private final LocalDate dateOfBirth;
-        @JsonProperty private final LocalDate expiryDate;
+
+        @JsonProperty
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private final LocalDate dateOfBirth;
+
+        @JsonProperty
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private final LocalDate expiryDate;
+
         @JsonProperty private final UUID requestId;
         @JsonProperty private final UUID correlationId;
         @JsonProperty private final DcsResponse dcsResponse;

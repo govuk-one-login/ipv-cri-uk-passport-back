@@ -8,6 +8,8 @@ import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PassportCredentialIssuerResponseTest {
 
     public static final String FAMILY_NAME = "familyName";
-    public static final String[] GIVEN_NAMES = {"givenNames"};
+    public static final List<String> GIVEN_NAMES = List.of("givenNames");
     public static final String PASSPORT_NUMBER = "passportNumber";
     public static final LocalDate DATE_OF_BIRTH = LocalDate.now();
     public static final LocalDate EXPIRY_DATE = LocalDate.now();
@@ -24,21 +26,44 @@ class PassportCredentialIssuerResponseTest {
     @Test
     void shouldConvertPassportCheckDaoToPassportCredentialIssuerResponse() {
 
-        PassportAttributes attributes = new PassportAttributes(PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
+        PassportAttributes attributes =
+                new PassportAttributes(
+                        PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
         PassportGpg45Score gpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
-        attributes.setDcsResponse(new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), true, false, new String[]{}));
-        PassportCheckDao passportCheckDao = new PassportCheckDao(RESOURCE_ID, attributes, gpg45Score);
+        attributes.setDcsResponse(
+                new DcsResponse(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        true,
+                        false,
+                        Collections.emptyList()));
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao(RESOURCE_ID, attributes, gpg45Score);
 
-        PassportCredentialIssuerResponse passportCredentialIssuerResponse = PassportCredentialIssuerResponse.fromPassportCheckDao(passportCheckDao);
+        PassportCredentialIssuerResponse passportCredentialIssuerResponse =
+                PassportCredentialIssuerResponse.fromPassportCheckDao(passportCheckDao);
 
         assertEquals(RESOURCE_ID, passportCredentialIssuerResponse.getResourceId());
-        assertEquals(FAMILY_NAME, passportCredentialIssuerResponse.getAttributes().getNames().getFamilyName());
-        assertEquals(GIVEN_NAMES, passportCredentialIssuerResponse.getAttributes().getNames().getGivenNames());
-        assertEquals(PASSPORT_NUMBER, passportCredentialIssuerResponse.getAttributes().getPassportNumber());
-        assertEquals(DATE_OF_BIRTH, passportCredentialIssuerResponse.getAttributes().getDateOfBirth());
+        assertEquals(
+                FAMILY_NAME,
+                passportCredentialIssuerResponse.getAttributes().getNames().getFamilyName());
+        assertEquals(
+                GIVEN_NAMES,
+                passportCredentialIssuerResponse.getAttributes().getNames().getGivenNames());
+        assertEquals(
+                PASSPORT_NUMBER,
+                passportCredentialIssuerResponse.getAttributes().getPassportNumber());
+        assertEquals(
+                DATE_OF_BIRTH, passportCredentialIssuerResponse.getAttributes().getDateOfBirth());
         assertEquals(EXPIRY_DATE, passportCredentialIssuerResponse.getAttributes().getExpiryDate());
-        assertEquals(passportCheckDao.getAttributes().getRequestId(), passportCredentialIssuerResponse.getAttributes().getRequestId());
-        assertEquals(passportCheckDao.getAttributes().getCorrelationId(), passportCredentialIssuerResponse.getAttributes().getCorrelationId());
-        assertEquals(passportCheckDao.getAttributes().getDcsResponse(), passportCredentialIssuerResponse.getAttributes().getDcsResponse());
+        assertEquals(
+                passportCheckDao.getAttributes().getRequestId(),
+                passportCredentialIssuerResponse.getAttributes().getRequestId());
+        assertEquals(
+                passportCheckDao.getAttributes().getCorrelationId(),
+                passportCredentialIssuerResponse.getAttributes().getCorrelationId());
+        assertEquals(
+                passportCheckDao.getAttributes().getDcsResponse(),
+                passportCredentialIssuerResponse.getAttributes().getDcsResponse());
     }
 }

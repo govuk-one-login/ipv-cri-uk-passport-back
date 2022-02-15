@@ -29,6 +29,7 @@ import uk.gov.di.ipv.cri.passport.library.service.DcsCredentialService;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ class DcsCredentialHandlerTest {
     private static final String TEST_RESOURCE_ID = UUID.randomUUID().toString();
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
-    public static final String[] FORENAMES = {"Tubbs"};
+    public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
 
@@ -77,12 +78,12 @@ class DcsCredentialHandlerTest {
     @BeforeEach
     void setUp() {
         attributes.setDcsResponse(validDcsResponse);
-        dcsCredential =
-                new PassportCheckDao(TEST_RESOURCE_ID, attributes, gpg45Score);
+        dcsCredential = new PassportCheckDao(TEST_RESOURCE_ID, attributes, gpg45Score);
         responseBody = new HashMap<>();
 
         dcsCredentialHandler =
-                new DcsCredentialHandler(mockDcsCredentialService, mockAccessTokenService, mockConfigurationService);
+                new DcsCredentialHandler(
+                        mockDcsCredentialService, mockAccessTokenService, mockConfigurationService);
     }
 
     @Test
@@ -121,14 +122,36 @@ class DcsCredentialHandlerTest {
                 objectMapper.readValue(response.getBody(), PassportCredentialIssuerResponse.class);
 
         assertEquals(dcsCredential.getResourceId(), responseBody.getResourceId());
-        assertEquals(dcsCredential.getAttributes().getSurname(), responseBody.getAttributes().getNames().getFamilyName());
-        assertEquals(dcsCredential.getAttributes().getForenames()[0], responseBody.getAttributes().getNames().getGivenNames()[0]);
-        assertEquals(dcsCredential.getAttributes().getPassportNumber(), responseBody.getAttributes().getPassportNumber());
-        assertEquals(dcsCredential.getAttributes().getDateOfBirth(), responseBody.getAttributes().getDateOfBirth());
-        assertEquals(dcsCredential.getAttributes().getExpiryDate(), responseBody.getAttributes().getExpiryDate());
-        assertEquals(dcsCredential.getAttributes().getRequestId(), responseBody.getAttributes().getRequestId());
-        assertEquals(dcsCredential.getAttributes().getCorrelationId(), responseBody.getAttributes().getCorrelationId());
-        assertEquals(dcsCredential.getAttributes().getDcsResponse().getRequestId(), responseBody.getAttributes().getDcsResponse().getRequestId());
+        assertEquals(
+                dcsCredential.getAttributes().getSurname(),
+                responseBody.getAttributes().getNames().getFamilyName());
+        assertEquals(
+                dcsCredential.getAttributes().getForenames().get(0),
+                responseBody.getAttributes().getNames().getGivenNames().get(0));
+        assertEquals(
+                dcsCredential.getAttributes().getPassportNumber(),
+                responseBody.getAttributes().getPassportNumber());
+        assertEquals(
+                dcsCredential.getAttributes().getDateOfBirth(),
+                responseBody.getAttributes().getDateOfBirth());
+        assertEquals(
+                dcsCredential.getAttributes().getExpiryDate(),
+                responseBody.getAttributes().getExpiryDate());
+        assertEquals(
+                dcsCredential.getAttributes().getRequestId(),
+                responseBody.getAttributes().getRequestId());
+        assertEquals(
+                dcsCredential.getAttributes().getCorrelationId(),
+                responseBody.getAttributes().getCorrelationId());
+        assertEquals(
+                dcsCredential.getAttributes().getDcsResponse().getRequestId(),
+                responseBody.getAttributes().getDcsResponse().getRequestId());
+        assertEquals(
+                dcsCredential.getGpg45Score().getEvidence().getStrength(),
+                responseBody.getGpg45Score().getEvidence().getStrength());
+        assertEquals(
+                dcsCredential.getGpg45Score().getEvidence().getValidity(),
+                responseBody.getGpg45Score().getEvidence().getValidity());
     }
 
     @Test

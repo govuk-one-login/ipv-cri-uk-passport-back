@@ -44,16 +44,19 @@ public class JwtVerificationHandler
     }
 
     @Override
-    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
+    public APIGatewayProxyResponseEvent handleRequest(
+            APIGatewayProxyRequestEvent input, Context context) {
 
         String clientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
 
         if (StringUtils.isBlank(clientId)) {
-            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.MISSING_CLIENT_ID_QUERY_PARAMETER);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    BAD_REQUEST, ErrorResponse.MISSING_CLIENT_ID_QUERY_PARAMETER);
         }
 
         if (input.getBody() == null) {
-            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
         }
 
         try {
@@ -62,7 +65,8 @@ public class JwtVerificationHandler
 
             if (isInvalidSignature(signedJWT, clientCert)) {
                 LOGGER.error("JWT signature is invalid");
-                return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.JWT_SIGNATURE_IS_INVALID);
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        BAD_REQUEST, ErrorResponse.JWT_SIGNATURE_IS_INVALID);
             }
 
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
@@ -71,19 +75,19 @@ public class JwtVerificationHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, claims);
         } catch (ParseException e) {
             LOGGER.error("Failed to parse the shared attributes JWT", e);
-            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT);
         } catch (CertificateException | JOSEException e) {
             LOGGER.error("Failed to verify the signature of the JWT", e);
-            return ApiGatewayResponseGenerator.proxyJsonResponse(BAD_REQUEST, ErrorResponse.FAILED_TO_VERIFY_SIGNATURE);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    BAD_REQUEST, ErrorResponse.FAILED_TO_VERIFY_SIGNATURE);
         }
     }
 
     private boolean isInvalidSignature(SignedJWT signedJWT, Certificate clientCertificate)
             throws JOSEException {
         PublicKey publicKey = clientCertificate.getPublicKey();
-        RSASSAVerifier rsassaVerifier =
-                new RSASSAVerifier(
-                        (RSAPublicKey) publicKey);
+        RSASSAVerifier rsassaVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
         return !signedJWT.verify(rsassaVerifier);
     }
 }

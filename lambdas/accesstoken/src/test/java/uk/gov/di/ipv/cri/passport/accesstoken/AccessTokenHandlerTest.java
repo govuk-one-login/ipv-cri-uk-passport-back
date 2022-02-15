@@ -48,10 +48,13 @@ class AccessTokenHandlerTest {
     private AccessTokenHandler handler;
     private TokenResponse tokenResponse;
 
-
     @BeforeEach
     void setUp() {
-        handler = new AccessTokenHandler(mockAccessTokenService, mockAuthorizationCodeService, mockConfigurationService);
+        handler =
+                new AccessTokenHandler(
+                        mockAccessTokenService,
+                        mockAuthorizationCodeService,
+                        mockConfigurationService);
     }
 
     @Test

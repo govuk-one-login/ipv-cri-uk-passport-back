@@ -36,8 +36,8 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -51,10 +51,10 @@ class PassportHandlerTest {
 
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
-    public static final String[] FORENAMES = {"Tubbs"};
+    public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
-    public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 4);
+    public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 2);
     public static final Gpg45Evidence INVALID_GPG45_SCORE = new Gpg45Evidence(4, 0);
 
     private final ObjectMapper objectMapper =
@@ -63,7 +63,7 @@ class PassportHandlerTest {
             Map.of(
                     "passportNumber", PASSPORT_NUMBER,
                     "surname", SURNAME,
-                    "forenames", Arrays.toString(FORENAMES),
+                    "forenames", FORENAMES.toString(),
                     "dateOfBirth", DATE_OF_BIRTH,
                     "expiryDate", EXPIRY_DATE);
 
@@ -81,7 +81,8 @@ class PassportHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
-    private final PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
+    private final PassportGpg45Score passportGpg45Score =
+            new PassportGpg45Score(new Gpg45Evidence(4, 4));
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -364,7 +365,7 @@ class PassportHandlerTest {
                         UUID.randomUUID(),
                         true,
                         false,
-                        new String[] {"Test DCS error message"});
+                        List.of("Test DCS error message"));
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(errorDcsResponse);
 
@@ -420,16 +421,22 @@ class PassportHandlerTest {
         assertEquals(
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
-        assertEquals(VALID_GPG45_SCORE.getStrength(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
-        assertEquals(VALID_GPG45_SCORE.getValidity(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
-        assertEquals(validDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+        assertEquals(
+                VALID_GPG45_SCORE.getStrength(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+        assertEquals(
+                VALID_GPG45_SCORE.getValidity(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+        assertEquals(
+                validDcsResponse,
+                persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
     }
 
     @Test
     void shouldPersistPassportCheckDaoWithInValidGpg45Score()
             throws IOException, CertificateException, NoSuchAlgorithmException,
-            InvalidKeySpecException, JOSEException, ParseException,
-            EmptyDcsResponseException {
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
@@ -459,9 +466,15 @@ class PassportHandlerTest {
         assertEquals(
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
-        assertEquals(INVALID_GPG45_SCORE.getStrength(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
-        assertEquals(INVALID_GPG45_SCORE.getValidity(), persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
-        assertEquals(invalidDcsResponse, persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+        assertEquals(
+                INVALID_GPG45_SCORE.getStrength(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+        assertEquals(
+                INVALID_GPG45_SCORE.getValidity(),
+                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+        assertEquals(
+                invalidDcsResponse,
+                persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
     }
 
     @Test

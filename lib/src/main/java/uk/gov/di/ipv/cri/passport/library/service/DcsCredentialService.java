@@ -16,8 +16,7 @@ public class DcsCredentialService {
                         DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
     }
 
-    public DcsCredentialService(
-            DataStore<PassportCheckDao> dataStore) {
+    public DcsCredentialService(DataStore<PassportCheckDao> dataStore) {
         this.dataStore = dataStore;
     }
 

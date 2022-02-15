@@ -27,6 +27,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -123,12 +124,11 @@ class PassportServiceTest {
                 new PassportAttributes(
                         "PASSPORT_NUMBER",
                         "SURNAME",
-                        new String[] {"FORENAMES"},
+                        List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
         PassportGpg45Score gpg45Score = new PassportGpg45Score(new Gpg45Evidence(4, 4));
-        PassportCheckDao dcsResponse =
-                new PassportCheckDao("UUID", passportAttributes, gpg45Score);
+        PassportCheckDao dcsResponse = new PassportCheckDao("UUID", passportAttributes, gpg45Score);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }
