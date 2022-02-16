@@ -183,3 +183,9 @@ Resources:
         - AttributeName: "accessToken"
           KeyType: "HASH"
 
+Outputs:
+  IPVCriUkPassportAPIGatewayID:
+    Description: CRI UK Passport API Gateway ID
+    Export:
+      Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
+    Value: !Ref IPVCriUKPassportAPI
