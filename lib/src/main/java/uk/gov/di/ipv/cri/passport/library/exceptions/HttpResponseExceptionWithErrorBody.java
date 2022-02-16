@@ -4,7 +4,7 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 
 import java.util.Map;
 
-public class HttpResponseExceptionWithErrorBody extends Throwable {
+public class HttpResponseExceptionWithErrorBody extends Exception {
     private final int statusCode;
     private final ErrorResponse errorResponse;
 
