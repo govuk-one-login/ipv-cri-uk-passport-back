@@ -147,9 +147,7 @@ class DcsCryptographyServiceTest {
         IpvCryptoException thrownException =
                 assertThrows(
                         IpvCryptoException.class,
-                        () -> {
-                            underTest.unwrapDcsResponse(dcsResponseItem);
-                        });
+                        () -> underTest.unwrapDcsResponse(dcsResponseItem));
 
         assertEquals("DCS Response Outer Signature invalid.", thrownException.getMessage());
     }
@@ -168,9 +166,7 @@ class DcsCryptographyServiceTest {
         IpvCryptoException thrownException =
                 assertThrows(
                         IpvCryptoException.class,
-                        () -> {
-                            underTest.unwrapDcsResponse(dcsResponseItem);
-                        });
+                        () -> underTest.unwrapDcsResponse(dcsResponseItem));
 
         assertTrue(thrownException.getMessage().startsWith("Cannot Decrypt DCS Payload:"));
     }
@@ -192,9 +188,7 @@ class DcsCryptographyServiceTest {
         IpvCryptoException thrownException =
                 assertThrows(
                         IpvCryptoException.class,
-                        () -> {
-                            underTest.unwrapDcsResponse(dcsResponseItem);
-                        });
+                        () -> underTest.unwrapDcsResponse(dcsResponseItem));
 
         assertEquals("DCS Response Inner Signature invalid.", thrownException.getMessage());
     }
@@ -212,7 +206,7 @@ class DcsCryptographyServiceTest {
             throws InvalidKeySpecException, NoSuchAlgorithmException, JOSEException {
         JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(payload));
-        jwsObject.sign(new RSASSASigner(getPrivateKey(BASE64_DCS_SIGNING_KEY)));
+        jwsObject.sign(new RSASSASigner(getPrivateKey()));
         return jwsObject;
     }
 
@@ -224,25 +218,22 @@ class DcsCryptographyServiceTest {
                         .build();
         JWEObject jwe = new JWEObject(header, new Payload(toEncrypt.serialize()));
 
-        jwe.encrypt(
-                new RSAEncrypter(
-                        (RSAPublicKey)
-                                getCertificate(BASE64_ENCRYPTION_PUBLIC_CERT).getPublicKey()));
+        jwe.encrypt(new RSAEncrypter((RSAPublicKey) getCertificate().getPublicKey()));
 
         return jwe;
     }
 
-    private Certificate getCertificate(String base64EncodedCert) throws CertificateException {
-        byte[] binaryCertificate = Base64.getDecoder().decode(base64EncodedCert);
+    private Certificate getCertificate() throws CertificateException {
+        byte[] binaryCertificate = Base64.getDecoder().decode(BASE64_ENCRYPTION_PUBLIC_CERT);
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
-    private PrivateKey getPrivateKey(String base64EncodedKey)
-            throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private PrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
         return KeyFactory.getInstance("RSA")
                 .generatePrivate(
-                        new PKCS8EncodedKeySpec(Base64.getDecoder().decode(base64EncodedKey)));
+                        new PKCS8EncodedKeySpec(
+                                Base64.getDecoder().decode(BASE64_DCS_SIGNING_KEY)));
     }
 
     private PublicKey getSigningPublicKey(RSAPrivateKey signingPrivateKey)

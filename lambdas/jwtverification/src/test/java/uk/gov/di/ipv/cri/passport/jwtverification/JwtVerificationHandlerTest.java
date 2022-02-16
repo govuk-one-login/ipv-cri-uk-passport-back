@@ -79,8 +79,7 @@ class JwtVerificationHandlerTest {
 
     @Test
     void shouldReturn200WhenGivenValidJWT() throws CertificateException {
-        when(configurationService.getClientJwtSigningCert("TEST"))
-                .thenReturn(getCertificate(BASE64_CERT));
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
@@ -94,8 +93,7 @@ class JwtVerificationHandlerTest {
 
     @Test
     void shouldReturnClaimsAsJsonFromJWT() throws JsonProcessingException, CertificateException {
-        when(configurationService.getClientJwtSigningCert("TEST"))
-                .thenReturn(getCertificate(BASE64_CERT));
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate());
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
@@ -171,13 +169,11 @@ class JwtVerificationHandlerTest {
     @Test
     void shouldReturn400WhenSignatureVerificationFails()
             throws JOSEException, JsonProcessingException, CertificateException {
-        when(configurationService.getClientJwtSigningCert("TEST"))
-                .thenReturn(getCertificate(BASE64_CERT));
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate());
 
         List<String> givenNames = Arrays.asList("Daniel", "Dan", "Danny");
         List<String> dateOfBirths = Arrays.asList("01/01/1980", "02/01/1980");
-        List<String> addresses =
-                Arrays.asList("{\"line1\":\"\321 Street\",\"postcode\":\"M34 1AA\"");
+        List<String> addresses = List.of("{\"line1\":\"\321 Street\",\"postcode\":\"M34 1AA\"");
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()
                         .claim("givenNames", givenNames)
@@ -229,8 +225,8 @@ class JwtVerificationHandlerTest {
         assertEquals(ErrorResponse.FAILED_TO_VERIFY_SIGNATURE.getMessage(), error.get("message"));
     }
 
-    private Certificate getCertificate(String base64certificate) throws CertificateException {
-        byte[] binaryCertificate = Base64.getDecoder().decode(base64certificate);
+    private Certificate getCertificate() throws CertificateException {
+        byte[] binaryCertificate = Base64.getDecoder().decode(BASE64_CERT);
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }

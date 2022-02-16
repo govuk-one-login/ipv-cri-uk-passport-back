@@ -46,7 +46,6 @@ class AccessTokenHandlerTest {
     @Mock private ConfigurationService mockConfigurationService;
 
     private AccessTokenHandler handler;
-    private TokenResponse tokenResponse;
 
     @BeforeEach
     void setUp() {
@@ -65,7 +64,7 @@ class AccessTokenHandlerTest {
         event.setBody(tokenRequestBody);
 
         AccessToken accessToken = new BearerAccessToken();
-        tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
+        TokenResponse tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
         when(mockAccessTokenService.generateAccessToken(any())).thenReturn(tokenResponse);
 
         when(mockAuthorizationCodeService.getResourceIdByAuthorizationCode("12345"))

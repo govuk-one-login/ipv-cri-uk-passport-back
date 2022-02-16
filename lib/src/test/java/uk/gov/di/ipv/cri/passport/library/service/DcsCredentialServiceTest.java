@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
@@ -20,15 +19,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class DcsCredentialServiceTest {
 
-    @Mock private ConfigurationService mockConfigurationService;
-
     @Mock private DataStore<PassportCheckDao> mockDataStore;
 
     @Mock PassportAttributes passportAttributes;
 
     @Mock PassportGpg45Score gpg45Score;
-
-    @Mock DcsResponse dcsResponse;
 
     private DcsCredentialService dcsCredentialService;
 
