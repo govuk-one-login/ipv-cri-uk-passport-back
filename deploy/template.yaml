@@ -185,5 +185,7 @@ Resources:
 
 Outputs:
   IPVCriUkPassportAPIGatewayID:
-    Value: !Ref IPVCriUKPassportAPI
     Description: CRI UK Passport API Gateway ID
+    Export:
+      Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
+    Value: !Ref IPVCriUKPassportAPI
