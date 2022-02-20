@@ -224,4 +224,28 @@ public class ConfigurationService {
                                                         clientId)))
                         .split(CLIENT_REDIRECT_URL_SEPARATOR));
     }
+
+    public String getAudienceForClients() {
+        return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUDIENCE");
+    }
+
+    public Certificate getClientCertificate(String clientId) throws CertificateException {
+        return getCertificateFromStore(
+                String.format(
+                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
+                                + "/%s/jwtAuthentication/publicCertificateForCoreToVerify",
+                        clientId));
+    }
+
+    public String getClientAuthenticationMethod(String clientId) {
+        return ssmProvider.get(
+                String.format(
+                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
+                                + "/%s/jwtAuthentication/authenticationMethod",
+                        clientId));
+    }
+
+    public String getMaxClientAuthTokenTtl() {
+        return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUTH_MAX_TTL");
+    }
 }

@@ -16,6 +16,8 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
+import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
@@ -34,16 +36,18 @@ public class AccessTokenHandler
 
     private final AccessTokenService accessTokenService;
     private final AuthorizationCodeService authorizationCodeService;
-
     private final ConfigurationService configurationService;
+    private final TokenRequestValidator tokenRequestValidator;
 
     public AccessTokenHandler(
             AccessTokenService accessTokenService,
             AuthorizationCodeService authorizationCodeService,
-            ConfigurationService configurationService) {
+            ConfigurationService configurationService,
+            TokenRequestValidator tokenRequestValidator) {
         this.accessTokenService = accessTokenService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
+        this.tokenRequestValidator = tokenRequestValidator;
     }
 
     @ExcludeFromGeneratedCoverageReport
@@ -51,6 +55,7 @@ public class AccessTokenHandler
         this.configurationService = new ConfigurationService();
         this.accessTokenService = new AccessTokenService(configurationService);
         this.authorizationCodeService = new AuthorizationCodeService(configurationService);
+        this.tokenRequestValidator = new TokenRequestValidator(configurationService);
     }
 
     @Override
@@ -69,6 +74,8 @@ public class AccessTokenHandler
                         getHttpStatusCodeForErrorResponse(validationResult.getError()),
                         validationResult.getError().toJSONObject());
             }
+
+            tokenRequestValidator.authenticateClient(input.getBody(), input.getPathParameters());
 
             AuthorizationCodeGrant authorizationCodeGrant =
                     (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
@@ -110,6 +117,11 @@ public class AccessTokenHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     getHttpStatusCodeForErrorResponse(e.getErrorObject()),
                     e.getErrorObject().toJSONObject());
+        } catch (ClientAuthenticationException e) {
+            LOGGER.error("Client authentication failed: ", e);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
+                    OAuth2Error.INVALID_GRANT.toJSONObject());
         }
     }
 
