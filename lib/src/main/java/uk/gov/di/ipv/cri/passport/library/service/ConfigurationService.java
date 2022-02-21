@@ -6,6 +6,7 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
+import uk.gov.di.ipv.cri.passport.library.exceptions.UnknownClientException;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -20,7 +21,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 public class ConfigurationService {
@@ -29,6 +32,7 @@ public class ConfigurationService {
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
+    private static final String CLIENT_REDIRECT_URL_SEPARATOR = ",";
 
     private final SSMProvider ssmProvider;
 
@@ -198,5 +202,25 @@ public class ConfigurationService {
                         System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
                                 + "/%s/sharedAttributesJwtSigningCert",
                         clientId));
+    }
+
+    public List<String> getClientRedirectUrls(String clientId) throws UnknownClientException {
+        Optional<String> redirectUrlStrings =
+                Optional.ofNullable(
+                        ssmProvider.get(
+                                String.format(
+                                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
+                                                + "/%s/jwtAuthentication/validRedirectUrls",
+                                        clientId)));
+
+        return Arrays.asList(
+                redirectUrlStrings
+                        .orElseThrow(
+                                () ->
+                                        new UnknownClientException(
+                                                String.format(
+                                                        "Client redirect URLs are not set in parameter store for client ID '%s'",
+                                                        clientId)))
+                        .split(CLIENT_REDIRECT_URL_SEPARATOR));
     }
 }
