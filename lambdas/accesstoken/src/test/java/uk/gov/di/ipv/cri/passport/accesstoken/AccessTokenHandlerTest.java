@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
+import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
@@ -34,6 +36,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +53,7 @@ class AccessTokenHandlerTest {
     @Mock private AccessTokenService mockAccessTokenService;
     @Mock private AuthorizationCodeService mockAuthorizationCodeService;
     @Mock private ConfigurationService mockConfigurationService;
+    @Mock private TokenRequestValidator mockTokenRequestValidator;
 
     private AccessTokenHandler handler;
 
@@ -59,7 +63,8 @@ class AccessTokenHandlerTest {
                 new AccessTokenHandler(
                         mockAccessTokenService,
                         mockAuthorizationCodeService,
-                        mockConfigurationService);
+                        mockConfigurationService,
+                        mockTokenRequestValidator);
     }
 
     @Test
@@ -187,6 +192,28 @@ class AccessTokenHandlerTest {
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_REQUEST.getCode(), errorResponse.getCode());
         assertEquals(OAuth2Error.INVALID_REQUEST.getDescription(), errorResponse.getDescription());
+    }
+
+    @Test
+    void shouldReturn400WhenClientAuthFails() throws Exception {
+        String tokenRequestBody =
+                "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
+
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        event.setBody(tokenRequestBody);
+
+        when(mockAccessTokenService.validateTokenRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
+
+        doThrow(new ClientAuthenticationException("error"))
+                .when(mockTokenRequestValidator)
+                .authenticateClient(any(), any());
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+        ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
+        assertEquals(HTTPResponse.SC_BAD_REQUEST, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
+        assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
     }
 
     private ErrorObject createErrorObjectFromResponse(String responseBody) throws ParseException {
