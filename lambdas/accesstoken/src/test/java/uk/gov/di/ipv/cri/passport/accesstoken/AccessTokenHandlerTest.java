@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.oauth2.sdk.AccessTokenResponse;
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.GrantType;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -37,7 +39,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AccessTokenHandlerTest {
 
-    private static final String TEST_RESOURCE_ID = UUID.randomUUID().toString();
+    private static final AuthorizationCodeItem TEST_AUTH_CODE_ITEM =
+            new AuthorizationCodeItem(
+                    new AuthorizationCode().toString(),
+                    UUID.randomUUID().toString(),
+                    "http://example.com");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
@@ -60,15 +66,14 @@ class AccessTokenHandlerTest {
     void shouldReturnAccessTokenOnSuccessfulExchange() throws Exception {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         String tokenRequestBody =
-                "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
+                "code=12345&redirect_uri=http://example.com&grant_type=authorization_code&client_id=test_client_id";
         event.setBody(tokenRequestBody);
 
         AccessToken accessToken = new BearerAccessToken();
         TokenResponse tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
         when(mockAccessTokenService.generateAccessToken(any())).thenReturn(tokenResponse);
 
-        when(mockAuthorizationCodeService.getResourceIdByAuthorizationCode("12345"))
-                .thenReturn(TEST_RESOURCE_ID);
+        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
 
         when(mockAccessTokenService.validateTokenRequest(any()))
                 .thenReturn(ValidationResult.createValidResult());
@@ -153,8 +158,7 @@ class AccessTokenHandlerTest {
         when(mockAccessTokenService.validateTokenRequest(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
-        when(mockAuthorizationCodeService.getResourceIdByAuthorizationCode("12345"))
-                .thenReturn(null);
+        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(null);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -163,6 +167,26 @@ class AccessTokenHandlerTest {
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
+    }
+
+    @Test
+    void shouldReturn400WhenInvalidRedirectUriParamIsProvided() throws Exception {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        String tokenRequestBody =
+                "code=12345&redirect_uri=http://invalid-uri.com&grant_type=authorization_code&client_id=test_client_id";
+        event.setBody(tokenRequestBody);
+
+        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
+
+        when(mockAccessTokenService.validateTokenRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
+
+        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_REQUEST.getCode(), errorResponse.getCode());
+        assertEquals(OAuth2Error.INVALID_REQUEST.getDescription(), errorResponse.getDescription());
     }
 
     private ErrorObject createErrorObjectFromResponse(String responseBody) throws ParseException {

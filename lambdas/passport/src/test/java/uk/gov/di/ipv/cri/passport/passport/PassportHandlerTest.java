@@ -174,7 +174,9 @@ class PassportHandlerTest {
 
         verify(authorizationCodeService)
                 .persistAuthorizationCode(
-                        authCode.get("value"), persistedDcsResponseItem.getValue().getResourceId());
+                        authCode.get("value"),
+                        persistedDcsResponseItem.getValue().getResourceId(),
+                        params.get(OAuth2RequestParams.REDIRECT_URI));
         assertEquals(authorizationCode.toString(), authCode.get("value"));
     }
 
@@ -198,7 +200,7 @@ class PassportHandlerTest {
                 ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(), responseBody.get("message"));
 
         verify(authorizationCodeService, never())
-                .persistAuthorizationCode(anyString(), anyString());
+                .persistAuthorizationCode(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -415,18 +417,23 @@ class PassportHandlerTest {
 
         ArgumentCaptor<String> authCodeArgumentCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> resourceIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> redirectUrlArgumentCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<PassportCheckDao> dcsResponseItemArgumentCaptor =
                 ArgumentCaptor.forClass(PassportCheckDao.class);
         verify(passportService).persistDcsResponse(dcsResponseItemArgumentCaptor.capture());
 
         verify(authorizationCodeService)
                 .persistAuthorizationCode(
-                        authCodeArgumentCaptor.capture(), resourceIdArgumentCaptor.capture());
+                        authCodeArgumentCaptor.capture(),
+                        resourceIdArgumentCaptor.capture(),
+                        redirectUrlArgumentCaptor.capture());
 
         assertEquals(authorizationCode.toString(), authCodeArgumentCaptor.getValue());
         assertEquals(
                 dcsResponseItemArgumentCaptor.getValue().getResourceId(),
                 resourceIdArgumentCaptor.getValue());
+        assertEquals(
+                params.get(OAuth2RequestParams.REDIRECT_URI), redirectUrlArgumentCaptor.getValue());
     }
 
     @Test
@@ -460,7 +467,7 @@ class PassportHandlerTest {
                     ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
                     responseBody.get("message"));
             verify(authorizationCodeService, never())
-                    .persistAuthorizationCode(anyString(), anyString());
+                    .persistAuthorizationCode(anyString(), anyString(), anyString());
         }
     }
 }

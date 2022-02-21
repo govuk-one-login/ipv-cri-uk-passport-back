@@ -5,8 +5,6 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
-import java.util.Objects;
-
 public class AuthorizationCodeService {
     private final DataStore<AuthorizationCodeItem> dataStore;
 
@@ -27,15 +25,16 @@ public class AuthorizationCodeService {
         return new AuthorizationCode();
     }
 
-    public String getResourceIdByAuthorizationCode(String authorizationCode) {
-        AuthorizationCodeItem authorizationCodeItem = dataStore.getItem(authorizationCode);
-        return Objects.isNull(authorizationCodeItem) ? null : authorizationCodeItem.getResourceId();
+    public AuthorizationCodeItem getAuthCodeItem(String authorizationCode) {
+        return dataStore.getItem(authorizationCode);
     }
 
-    public void persistAuthorizationCode(String authorizationCode, String resourceId) {
+    public void persistAuthorizationCode(
+            String authorizationCode, String resourceId, String redirectUrl) {
         AuthorizationCodeItem authorizationCodeItem = new AuthorizationCodeItem();
         authorizationCodeItem.setAuthCode(authorizationCode);
         authorizationCodeItem.setResourceId(resourceId);
+        authorizationCodeItem.setRedirectUrl(redirectUrl);
 
         dataStore.create(authorizationCodeItem);
     }
