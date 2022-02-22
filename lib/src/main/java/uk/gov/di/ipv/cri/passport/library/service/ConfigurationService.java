@@ -205,23 +205,14 @@ public class ConfigurationService {
     }
 
     public List<String> getClientRedirectUrls(String clientId) throws UnknownClientException {
-        Optional<String> redirectUrlStrings =
-                Optional.ofNullable(
-                        ssmProvider.get(
-                                String.format(
-                                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
-                                                + "/%s/jwtAuthentication/validRedirectUrls",
-                                        clientId)));
+        String redirectUrlStrings =
+                ssmProvider.get(
+                        String.format(
+                                System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
+                                        + "/%s/jwtAuthentication/validRedirectUrls",
+                                clientId));
 
-        return Arrays.asList(
-                redirectUrlStrings
-                        .orElseThrow(
-                                () ->
-                                        new UnknownClientException(
-                                                String.format(
-                                                        "Client redirect URLs are not set in parameter store for client ID '%s'",
-                                                        clientId)))
-                        .split(CLIENT_REDIRECT_URL_SEPARATOR));
+        return Arrays.asList(redirectUrlStrings.split(CLIENT_REDIRECT_URL_SEPARATOR));
     }
 
     public String getAudienceForClients() {
