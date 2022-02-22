@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.passport.library.helpers;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
+import uk.gov.di.ipv.cri.passport.library.exceptions.HttpClientException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import javax.net.ssl.SSLContext;
@@ -50,7 +51,7 @@ public class HttpClientSetUp {
                 | KeyManagementException
                 | KeyStoreException
                 | UnrecoverableKeyException e) {
-            throw new RuntimeException(e);
+            throw new HttpClientException(e);
         }
     }
 

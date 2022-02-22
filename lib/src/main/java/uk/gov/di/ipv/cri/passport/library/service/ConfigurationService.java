@@ -33,6 +33,8 @@ public class ConfigurationService {
     private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
     private static final String CLIENT_REDIRECT_URL_SEPARATOR = ",";
+    public static final String CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX =
+            "CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX";
 
     private final SSMProvider ssmProvider;
 
@@ -199,18 +201,16 @@ public class ConfigurationService {
     public Certificate getClientJwtSigningCert(String clientId) throws CertificateException {
         return getCertificateFromStore(
                 String.format(
-                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
-                                + "/%s/sharedAttributesJwtSigningCert",
-                        clientId));
+                        "%s/%s/sharedAttributesJwtSigningCert",
+                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
     public List<String> getClientRedirectUrls(String clientId) throws UnknownClientException {
         String redirectUrlStrings =
                 ssmProvider.get(
                         String.format(
-                                System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
-                                        + "/%s/jwtAuthentication/validRedirectUrls",
-                                clientId));
+                                "%s/%s/jwtAuthentication/validRedirectUrls",
+                                System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
 
         return Arrays.asList(redirectUrlStrings.split(CLIENT_REDIRECT_URL_SEPARATOR));
     }
@@ -222,17 +222,15 @@ public class ConfigurationService {
     public Certificate getClientCertificate(String clientId) throws CertificateException {
         return getCertificateFromStore(
                 String.format(
-                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
-                                + "/%s/jwtAuthentication/publicCertificateForCoreToVerify",
-                        clientId));
+                        "%s/%s/jwtAuthentication/publicCertificateForCoreToVerify",
+                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
     public String getClientAuthenticationMethod(String clientId) {
         return ssmProvider.get(
                 String.format(
-                        System.getenv("CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX")
-                                + "/%s/jwtAuthentication/authenticationMethod",
-                        clientId));
+                        "%s/%s/jwtAuthentication/authenticationMethod",
+                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
     public String getMaxClientAuthTokenTtl() {
