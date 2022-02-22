@@ -222,7 +222,7 @@ public class ConfigurationService {
     public Certificate getClientCertificate(String clientId) throws CertificateException {
         return getCertificateFromStore(
                 String.format(
-                        "%s/%s/jwtAuthentication/publicCertificateForCoreToVerify",
+                        "%s/%s/jwtAuthentication/publicCertificateToVerify",
                         System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
