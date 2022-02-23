@@ -207,7 +207,7 @@ class AccessTokenHandlerTest {
 
         doThrow(new ClientAuthenticationException("error"))
                 .when(mockTokenRequestValidator)
-                .authenticateClient(any(), any());
+                .authenticateClient(any());
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());

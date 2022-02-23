@@ -75,7 +75,7 @@ public class AccessTokenHandler
                         validationResult.getError().toJSONObject());
             }
 
-            tokenRequestValidator.authenticateClient(input.getBody(), input.getPathParameters());
+            tokenRequestValidator.authenticateClient(input.getBody());
 
             AuthorizationCodeGrant authorizationCodeGrant =
                     (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
