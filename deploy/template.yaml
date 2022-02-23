@@ -65,8 +65,8 @@ Resources:
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
-          PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
-          PASSPORT_CRI_CLIENT_AUDIENCE: "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
+          PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
+          PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
