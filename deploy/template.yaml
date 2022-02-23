@@ -72,6 +72,14 @@ Resources:
             TableName: !Ref CRIPassportAuthCodesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAccessTokensTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
       Events:
         IPVCriUKPassportAPI:
           Type: Api
