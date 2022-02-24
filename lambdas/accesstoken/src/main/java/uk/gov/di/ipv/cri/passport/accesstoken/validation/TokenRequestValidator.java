@@ -46,6 +46,7 @@ public class TokenRequestValidator {
 
     private void authenticateClientWithJwt(String requestBody)
             throws ClientAuthenticationException {
+
         PrivateKeyJWT clientJwt;
         try {
             clientJwt = PrivateKeyJWT.parse(requestBody);

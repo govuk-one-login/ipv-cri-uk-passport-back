@@ -236,4 +236,8 @@ public class ConfigurationService {
     public String getMaxClientAuthTokenTtl() {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUTH_MAX_TTL");
     }
+
+    public String getSharedAttributesSigningKeyId() {
+        return ssmProvider.get(System.getenv("SHARED_ATTRIBUTES_SIGNING_KEY_ID_PARAM"));
+    }
 }

@@ -97,6 +97,7 @@ class DcsCredentialHandlerTest {
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsCredentialService.getDcsCredential(anyString())).thenReturn(dcsCredential);
+        when(mockConfigurationService.getSharedAttributesSigningKeyId()).thenReturn("3efe7d7f-5a08-4ea3-90c3-11b24ec3b375");
 
         APIGatewayProxyResponseEvent response =
                 dcsCredentialHandler.handleRequest(event, mockContext);
