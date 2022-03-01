@@ -22,7 +22,8 @@ public enum ErrorResponse {
     JWT_SIGNATURE_IS_INVALID(1013, "Signature of the shared attribute JWT is invalid"),
     INVALID_REDIRECT_URL(1014, "Provided redirect URL is not in those configured for client"),
     UNKNOWN_CLIENT_ID(1015, "Unknown client id provided in request params"),
-    INVALID_REQUEST_PARAM(1016, "Invalid request param");
+    INVALID_REQUEST_PARAM(1016, "Invalid request param"),
+    VC_HTTP_API_CLAIM_MISSING(1017, "vc_http_api claim missing from shared attribute JWT");
 
     private final int code;
     private final String message;

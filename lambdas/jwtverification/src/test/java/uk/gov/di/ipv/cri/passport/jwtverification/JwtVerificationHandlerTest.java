@@ -40,9 +40,12 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.jwtverification.JwtVerificationHandler.VC_HTTP_API_CLAIM;
 
 @ExtendWith(MockitoExtension.class)
 class JwtVerificationHandlerTest {
+
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Mock private ConfigurationService configurationService;
 
@@ -60,15 +63,14 @@ class JwtVerificationHandlerTest {
 
     @BeforeEach
     void setUp() throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException {
-        List<String> givenNames = Arrays.asList("Daniel", "Dan", "Danny");
-        List<String> dateOfBirths = Arrays.asList("01/01/1980", "02/01/1980");
-        List<String> addresses = Collections.singletonList("123 random street, M13 7GE");
+        Map<String, List<String>> vcHttpApiClaim =
+                Map.of(
+                        "givenNames", Arrays.asList("Daniel", "Dan", "Danny"),
+                        "dateOfBirths", Arrays.asList("01/01/1980", "02/01/1980"),
+                        "addresses", Collections.singletonList("123 random street, M13 7GE"));
+
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder()
-                        .claim("givenNames", givenNames)
-                        .claim("dateOfBirths", dateOfBirths)
-                        .claim("addresses", addresses)
-                        .build();
+                new JWTClaimsSet.Builder().claim(VC_HTTP_API_CLAIM, vcHttpApiClaim).build();
 
         RSASSASigner rsaSigner = new RSASSASigner(getPrivateKey());
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
@@ -102,9 +104,8 @@ class JwtVerificationHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> claims =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(Arrays.asList("01/01/1980", "02/01/1980"), claims.get("dateOfBirths"));
         assertEquals(
                 Collections.singletonList("123 random street, M13 7GE"), claims.get("addresses"));
@@ -121,9 +122,8 @@ class JwtVerificationHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> error =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
         assertEquals(ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT.getCode(), error.get("code"));
         assertEquals(
@@ -140,9 +140,8 @@ class JwtVerificationHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> error =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
         assertEquals(
                 ErrorResponse.FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT.getCode(), error.get("code"));
@@ -157,9 +156,8 @@ class JwtVerificationHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> error =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
         assertEquals(ErrorResponse.MISSING_CLIENT_ID_QUERY_PARAMETER.getCode(), error.get("code"));
         assertEquals(
@@ -195,9 +193,8 @@ class JwtVerificationHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> error =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
         assertEquals(ErrorResponse.JWT_SIGNATURE_IS_INVALID.getCode(), error.get("code"));
         assertEquals(ErrorResponse.JWT_SIGNATURE_IS_INVALID.getMessage(), error.get("message"));
@@ -217,12 +214,38 @@ class JwtVerificationHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> error =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
         assertEquals(ErrorResponse.FAILED_TO_VERIFY_SIGNATURE.getCode(), error.get("code"));
         assertEquals(ErrorResponse.FAILED_TO_VERIFY_SIGNATURE.getMessage(), error.get("message"));
+    }
+
+    @Test
+    void shouldReturn400WhenVcHttpApiClaimMissing() throws Exception {
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate());
+
+        JWTClaimsSet claimsSet =
+                new JWTClaimsSet.Builder().claim("NO_VC_HTTP_API_CLAIM_PRESENT", "Nope").build();
+
+        RSASSASigner rsaSigner = new RSASSASigner(getPrivateKey());
+        SignedJWT signedJwtWithoutClaim =
+                new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
+        signedJwtWithoutClaim.sign(rsaSigner);
+
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> map = new HashMap<>();
+        map.put("client_id", "TEST");
+        event.setHeaders(map);
+        event.setBody(signedJwtWithoutClaim.serialize());
+
+        var response = underTest.handleRequest(event, context);
+
+        Map<String, Object> error =
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
+        assertEquals(400, response.getStatusCode());
+        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getCode(), error.get("code"));
+        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getMessage(), error.get("message"));
     }
 
     private Certificate getCertificate() throws CertificateException {
