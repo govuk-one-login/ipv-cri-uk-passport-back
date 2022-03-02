@@ -28,6 +28,7 @@ public class JwtVerificationHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     public static final String VC_HTTP_API_CLAIM = "vc_http_api";
+    public static final String CLAIMS_CLAIM = "claims";
     private final ConfigurationService configurationService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtVerificationHandler.class);
@@ -71,15 +72,15 @@ public class JwtVerificationHandler
             }
 
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-            Map<String, Object> sharedAttributes = claimsSet.getJSONObjectClaim(VC_HTTP_API_CLAIM);
+            Map<String, Object> claims = claimsSet.getJSONObjectClaim(CLAIMS_CLAIM);
 
-            if (sharedAttributes == null) {
+            if (claims == null || claims.get(VC_HTTP_API_CLAIM) == null) {
                 LOGGER.error("vc_http_api claim not found in JWT");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         BAD_REQUEST, ErrorResponse.VC_HTTP_API_CLAIM_MISSING);
             }
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(OK, sharedAttributes);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(OK, claims.get(VC_HTTP_API_CLAIM));
         } catch (ParseException e) {
             LOGGER.error("Failed to parse the shared attributes JWT", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
