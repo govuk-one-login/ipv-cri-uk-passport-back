@@ -40,6 +40,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.jwtverification.JwtVerificationHandler.CLAIMS_CLAIM;
 import static uk.gov.di.ipv.cri.passport.jwtverification.JwtVerificationHandler.VC_HTTP_API_CLAIM;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,7 +71,9 @@ class JwtVerificationHandlerTest {
                         "addresses", Collections.singletonList("123 random street, M13 7GE"));
 
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder().claim(VC_HTTP_API_CLAIM, vcHttpApiClaim).build();
+                new JWTClaimsSet.Builder()
+                        .claim(CLAIMS_CLAIM, Map.of(VC_HTTP_API_CLAIM, vcHttpApiClaim))
+                        .build();
 
         RSASSASigner rsaSigner = new RSASSASigner(getPrivateKey());
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
@@ -222,11 +225,40 @@ class JwtVerificationHandlerTest {
     }
 
     @Test
-    void shouldReturn400WhenVcHttpApiClaimMissing() throws Exception {
+    void shouldReturn400WhenClaimsClaimMissing() throws Exception {
         when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate());
 
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder().claim("NO_VC_HTTP_API_CLAIM_PRESENT", "Nope").build();
+                new JWTClaimsSet.Builder().claim("NO_CLAIMS_CLAIM_PRESENT", "Nope").build();
+
+        RSASSASigner rsaSigner = new RSASSASigner(getPrivateKey());
+        SignedJWT signedJwtWithoutClaim =
+                new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claimsSet);
+        signedJwtWithoutClaim.sign(rsaSigner);
+
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> map = new HashMap<>();
+        map.put("client_id", "TEST");
+        event.setHeaders(map);
+        event.setBody(signedJwtWithoutClaim.serialize());
+
+        var response = underTest.handleRequest(event, context);
+
+        Map<String, Object> error =
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
+        assertEquals(400, response.getStatusCode());
+        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getCode(), error.get("code"));
+        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getMessage(), error.get("message"));
+    }
+
+    @Test
+    void shouldReturn400WhenVcHttpApiClaimMissingFromClaimsClaim() throws Exception {
+        when(configurationService.getClientJwtSigningCert("TEST")).thenReturn(getCertificate());
+
+        JWTClaimsSet claimsSet =
+                new JWTClaimsSet.Builder()
+                        .claim("claims", Map.of("not_vc_http_api_claim", "nope"))
+                        .build();
 
         RSASSASigner rsaSigner = new RSASSASigner(getPrivateKey());
         SignedJWT signedJwtWithoutClaim =
