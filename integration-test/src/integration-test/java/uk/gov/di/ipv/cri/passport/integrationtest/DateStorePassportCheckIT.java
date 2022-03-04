@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,23 +31,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class DateStorePassportCheckIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DateStorePassportCheckIT.class);
-    private static final ObjectMapper objectMapper =
+    private static final ObjectMapper OBJECT_MAPPER =
             new ObjectMapper().registerModule(new JavaTimeModule());
-    private static final String DCS_RESPONSE_TABLE_NAME = "dcs-response-integration-test";
+
     private static final String RESOURCE_ID_PARAM = "resourceId";
     private static final String ATTRIBUTES_PARAM = "attributes";
     private static final String GPG45_SCORE_PARAM = "gpg45Score";
-    private static final DataStore<PassportCheckDao> dcsResponseDataStore =
-            new DataStore<>(
-                    DCS_RESPONSE_TABLE_NAME, PassportCheckDao.class, DataStore.getClient(null));
-
     private static final List<String> createdItemIds = new ArrayList<>();
 
-    private static final AmazonDynamoDB independentClient =
-            AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();
+    private static DataStore<PassportCheckDao> dcsResponseDataStore;
+    private static Table tableTestHarness;
 
-    private static final DynamoDB testClient = new DynamoDB(independentClient);
-    private static final Table tableTestHarness = testClient.getTable(DCS_RESPONSE_TABLE_NAME);
+    @BeforeAll
+    public static void setUp() {
+        String dcsResponseTableName = System.getenv("DCS_RESPONSE_TABLE_NAME");
+        if (dcsResponseTableName == null) {
+            throw new IllegalArgumentException(
+                    "The environment variable 'DCS_RESPONSE_TABLE_NAME' must be provided to run this test");
+        }
+
+        dcsResponseDataStore =
+                new DataStore<>(
+                        dcsResponseTableName, PassportCheckDao.class, DataStore.getClient(null));
+
+        AmazonDynamoDB independentClient =
+                AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();
+        DynamoDB testClient = new DynamoDB(independentClient);
+        tableTestHarness = testClient.getTable(dcsResponseTableName);
+    }
 
     @AfterAll
     public static void deleteTestItems() {
@@ -73,16 +85,16 @@ public class DateStorePassportCheckIT {
         assertEquals(passportCheckDao.getResourceId(), savedPassportCheck.get(RESOURCE_ID_PARAM));
 
         String attributesJson =
-                objectMapper.writeValueAsString(savedPassportCheck.get(ATTRIBUTES_PARAM));
+                OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(ATTRIBUTES_PARAM));
         PassportAttributes savedPassportAttributes =
-                objectMapper.readValue(attributesJson, PassportAttributes.class);
+                OBJECT_MAPPER.readValue(attributesJson, PassportAttributes.class);
         assertEquals(
                 passportCheckDao.getAttributes().toString(), savedPassportAttributes.toString());
 
         String gpg45ScoreJson =
-                objectMapper.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
+                OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
         PassportGpg45Score savedPassportGpg45Score =
-                objectMapper.readValue(gpg45ScoreJson, PassportGpg45Score.class);
+                OBJECT_MAPPER.readValue(gpg45ScoreJson, PassportGpg45Score.class);
         assertEquals(
                 passportCheckDao.getGpg45Score().toString(), savedPassportGpg45Score.toString());
     }
@@ -90,7 +102,7 @@ public class DateStorePassportCheckIT {
     @Test
     void shouldGetPassportCheckDaoFromTable() throws JsonProcessingException {
         PassportCheckDao passportCheckDao = createPassportCheckDao();
-        Item item = Item.fromJSON(objectMapper.writeValueAsString(passportCheckDao));
+        Item item = Item.fromJSON(OBJECT_MAPPER.writeValueAsString(passportCheckDao));
         tableTestHarness.putItem(item);
 
         PassportCheckDao result = dcsResponseDataStore.getItem(passportCheckDao.getResourceId());
