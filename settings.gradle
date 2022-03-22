@@ -2,8 +2,8 @@ rootProject.name = 'di-ipv-cri-uk-passport-back'
 include "lib",
 		"lambdas",
 		"lambdas:accesstoken",
-		"lambdas:dcscredential",
-		"lambdas:passport",
+		"lambdas:issuecredential",
+		"lambdas:authorizationcode",
 		"lambdas:stubdcs",
-		"lambdas:jwtverification",
+		"lambdas:sharedattributes",
 		"integration-test"

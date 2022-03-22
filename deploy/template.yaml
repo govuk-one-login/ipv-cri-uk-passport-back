@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  ipv-cri-uk-passport-back
+Description: ipv-cri-uk-passport-back
 
 Globals:
   Function:
@@ -19,14 +18,14 @@ Resources:
       Name: IPV CRI UK Passport API Gateway
       StageName: !Sub ${Environment}
 
-  IPVDcsCredentialFunction:
+  IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "ipv-dcs-credential-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.dcscredential.DcsCredentialHandler::handleRequest
+      FunctionName: !Sub "ipv-passport-issue-credential-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.issuecredential.IssueCredentialHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/dcscredential
+      CodeUri: ../lambdas/issuecredential
       Architectures:
         - x86_64
       MemorySize: 512
@@ -45,13 +44,13 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportAPI
-            Path: /credential
-            Method: GET
+            Path: /credentials/issue
+            Method: POST
 
-  IPVDcsAccessTokenFunction:
+  IPVCriUKPassportAccessTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "ipv-dcs-token-${Environment}"
+      FunctionName: !Sub "ipv-passport-token-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.accesstoken.AccessTokenHandler::handleRequest
       Runtime: java11
       PackageType: Zip
@@ -88,14 +87,14 @@ Resources:
             Path: /token
             Method: POST
 
-  IPVPassportFunction:
+  IPVCriUKPassportAuthorizationCodeFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "ipv-passport-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.passport.PassportHandler::handleRequest
+      FunctionName: !Sub "ipv-passport-authorization-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.authorizationcode.AuthorizationCodeHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/passport
+      CodeUri: ../lambdas/authorizationcode
       Architectures:
         - x86_64
       MemorySize: 512
@@ -131,17 +130,17 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportAPI
-            Path: /passport
+            Path: /authorization
             Method: POST
 
-  JwtVerificationFunction:
+  IPVCriUKPassportSharedAttributesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "ipv-jwt-verification-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.jwtverification.JwtVerificationHandler::handleRequest
+      FunctionName: !Sub "ipv-passport-shared-attributes-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/jwtverification
+      CodeUri: ../lambdas/sharedattributes
       Architectures:
         - x86_64
       MemorySize: 512
@@ -156,7 +155,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportAPI
-            Path: /jwt-verification
+            Path: /shared-attributes
             Method: POST
 
   DCSResponseTable:
