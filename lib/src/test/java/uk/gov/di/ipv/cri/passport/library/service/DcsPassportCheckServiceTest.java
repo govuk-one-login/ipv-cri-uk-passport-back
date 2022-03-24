@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -23,7 +23,7 @@ class DcsPassportCheckServiceTest {
 
     @Mock PassportAttributes passportAttributes;
 
-    @Mock PassportGpg45Score gpg45Score;
+    @Mock Evidence gpg45Score;
 
     private DcsPassportCheckService dcsPassportCheckService;
 

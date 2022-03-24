@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -93,10 +93,8 @@ public class DateStorePassportCheckIT {
 
         String gpg45ScoreJson =
                 OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
-        PassportGpg45Score savedPassportGpg45Score =
-                OBJECT_MAPPER.readValue(gpg45ScoreJson, PassportGpg45Score.class);
-        assertEquals(
-                passportCheckDao.getGpg45Score().toString(), savedPassportGpg45Score.toString());
+        Evidence savedEvidence = OBJECT_MAPPER.readValue(gpg45ScoreJson, Evidence.class);
+        assertEquals(passportCheckDao.getGpg45Score().toString(), savedEvidence.toString());
     }
 
     @Test
@@ -126,9 +124,9 @@ public class DateStorePassportCheckIT {
                         LocalDate.of(1900, 1, 1),
                         LocalDate.of(2025, 2, 2));
         passportAttributes.setDcsResponse(dcsResponse);
-        PassportGpg45Score passportGpg45Score = new PassportGpg45Score(new Gpg45Evidence(5, 5));
+        Evidence evidence = new Evidence(new Gpg45Evidence(5, 5));
         createdItemIds.add(resourceId);
 
-        return new PassportCheckDao(resourceId, passportAttributes, passportGpg45Score);
+        return new PassportCheckDao(resourceId, passportAttributes, evidence);
     }
 }

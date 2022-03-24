@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.library.domain;
+package uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;

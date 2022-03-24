@@ -240,4 +240,8 @@ public class ConfigurationService {
     public String getMaxClientAuthTokenTtl() {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUTH_MAX_TTL");
     }
+
+    public String getVerifiableCredentialKmsSigningKeyId() {
+        return ssmProvider.get(System.getenv("VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID_PARAM"));
+    }
 }

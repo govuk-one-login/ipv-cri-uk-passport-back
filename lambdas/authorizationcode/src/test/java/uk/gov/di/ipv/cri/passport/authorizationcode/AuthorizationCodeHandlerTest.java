@@ -20,8 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -334,10 +334,18 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
         assertEquals(
                 VALID_GPG45_SCORE.getStrength(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+                persistedPassportCheckDao
+                        .getValue()
+                        .getGpg45Score()
+                        .getGpg45Evidence()
+                        .getStrength());
         assertEquals(
                 VALID_GPG45_SCORE.getValidity(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+                persistedPassportCheckDao
+                        .getValue()
+                        .getGpg45Score()
+                        .getGpg45Evidence()
+                        .getValidity());
         assertEquals(
                 validDcsResponse,
                 persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
@@ -379,10 +387,18 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
         assertEquals(
                 INVALID_GPG45_SCORE.getStrength(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getStrength());
+                persistedPassportCheckDao
+                        .getValue()
+                        .getGpg45Score()
+                        .getGpg45Evidence()
+                        .getStrength());
         assertEquals(
                 INVALID_GPG45_SCORE.getValidity(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getEvidence().getValidity());
+                persistedPassportCheckDao
+                        .getValue()
+                        .getGpg45Score()
+                        .getGpg45Evidence()
+                        .getValidity());
         assertEquals(
                 invalidDcsResponse,
                 persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());

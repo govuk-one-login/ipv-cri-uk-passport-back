@@ -4,19 +4,18 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 
 @DynamoDbBean
 @ExcludeFromGeneratedCoverageReport
 public class PassportCheckDao {
     private String resourceId;
     private PassportAttributes attributes;
-    private PassportGpg45Score gpg45Score;
+    private Evidence gpg45Score;
 
     public PassportCheckDao() {}
 
-    public PassportCheckDao(
-            String resourceId, PassportAttributes attributes, PassportGpg45Score gpg45Score) {
+    public PassportCheckDao(String resourceId, PassportAttributes attributes, Evidence gpg45Score) {
         this.resourceId = resourceId;
         this.attributes = attributes;
         this.gpg45Score = gpg45Score;
@@ -39,11 +38,11 @@ public class PassportCheckDao {
         this.attributes = passportAttributes;
     }
 
-    public PassportGpg45Score getGpg45Score() {
+    public Evidence getGpg45Score() {
         return gpg45Score;
     }
 
-    public void setGpg45Score(PassportGpg45Score gpg45Score) {
+    public void setGpg45Score(Evidence gpg45Score) {
         this.gpg45Score = gpg45Score;
     }
 }
