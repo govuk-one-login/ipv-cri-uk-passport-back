@@ -34,6 +34,7 @@ Resources:
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+          VERIFIABLE_CREDENTIAL_ISSUER_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
