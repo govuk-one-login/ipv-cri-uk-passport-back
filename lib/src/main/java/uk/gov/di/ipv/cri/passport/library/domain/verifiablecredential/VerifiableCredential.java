@@ -8,15 +8,12 @@ import java.util.List;
 
 public class VerifiableCredential {
 
-    @JsonProperty private String resourceId;
     @JsonProperty private CredentialSubject credentialSubject;
     @JsonProperty private Evidence evidence;
 
     public VerifiableCredential() {}
 
-    public VerifiableCredential(
-            String resourceId, CredentialSubject credentialSubject, Evidence evidence) {
-        this.resourceId = resourceId;
+    public VerifiableCredential(CredentialSubject credentialSubject, Evidence evidence) {
         this.credentialSubject = credentialSubject;
         this.evidence = evidence;
     }
@@ -44,19 +41,16 @@ public class VerifiableCredential {
                 new CredentialSubject.Builder()
                         .setName(new Name(nameParts))
                         .setPassportNumber(passportCheck.getAttributes().getPassportNumber())
-                        .setBirthDate(passportCheck.getAttributes().getDateOfBirth())
+                        .setBirthDate(
+                                new BirthDate(
+                                        passportCheck.getAttributes().getDateOfBirth().toString()))
                         .setExpiryDate(passportCheck.getAttributes().getExpiryDate())
                         .setRequestId(passportCheck.getAttributes().getRequestId())
                         .setCorrelationId(passportCheck.getAttributes().getCorrelationId())
                         .setDcsResponse(passportCheck.getAttributes().getDcsResponse())
                         .build();
 
-        return new VerifiableCredential(
-                passportCheck.getResourceId(), credentialSubject, passportCheck.getGpg45Score());
-    }
-
-    public String getResourceId() {
-        return resourceId;
+        return new VerifiableCredential(credentialSubject, passportCheck.getGpg45Score());
     }
 
     public CredentialSubject getCredentialSubject() {

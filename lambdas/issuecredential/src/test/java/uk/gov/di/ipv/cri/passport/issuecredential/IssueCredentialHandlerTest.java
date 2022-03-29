@@ -171,7 +171,6 @@ class IssueCredentialHandlerTest {
         VerifiableCredential verifiableCredential =
                 objectMapper.convertValue(vcNode, VerifiableCredential.class);
 
-        assertEquals(dcsCredential.getResourceId(), verifiableCredential.getResourceId());
         assertEquals(claims.get("sub").asText(), SUBJECT);
 
         List<NameParts> nameParts =
@@ -204,8 +203,8 @@ class IssueCredentialHandlerTest {
                 dcsCredential.getAttributes().getPassportNumber(),
                 verifiableCredential.getCredentialSubject().getPassportNumber());
         assertEquals(
-                dcsCredential.getAttributes().getDateOfBirth(),
-                verifiableCredential.getCredentialSubject().getBirthDate());
+                dcsCredential.getAttributes().getDateOfBirth().toString(),
+                verifiableCredential.getCredentialSubject().getBirthDate().getValue());
         assertEquals(
                 dcsCredential.getAttributes().getExpiryDate(),
                 verifiableCredential.getCredentialSubject().getExpiryDate());

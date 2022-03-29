@@ -15,7 +15,7 @@ public class CredentialSubject {
 
     @JsonProperty
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private final LocalDate birthDate;
+    private final BirthDate birthDate;
 
     @JsonProperty
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -29,7 +29,7 @@ public class CredentialSubject {
     public CredentialSubject(
             @JsonProperty(value = "name", required = true) Name name,
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
-            @JsonProperty(value = "birthDate", required = true) LocalDate birthDate,
+            @JsonProperty(value = "birthDate", required = true) BirthDate birthDate,
             @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate,
             @JsonProperty(value = "requestId", required = true) UUID requestId,
             @JsonProperty(value = "correlationId", required = true) UUID correlationId,
@@ -51,7 +51,7 @@ public class CredentialSubject {
         return passportNumber;
     }
 
-    public LocalDate getBirthDate() {
+    public BirthDate getBirthDate() {
         return birthDate;
     }
 
@@ -74,7 +74,7 @@ public class CredentialSubject {
     public static class Builder {
         private Name name;
         private String passportNumber;
-        private LocalDate birthDate;
+        private BirthDate birthDate;
         private LocalDate expiryDate;
         private UUID requestId;
         private UUID correlationId;
@@ -90,7 +90,7 @@ public class CredentialSubject {
             return this;
         }
 
-        public Builder setBirthDate(LocalDate birthDate) {
+        public Builder setBirthDate(BirthDate birthDate) {
             this.birthDate = birthDate;
             return this;
         }

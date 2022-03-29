@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.BirthDate;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.CredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Name;
@@ -62,7 +63,6 @@ class JwtHelperTest {
 
         VerifiableCredential verifiableCredential =
                 new VerifiableCredential(
-                        "test",
                         new CredentialSubject(
                                 new Name(
                                         List.of(
@@ -72,7 +72,7 @@ class JwtHelperTest {
                                                         VALID_FROM,
                                                         VALID_UNTIL))),
                                 PASSPORT_NUMBER,
-                                LocalDate.parse(BIRTH_DATE),
+                                new BirthDate(BIRTH_DATE),
                                 LocalDate.parse(EXPIRY_DATE),
                                 UUID.randomUUID(),
                                 UUID.randomUUID(),
@@ -97,7 +97,7 @@ class JwtHelperTest {
                 nameNode.get("nameParts").get(0).get("type").asText());
         assertEquals(VALID_FROM, nameNode.get("nameParts").get(0).get("validFrom").asText());
         assertEquals(VALID_UNTIL, nameNode.get("nameParts").get(0).get("validUntil").asText());
-        assertEquals(BIRTH_DATE, credentialSubjectNode.get("birthDate").asText());
+        assertEquals(BIRTH_DATE, credentialSubjectNode.get("birthDate").get("value").asText());
         assertEquals(EXPIRY_DATE, credentialSubjectNode.get("expiryDate").asText());
     }
 
