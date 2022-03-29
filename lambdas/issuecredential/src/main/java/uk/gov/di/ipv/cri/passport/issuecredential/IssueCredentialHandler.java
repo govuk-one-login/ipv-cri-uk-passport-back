@@ -7,6 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -78,6 +79,8 @@ public class IssueCredentialHandler
             String accessTokenString =
                     RequestHelper.getHeaderByKey(input.getHeaders(), AUTHORIZATION_HEADER_KEY);
 
+            String subject = getSubjectFromBody(input);
+
             // Performs validation on header value and throws a ParseException if invalid
             AccessToken.parse(accessTokenString);
 
@@ -100,7 +103,8 @@ public class IssueCredentialHandler
             VerifiableCredential verifiableCredential =
                     VerifiableCredential.fromPassportCheckDao(passportCheck);
 
-            SignedJWT signedJWT = generateAndSignVerifiableCredentialJwt(verifiableCredential);
+            SignedJWT signedJWT =
+                    generateAndSignVerifiableCredentialJwt(verifiableCredential, subject);
 
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
@@ -108,21 +112,30 @@ public class IssueCredentialHandler
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
-        } catch (JOSEException e) {
-            LOGGER.error("Failed to create VerifiableIdentityCredential");
+        } catch (JOSEException | java.text.ParseException e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+                    OAuth2Error.INVALID_REQUEST.getHTTPStatusCode(),
+                    OAuth2Error.INVALID_REQUEST
+                            .appendDescription(" " + e.getMessage())
+                            .toJSONObject());
         }
     }
 
+    private String getSubjectFromBody(APIGatewayProxyRequestEvent input)
+            throws java.text.ParseException {
+        if (input.getBody() == null)
+            throw new java.text.ParseException("Subject is missing from Request JWT", 0);
+        return PlainJWT.parse(input.getBody()).getJWTClaimsSet().getSubject();
+    }
+
     private SignedJWT generateAndSignVerifiableCredentialJwt(
-            VerifiableCredential verifiableCredential) throws JOSEException {
+            VerifiableCredential verifiableCredential, String subject) throws JOSEException {
         Instant now = Instant.now();
 
         // TODO: Set Subject and Issuer
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()
-                        .claim(SUBJECT, "Subject")
+                        .claim(SUBJECT, subject)
                         .claim(ISSUER, "Issuer")
                         .claim(NOT_BEFORE, now.getEpochSecond())
                         .claim(

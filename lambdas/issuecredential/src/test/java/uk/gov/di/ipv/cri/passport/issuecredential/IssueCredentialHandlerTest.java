@@ -11,6 +11,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jwt.JWTClaimNames;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
@@ -73,6 +76,7 @@ class IssueCredentialHandlerTest {
 
     private static final String BASE64_CERT =
             "MIIFVjCCAz4CCQDGbJ/u6uFT6DANBgkqhkiG9w0BAQsFADBtMQswCQYDVQQGEwJHQjENMAsGA1UECAwEVGVzdDENMAsGA1UEBwwEVGVzdDENMAsGA1UECgwEVEVzdDENMAsGA1UECwwEVEVzdDENMAsGA1UEAwwEVEVzdDETMBEGCSqGSIb3DQEJARYEVGVzdDAeFw0yMjAxMDcxNTM0NTlaFw0yMzAxMDcxNTM0NTlaMG0xCzAJBgNVBAYTAkdCMQ0wCwYDVQQIDARUZXN0MQ0wCwYDVQQHDARUZXN0MQ0wCwYDVQQKDARURXN0MQ0wCwYDVQQLDARURXN0MQ0wCwYDVQQDDARURXN0MRMwEQYJKoZIhvcNAQkBFgRUZXN0MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAy1cVZ1KfFmgFlDQyf/R3LF/Js6jAS2Zzbs8WGSS0ys6Z+XR4x5DTIznZp5cHuuQmqOFylXSw5oGBwMXd2L6NimG9rJnJ4w8Gy5A6ImGsiDZC+3AXRBb5hq/IdDTBjbUqRxAKokSVwotWZt554BdSRPTmlYDujzxnClNKA06Xb/X3rTsgCUmZhUnSVtOzKytP3Bdv88VI5gq5tlZOtKXCB0PnJOqRbBmuL1RNkeTny4ZJW3I2ywSATwDDyDm4pJ8XGGNFKaYYTwr6uNTQ2VHb1FVC33oWbg+Zu9D4p5l7ONicCCF3V+GbvmyeCmHGnXznz0nYX1LFqaKtruEh3/GXyLy5X03Jzq6HhTf1SNFBmzziuCovhbR4v5aFDqAYNPWz+ajOdTUfP1I18c5jR1xGUxEiiLKBZWU1J5mhqCa+0CdI0mi3HwFmluudh47I2Xw++JiqZQpxRqNGcKJOPnWDgKOKXQ/ag37aJkxqoYWk9pQ/pXOdIKm//+B//8nWGo8BA/bfdmMHyzhWWxqtydjie2EZ5ODSdQ+yu1xU5cwP59BEQoU7FKVEGiJa4kzrsI2cgloUPlsPfLENMa5i09exDo//eDB/zNy9ACgGCriov1ex3uv4vHp3WtpZYe+akGEJeP0N5dejs0hkBuX+LUcM30TnQ424tEzcuaJ1F7r4FP0CAwEAATANBgkqhkiG9w0BAQsFAAOCAgEAUh5gZx8S/XoZZoQai2uTyW/lyr1LpXMQyfvdWRr5+/OtFuASG3fAPXOTiUfuqH6Uma8BaXPRbSGWxBOFg0EbyvUY4UczZXZgVqyzkGjD2bVcnGra1OHz2AkcJm7OvzjMUvmXdDiQ8WcKIH16BZVsJFveTffJbM/KxL9UUdSLT0fNw1OvZWN1LxRj+X16B26ZnmaXPdmEC8MfwNcEU63qSlIbAvLg9Dp03weqO1qWR1vI/n1jwqidCUVwT0XF88/pJrds8/8guKlawhp9Yv+jMVYaawBiALR+5PFN56DivtmSVI5uv3oFh5tqJXXn9PhsPcIq0YKGQvvcdZl7vCikS65VzmswXBVFJNsYeeZ5NmiH2ANQd4+BLetgLAoXZxaOJ4nK+3Ml+gMwpZRRAbtixKJQDtVy+Ahuh1TEwTS1CERDYq43LhVYbMcgxdOLpZLvMew2tvJc3HfSWQKuF+NjGn/RwG54GyhjpdbfNZMB/EJXNJMt1j9RSVbPLsWjaENUkZoXE0otSou9tJOR0fwoqBJGUi5GCp98+iBdIQMAvXW5JkoDS6CM1FOfSv9ZXLvfXHOuBfKTDeVNy7u3QvyJ+BdkSc0iH4gj1F2zLHNIaZbDzwRzcDf2s3D1wTtoJ/WxfRSLGBMuUsXSduh9Md1S862N3Ce6wpri1IsgySCP84Y=";
+    public static final String SUBJECT = "subject";
 
     @Mock private Context mockContext;
 
@@ -124,6 +128,8 @@ class IssueCredentialHandlerTest {
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
+        setRequestBodyAsPlainJWT(event);
+
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
@@ -144,6 +150,8 @@ class IssueCredentialHandlerTest {
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
+        setRequestBodyAsPlainJWT(event);
+
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
@@ -151,8 +159,6 @@ class IssueCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
-
-        System.out.println(response.getBody());
 
         SignedJWT signedJWT = SignedJWT.parse(response.getBody());
         JsonNode claimsSet = objectMapper.readTree(signedJWT.getJWTClaimsSet().toString());
@@ -166,6 +172,7 @@ class IssueCredentialHandlerTest {
                 objectMapper.convertValue(vcNode, VerifiableCredential.class);
 
         assertEquals(dcsCredential.getResourceId(), verifiableCredential.getResourceId());
+        assertEquals(claims.get("sub").asText(), SUBJECT);
 
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();
@@ -221,10 +228,29 @@ class IssueCredentialHandlerTest {
     }
 
     @Test
+    void shouldReturnErrorResponseWhenRequestJWTSubjectIsNull() throws JsonProcessingException {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        Map<String, String> headers = Collections.singletonMap("Authorization", null);
+        event.setHeaders(headers);
+
+        APIGatewayProxyResponseEvent response =
+                issueCredentialHandler.handleRequest(event, mockContext);
+        responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(OAuth2Error.INVALID_REQUEST.getHTTPStatusCode(), response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_REQUEST.getCode(), responseBody.get("error"));
+        assertEquals(
+                OAuth2Error.INVALID_REQUEST.getDescription()
+                        + " Subject is missing from Request JWT",
+                responseBody.get("error_description"));
+    }
+
+    @Test
     void shouldReturnErrorResponseWhenTokenIsNull() throws JsonProcessingException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         Map<String, String> headers = Collections.singletonMap("Authorization", null);
         event.setHeaders(headers);
+        setRequestBodyAsPlainJWT(event);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -242,6 +268,7 @@ class IssueCredentialHandlerTest {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         Map<String, String> headers = Collections.singletonMap("Authorization", "11111111");
         event.setHeaders(headers);
+        setRequestBodyAsPlainJWT(event);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -258,6 +285,7 @@ class IssueCredentialHandlerTest {
     @Test
     void shouldReturnErrorResponseWhenTokenIsMissing() throws JsonProcessingException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        setRequestBodyAsPlainJWT(event);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -277,6 +305,7 @@ class IssueCredentialHandlerTest {
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
+        setRequestBodyAsPlainJWT(event);
 
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString())).thenReturn(null);
 
@@ -315,5 +344,16 @@ class IssueCredentialHandlerTest {
 
     private static Predicate<NameParts> hasValue(String value) {
         return row -> row.getValue().equals(value);
+    }
+
+    private void setRequestBodyAsPlainJWT(APIGatewayProxyRequestEvent event) {
+        String requestJWT =
+                new PlainJWT(
+                                new JWTClaimsSet.Builder()
+                                        .claim(JWTClaimNames.SUBJECT, SUBJECT)
+                                        .build())
+                        .serialize();
+
+        event.setBody(requestJWT);
     }
 }
