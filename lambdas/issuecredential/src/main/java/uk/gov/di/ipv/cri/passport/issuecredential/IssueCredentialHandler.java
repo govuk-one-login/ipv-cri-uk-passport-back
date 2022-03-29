@@ -131,12 +131,10 @@ public class IssueCredentialHandler
     private SignedJWT generateAndSignVerifiableCredentialJwt(
             VerifiableCredential verifiableCredential, String subject) throws JOSEException {
         Instant now = Instant.now();
-
-        // TODO: Set Subject and Issuer
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()
                         .claim(SUBJECT, subject)
-                        .claim(ISSUER, "Issuer")
+                        .claim(ISSUER, configurationService.getVerifiableCredentialIssuer())
                         .claim(NOT_BEFORE, now.getEpochSecond())
                         .claim(
                                 EXPIRATION_TIME,
