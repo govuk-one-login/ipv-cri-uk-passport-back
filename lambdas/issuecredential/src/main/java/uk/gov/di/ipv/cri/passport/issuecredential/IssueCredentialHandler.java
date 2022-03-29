@@ -102,7 +102,7 @@ public class IssueCredentialHandler
 
             SignedJWT signedJWT = generateAndSignVerifiableCredentialJwt(verifiableCredential);
 
-            return ApiGatewayResponseGenerator.proxyJoseResponse(
+            return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
         } catch (ParseException e) {
             LOGGER.error("Failed to parse access token");
@@ -125,7 +125,9 @@ public class IssueCredentialHandler
                         .claim(SUBJECT, "Subject")
                         .claim(ISSUER, "Issuer")
                         .claim(NOT_BEFORE, now.getEpochSecond())
-                        .claim(EXPIRATION_TIME, now.plusSeconds(600).getEpochSecond())
+                        .claim(
+                                EXPIRATION_TIME,
+                                now.plusSeconds(configurationService.maxJwtTtl()).getEpochSecond())
                         .claim(VC_CONTEXT, new String[] {W3_BASE_CONTEXT, DI_CONTEXT})
                         .claim(
                                 VC_TYPE,

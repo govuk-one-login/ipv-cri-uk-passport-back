@@ -20,7 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Set;
 
-import static com.nimbusds.jose.JWSAlgorithm.RS256;
+import static com.nimbusds.jose.JWSAlgorithm.ES256;
 
 public class KmsSigner implements JWSSigner {
 
@@ -53,8 +53,7 @@ public class KmsSigner implements JWSSigner {
 
         SignRequest signRequest =
                 new SignRequest()
-                        .withSigningAlgorithm(
-                                SigningAlgorithmSpec.RSASSA_PKCS1_V1_5_SHA_256.toString())
+                        .withSigningAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256.toString())
                         .withKeyId(keyId)
                         .withMessage(ByteBuffer.wrap(signingInputHash))
                         .withMessageType(MessageType.DIGEST);
@@ -66,7 +65,7 @@ public class KmsSigner implements JWSSigner {
 
     @Override
     public Set<JWSAlgorithm> supportedJWSAlgorithms() {
-        return Set.of(RS256);
+        return Set.of(ES256);
     }
 
     @Override

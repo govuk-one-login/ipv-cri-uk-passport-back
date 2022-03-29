@@ -244,4 +244,8 @@ public class ConfigurationService {
     public String getVerifiableCredentialKmsSigningKeyId() {
         return ssmProvider.get(System.getenv("VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID_PARAM"));
     }
+
+    public long maxJwtTtl() {
+        return Long.parseLong(ssmProvider.get(System.getenv("MAX_JWT_TTL")));
+    }
 }

@@ -39,7 +39,7 @@ class KmsSignerTest {
 
         JSONObject jsonPayload = new JSONObject(Map.of("test", "test"));
 
-        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
+        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
         JWSObject jwsObject = new JWSObject(jwsHeader, new Payload(jsonPayload));
 
         jwsObject.sign(kmsSigner);

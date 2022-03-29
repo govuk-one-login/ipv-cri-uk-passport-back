@@ -25,6 +25,11 @@ public class ApiGatewayResponseGenerator {
         return proxyResponse(statusCode, payload, responseHeaders);
     }
 
+    public static APIGatewayProxyResponseEvent proxyJwtResponse(int statusCode, String payload) {
+        Map<String, String> responseHeaders = Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt");
+        return proxyResponse(statusCode, payload, responseHeaders);
+    }
+
     public static <T> APIGatewayProxyResponseEvent proxyJsonResponse(int statusCode, T body) {
         Map<String, String> responseHeaders =
                 Map.of(HttpHeaders.CONTENT_TYPE, JSON_CONTENT_TYPE_VALUE);
