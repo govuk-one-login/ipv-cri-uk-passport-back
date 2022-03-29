@@ -233,6 +233,10 @@ public class ConfigurationService {
                         System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
+    public String getVerifiableCredentialIssuer() {
+        return getParameterFromStoreUsingEnv("VERIFIABLE_CREDENTIAL_ISSUER_PARAM");
+    }
+
     public String getMaxClientAuthTokenTtl() {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUTH_MAX_TTL");
     }
