@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportGpg45Score;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
@@ -154,7 +154,7 @@ public class AuthorizationCodeHandler
         }
     }
 
-    private PassportGpg45Score generateGpg45Score(DcsResponse dcsResponse) {
+    private Evidence generateGpg45Score(DcsResponse dcsResponse) {
         int validity =
                 dcsResponse.isValid()
                         ? MAX_PASSPORT_GPG45_VALIDITY_VALUE
@@ -162,7 +162,7 @@ public class AuthorizationCodeHandler
         Gpg45Evidence gpg45Evidence =
                 new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
 
-        return new PassportGpg45Score(gpg45Evidence);
+        return new Evidence(gpg45Evidence);
     }
 
     private PassportAttributes parsePassportFormRequest(String input)
