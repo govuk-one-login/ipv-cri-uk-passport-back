@@ -42,6 +42,8 @@ Resources:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAccessTokensTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
       Events:
         IPVCriUKPassportAPI:
           Type: Api
