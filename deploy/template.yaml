@@ -44,6 +44,10 @@ Resources:
             TableName: !Ref CRIPassportAccessTokensTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
       Events:
         IPVCriUKPassportAPI:
           Type: Api
