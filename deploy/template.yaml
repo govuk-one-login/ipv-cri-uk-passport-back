@@ -48,6 +48,13 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+        - Statement:
+            - Sid: kmsSigningKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:sign'
+              Resource:
+                - !ImportValue PassportCriVcSigningKeyArn
       Events:
         IPVCriUKPassportAPI:
           Type: Api
