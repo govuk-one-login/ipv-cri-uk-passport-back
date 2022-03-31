@@ -112,10 +112,18 @@ public class IssueCredentialHandler
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
-        } catch (JOSEException | java.text.ParseException e) {
+        } catch (java.text.ParseException e) {
+            LOGGER.error("Failed to parse request body: '{}'", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     OAuth2Error.INVALID_REQUEST.getHTTPStatusCode(),
                     OAuth2Error.INVALID_REQUEST
+                            .appendDescription(" " + e.getMessage())
+                            .toJSONObject());
+        } catch (JOSEException e) {
+            LOGGER.error("Failed to sign verifiable credential: '{}'", e.getMessage());
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    OAuth2Error.SERVER_ERROR.getHTTPStatusCode(),
+                    OAuth2Error.SERVER_ERROR
                             .appendDescription(" " + e.getMessage())
                             .toJSONObject());
         }
