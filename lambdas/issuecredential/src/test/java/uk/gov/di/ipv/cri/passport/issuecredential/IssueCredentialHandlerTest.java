@@ -168,7 +168,7 @@ class IssueCredentialHandlerTest {
         VerifiableCredential verifiableCredential =
                 objectMapper.convertValue(vcNode, VerifiableCredential.class);
 
-        assertEquals(claims.get("sub").asText(), SUBJECT);
+        assertEquals(SUBJECT, claims.get("sub").asText());
 
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();

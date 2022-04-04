@@ -24,7 +24,7 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.E
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_3;
 
 @ExtendWith(MockitoExtension.class)
-public class ConfigurationServicePublicKeySelectorTest {
+class ConfigurationServicePublicKeySelectorTest {
 
     @Mock ConfigurationService mockConfigurationService;
     @InjectMocks ConfigurationServicePublicKeySelector keySelector;
