@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.passport.accesstoken.domain;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.auth.Secret;
@@ -7,17 +8,13 @@ import com.nimbusds.oauth2.sdk.auth.verifier.ClientCredentialsSelector;
 import com.nimbusds.oauth2.sdk.auth.verifier.Context;
 import com.nimbusds.oauth2.sdk.auth.verifier.InvalidClientException;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.security.PublicKey;
-import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.List;
 
 public class ConfigurationServicePublicKeySelector implements ClientCredentialsSelector<Object> {
-    public static final Logger LOGGER =
-            LoggerFactory.getLogger(ConfigurationServicePublicKeySelector.class);
 
     private final ConfigurationService configurationService;
 
@@ -42,9 +39,9 @@ public class ConfigurationServicePublicKeySelector implements ClientCredentialsS
         try {
             return List.of(
                     configurationService
-                            .getClientCertificate(claimedClientID.getValue())
-                            .getPublicKey());
-        } catch (CertificateException e) {
+                            .getClientSigningPublicJwk(claimedClientID.getValue())
+                            .toECPublicKey());
+        } catch (ParseException | JOSEException e) {
             throw new InvalidClientException(e.getMessage());
         }
     }

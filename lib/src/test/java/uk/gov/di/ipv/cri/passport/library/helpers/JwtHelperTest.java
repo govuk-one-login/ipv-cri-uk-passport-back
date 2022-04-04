@@ -34,8 +34,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY;
-import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK;
+import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
+import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 
 @ExtendWith(MockitoExtension.class)
 class JwtHelperTest {
@@ -74,7 +74,7 @@ class JwtHelperTest {
         SignedJWT signedJWT = JwtHelper.createSignedJwtFromObject(verifiableCredential, ecSigner);
         JWTClaimsSet generatedClaims = signedJWT.getJWTClaimsSet();
 
-        assertTrue(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK))));
+        assertTrue(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))));
 
         JsonNode claimsSet = objectMapper.readTree(generatedClaims.toString());
 
@@ -96,6 +96,6 @@ class JwtHelperTest {
                 KeyFactory.getInstance("EC")
                         .generatePrivate(
                                 new PKCS8EncodedKeySpec(
-                                        Base64.getDecoder().decode(EC_PRIVATE_KEY)));
+                                        Base64.getDecoder().decode(EC_PRIVATE_KEY_1)));
     }
 }

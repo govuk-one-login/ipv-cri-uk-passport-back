@@ -15,7 +15,7 @@ public enum ErrorResponse {
     ERROR_GETTING_RESPONSE_FROM_DCS(1006, "No response was returned from DCS"),
     DCS_RETURNED_AN_ERROR(1007, "DCS returned an error response"),
     MISSING_SHARED_ATTRIBUTES_JWT(1008, "Missing shared attributes JWT from request body"),
-    FAILED_TO_PARSE_SHARED_ATTRIBUTES_JWT(1009, "Failed to parse shared attributes JWT"),
+    FAILED_TO_PARSE(1009, "Failed to parse"),
     MISSING_CLIENT_ID_QUERY_PARAMETER(1010, "Missing client_id query parameter"),
     FAILED_TO_RETRIEVE_CERTIFICATE(1011, "Failed to retrieve client certificate from SSM"),
     FAILED_TO_VERIFY_SIGNATURE(1012, "Failed to verify the signature of the JWT"),
