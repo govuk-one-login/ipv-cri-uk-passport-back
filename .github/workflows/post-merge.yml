@@ -43,6 +43,11 @@ jobs:
           role-to-assume: ${{ secrets.ACTIONS_ROLE_ARN }}
           aws-region: eu-west-2
 
+      - name: Integration tests
+        env:
+          DCS_RESPONSE_TABLE_NAME: dcs-response-build
+        run: ./gradlew intTest
+
       - name: SAM validate
         working-directory: ./deploy
         run: sam validate
