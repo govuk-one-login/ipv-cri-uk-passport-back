@@ -71,10 +71,9 @@ class ConfigurationServicePublicKeySelectorTest {
         InvalidClientException exception =
                 assertThrows(
                         InvalidClientException.class,
-                        () -> {
-                            keySelector.selectPublicKeys(
-                                    new ClientID("testClientId"), null, null, false, null);
-                        });
+                        () ->
+                                keySelector.selectPublicKeys(
+                                        new ClientID("testClientId"), null, null, false, null));
         assertEquals("Not a JWK", exception.getMessage());
     }
 
@@ -89,10 +88,9 @@ class ConfigurationServicePublicKeySelectorTest {
         InvalidClientException exception =
                 assertThrows(
                         InvalidClientException.class,
-                        () -> {
-                            keySelector.selectPublicKeys(
-                                    new ClientID("testClientId"), null, null, false, null);
-                        });
+                        () ->
+                                keySelector.selectPublicKeys(
+                                        new ClientID("testClientId"), null, null, false, null));
         assertEquals("Something went wrong...", exception.getMessage());
     }
 }
