@@ -65,10 +65,7 @@ class TokenRequestValidatorTest {
 
         var validQueryParams =
                 getValidQueryParams(generateClientAssertion(getValidClaimsSetValues()));
-        assertDoesNotThrow(
-                () -> {
-                    validator.authenticateClient(queryMapToString(validQueryParams));
-                });
+        assertDoesNotThrow(() -> validator.authenticateClient(queryMapToString(validQueryParams)));
     }
 
     @Test
@@ -86,10 +83,7 @@ class TokenRequestValidatorTest {
                 SignedJWT.parse(String.format("%s.%s.%s", jwtParts[0], jwtParts[1], derSignature));
 
         var validQueryParams = getValidQueryParams(derSignatureJwt.serialize());
-        assertDoesNotThrow(
-                () -> {
-                    validator.authenticateClient(queryMapToString(validQueryParams));
-                });
+        assertDoesNotThrow(() -> validator.authenticateClient(queryMapToString(validQueryParams)));
     }
 
     @Test
@@ -109,10 +103,9 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(
-                                    queryMapToString(invalidSignatureQueryParams));
-                        });
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(invalidSignatureQueryParams)));
 
         assertTrue(exception.getMessage().contains("InvalidClientException: Bad JWT signature"));
     }
@@ -129,10 +122,9 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(
-                                    queryMapToString(differentIssuerAndSubjectQueryParams));
-                        });
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(differentIssuerAndSubjectQueryParams)));
 
         assertTrue(
                 exception
@@ -154,10 +146,9 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(
-                                    queryMapToString(wrongAudienceQueryParams));
-                        });
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(wrongAudienceQueryParams)));
 
         assertTrue(
                 exception
@@ -180,9 +171,7 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(queryMapToString(expiredQueryParams));
-                        });
+                        () -> validator.authenticateClient(queryMapToString(expiredQueryParams)));
 
         assertTrue(exception.getMessage().contains("Expired JWT"));
     }
@@ -203,9 +192,7 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(queryMapToString(expiredQueryParams));
-                        });
+                        () -> validator.authenticateClient(queryMapToString(expiredQueryParams)));
         assertTrue(
                 exception
                         .getMessage()
@@ -218,10 +205,7 @@ class TokenRequestValidatorTest {
         when(mockConfigurationService.getClientAuthenticationMethod(clientId)).thenReturn("none");
         var params = getValidQueryParamsWithoutClientAuth(clientId);
 
-        assertDoesNotThrow(
-                () -> {
-                    validator.authenticateClient(queryMapToString(params));
-                });
+        assertDoesNotThrow(() -> validator.authenticateClient(queryMapToString(params)));
     }
 
     @Test
@@ -231,10 +215,7 @@ class TokenRequestValidatorTest {
         var validQueryParams =
                 getValidQueryParams(generateClientAssertion(getValidClaimsSetValues()));
 
-        assertDoesNotThrow(
-                () -> {
-                    validator.authenticateClient(queryMapToString(validQueryParams));
-                });
+        assertDoesNotThrow(() -> validator.authenticateClient(queryMapToString(validQueryParams)));
     }
 
     @Test
@@ -247,10 +228,9 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(
-                                    queryMapToString(missingClientAssertionParams));
-                        });
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(missingClientAssertionParams)));
 
         assertEquals(
                 "Missing client_assertion jwt for configured client 'invalid-client'",
@@ -264,9 +244,9 @@ class TokenRequestValidatorTest {
         ClientAuthenticationException exception =
                 assertThrows(
                         ClientAuthenticationException.class,
-                        () -> {
-                            validator.authenticateClient(queryMapToString(missingClientIdParams));
-                        });
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(missingClientIdParams)));
 
         assertEquals(
                 "Unknown client, no client_id value or client_assertion jwt found in request",

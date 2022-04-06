@@ -39,7 +39,6 @@ import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -57,6 +56,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
+import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 
 @ExtendWith(MockitoExtension.class)
 class IssueCredentialHandlerTest {
@@ -67,12 +68,6 @@ class IssueCredentialHandlerTest {
     public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
-
-    String EC_PRIVATE_KEY =
-            "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgOXt0P05ZsQcK7eYusgIPsqZdaBCIJiW4imwUtnaAthWhRANCAAQT1nO46ipxVTilUH2umZPN7OPI49GU6Y8YkcqLxFKUgypUzGbYR2VJGM+QJXk0PI339EyYkt6tjgfS+RcOMQNO";
-    String EC_PUBLIC_JWK =
-            "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"E9ZzuOoqcVU4pVB9rpmTzezjyOPRlOmPGJHKi8RSlIM\",\"y\":\"KlTMZthHZUkYz5AleTQ8jff0TJiS3q2OB9L5Fw4xA04\"}";
-
     public static final String SUBJECT = "subject";
 
     @Mock private Context mockContext;
@@ -140,7 +135,7 @@ class IssueCredentialHandlerTest {
 
     @Test
     void shouldReturnCredentialsOnSuccessfulDcsCredentialRequest()
-            throws JsonProcessingException, ParseException, JOSEException, CertificateException {
+            throws JsonProcessingException, ParseException, JOSEException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
         Map<String, String> headers =
@@ -218,7 +213,7 @@ class IssueCredentialHandlerTest {
                 dcsCredential.getGpg45Score().getGpg45Evidence().getValidity(),
                 verifiableCredential.getEvidence().getGpg45Evidence().getValidity());
 
-        ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK));
+        ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
         assertTrue(signedJWT.verify(ecVerifier));
     }
 
@@ -324,7 +319,7 @@ class IssueCredentialHandlerTest {
                 KeyFactory.getInstance("EC")
                         .generatePrivate(
                                 new PKCS8EncodedKeySpec(
-                                        Base64.getDecoder().decode(EC_PRIVATE_KEY)));
+                                        Base64.getDecoder().decode(EC_PRIVATE_KEY_1)));
     }
 
     private static Predicate<NameParts> isType(NamePartType namePartType) {
