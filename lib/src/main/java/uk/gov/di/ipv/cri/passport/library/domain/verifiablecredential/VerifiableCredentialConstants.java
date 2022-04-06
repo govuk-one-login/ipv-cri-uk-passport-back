@@ -1,16 +1,19 @@
 package uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential;
 
-public interface VerifiableCredentialConstants {
-    String VC_CONTEXT = "@context";
-    String W3_BASE_CONTEXT = "https://www.w3.org/2018/credentials/v1";
-    String DI_CONTEXT = "https://vocab.london.cloudapps.digital/contexts/identity-v1.jsonld";
-    String VC_TYPE = "type";
-    String VERIFIABLE_CREDENTIAL_TYPE = "VerifiableCredential";
-    String IDENTITY_CHECK_CREDENTIAL_TYPE = "IdentityCheckCredential";
-    String CREDENTIAL_SUBJECT_NAME = "name";
-    String CREDENTIAL_SUBJECT_BIRTH_DATE = "birthDate";
-    String CREDENTIAL_SUBJECT_ADDRESS = "address";
-    String VC_CREDENTIAL_SUBJECT = "credentialSubject";
-    String VC_EVIDENCE = "evidence";
-    String VC_CLAIM = "vc";
+public class VerifiableCredentialConstants {
+    public static final String VC_CONTEXT = "@context";
+    public static final String W3_BASE_CONTEXT = "https://www.w3.org/2018/credentials/v1";
+    public static final String DI_CONTEXT =
+            "https://vocab.london.cloudapps.digital/contexts/identity-v1.jsonld";
+    public static final String VC_TYPE = "type";
+    public static final String VERIFIABLE_CREDENTIAL_TYPE = "VerifiableCredential";
+    public static final String IDENTITY_CHECK_CREDENTIAL_TYPE = "IdentityCheckCredential";
+    public static final String CREDENTIAL_SUBJECT_NAME = "name";
+    public static final String CREDENTIAL_SUBJECT_BIRTH_DATE = "birthDate";
+    public static final String CREDENTIAL_SUBJECT_ADDRESS = "address";
+    public static final String VC_CREDENTIAL_SUBJECT = "credentialSubject";
+    public static final String VC_EVIDENCE = "evidence";
+    public static final String VC_CLAIM = "vc";
+
+    private VerifiableCredentialConstants() {}
 }

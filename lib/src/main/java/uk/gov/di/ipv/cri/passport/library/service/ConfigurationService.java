@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
+import com.nimbusds.jose.jwk.ECKey;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
@@ -21,6 +22,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -80,10 +82,6 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv(environmentVariable));
     }
 
-    private String getParameterFromStore(String parameterName) {
-        return ssmProvider.get(parameterName);
-    }
-
     private String getDecryptedParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.withDecryption().get(System.getenv(environmentVariable));
     }
@@ -92,12 +90,6 @@ public class ConfigurationService {
             throws CertificateException {
         byte[] binaryCertificate =
                 Base64.getDecoder().decode(getParameterFromStoreUsingEnv(environmentVariable));
-        CertificateFactory factory = CertificateFactory.getInstance("X.509");
-        return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
-    }
-
-    private Certificate getCertificateFromStore(String parameterName) throws CertificateException {
-        byte[] binaryCertificate = Base64.getDecoder().decode(getParameterFromStore(parameterName));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
@@ -198,11 +190,12 @@ public class ConfigurationService {
         return null;
     }
 
-    public Certificate getClientJwtSigningCert(String clientId) throws CertificateException {
-        return getCertificateFromStore(
-                String.format(
-                        "%s/%s/sharedAttributesJwtSigningCert",
-                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
+    public ECKey getClientSigningPublicJwk(String clientId) throws ParseException {
+        return ECKey.parse(
+                ssmProvider.get(
+                        String.format(
+                                "%s/%s/signingPublicJwk",
+                                System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId)));
     }
 
     public List<String> getClientRedirectUrls(String clientId) throws UnknownClientException {
@@ -217,13 +210,6 @@ public class ConfigurationService {
 
     public String getAudienceForClients() {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUDIENCE");
-    }
-
-    public Certificate getClientCertificate(String clientId) throws CertificateException {
-        return getCertificateFromStore(
-                String.format(
-                        "%s/%s/jwtAuthentication/publicCertificateToVerify",
-                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
     public String getClientAuthenticationMethod(String clientId) {
