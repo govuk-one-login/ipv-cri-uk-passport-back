@@ -5,7 +5,9 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.impl.ECDSA;
 import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -70,6 +72,27 @@ class TokenRequestValidatorTest {
     }
 
     @Test
+    void shouldNotThrowForValidJwtWithDerSignature() throws Exception {
+        when(mockConfigurationService.getClientSigningPublicJwk(clientId))
+                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
+        when(mockConfigurationService.getMaxClientAuthTokenTtl()).thenReturn("2400");
+
+        SignedJWT signedJWT = SignedJWT.parse(generateClientAssertion(getValidClaimsSetValues()));
+        Base64URL derSignature =
+                Base64URL.encode(ECDSA.transcodeSignatureToDER(signedJWT.getSignature().decode()));
+        Base64URL[] jwtParts = signedJWT.getParsedParts();
+        SignedJWT derSignatureJwt =
+                SignedJWT.parse(String.format("%s.%s.%s", jwtParts[0], jwtParts[1], derSignature));
+
+        var validQueryParams = getValidQueryParams(derSignatureJwt.serialize());
+        assertDoesNotThrow(
+                () -> {
+                    validator.authenticateClient(queryMapToString(validQueryParams));
+                });
+    }
+
+    @Test
     void shouldThrowIfInvalidSignature() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
@@ -78,9 +101,10 @@ class TokenRequestValidatorTest {
         var invalidSignatureQueryParams =
                 new HashMap<>(
                         getValidQueryParams(generateClientAssertion(getValidClaimsSetValues())));
+        String invalidSignatureJwt = invalidSignatureQueryParams.get("client_assertion");
         invalidSignatureQueryParams.put(
                 "client_assertion",
-                invalidSignatureQueryParams.get("client_assertion") + "BREAKING_THE_SIGNATURE");
+                invalidSignatureJwt.substring(0, invalidSignatureJwt.length() - 4) + "nope");
 
         ClientAuthenticationException exception =
                 assertThrows(

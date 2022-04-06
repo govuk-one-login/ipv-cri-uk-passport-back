@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
@@ -89,7 +90,13 @@ public class SharedAttributesHandler
 
     private boolean isInvalidSignature(SignedJWT signedJWT, String clientId)
             throws JOSEException, ParseException {
-        return !signedJWT.verify(
+        SignedJWT concatSignatureJwt;
+        if (JwtHelper.signatureIsDerFormat(signedJWT)) {
+            concatSignatureJwt = JwtHelper.transcodeSignature(signedJWT);
+        } else {
+            concatSignatureJwt = signedJWT;
+        }
+        return !concatSignatureJwt.verify(
                 new ECDSAVerifier(configurationService.getClientSigningPublicJwk(clientId)));
     }
 }

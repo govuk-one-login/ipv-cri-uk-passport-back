@@ -11,13 +11,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.accesstoken.domain.ConfigurationServicePublicKeySelector;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
+import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.time.OffsetDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TokenRequestValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenRequestValidator.class);
@@ -59,9 +62,12 @@ public class TokenRequestValidator {
                 return;
             }
 
-            verifier.verify(clientJwt, null, null);
+            verifier.verify(clientJwtWithConcatSignature(clientJwt, requestBody), null, null);
             validateMaxAllowedAuthClientTtl(clientJwt.getJWTAuthenticationClaimsSet());
-        } catch (ParseException | InvalidClientException | JOSEException e) {
+        } catch (ParseException
+                | InvalidClientException
+                | JOSEException
+                | java.text.ParseException e) {
             LOGGER.error("Validation of client_assertion jwt failed");
             throw new ClientAuthenticationException(e);
         }
@@ -112,5 +118,26 @@ public class TokenRequestValidator {
         return new ClientAuthenticationVerifier<>(
                 configurationServicePublicKeySelector,
                 Set.of(new Audience(configurationService.getAudienceForClients())));
+    }
+
+    private PrivateKeyJWT clientJwtWithConcatSignature(PrivateKeyJWT clientJwt, String requestBody)
+            throws JOSEException, java.text.ParseException, ParseException {
+        // AWS KMS EC signature are in DER format. We need them in concat format.
+        return JwtHelper.signatureIsDerFormat(clientJwt.getClientAssertion())
+                ? transcodeSignatureToConcatFormat(clientJwt, requestBody)
+                : clientJwt;
+    }
+
+    private PrivateKeyJWT transcodeSignatureToConcatFormat(
+            PrivateKeyJWT clientJwt, String requestBody)
+            throws java.text.ParseException, JOSEException, ParseException {
+        Map<String, String> queryStringMap = RequestHelper.parseRequestBody(requestBody);
+        queryStringMap.put(
+                CLIENT_ASSERTION_PARAM,
+                JwtHelper.transcodeSignature(clientJwt.getClientAssertion()).serialize());
+        Map<String, List<String>> queryStringMapForParsing =
+                queryStringMap.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> List.of(e.getValue())));
+        return PrivateKeyJWT.parse(queryStringMapForParsing);
     }
 }

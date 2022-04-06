@@ -165,7 +165,9 @@ class SharedAttributesHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody(signedJWT.serialize() + "THISBREAKSTHESIGNATURE");
+        String badSignatureSignedJwt = signedJWT.serialize();
+        event.setBody(
+                badSignatureSignedJwt.substring(0, badSignatureSignedJwt.length() - 4) + "nope");
 
         var response = underTest.handleRequest(event, context);
 
