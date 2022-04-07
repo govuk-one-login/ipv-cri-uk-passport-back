@@ -24,8 +24,7 @@ import java.util.Map;
 public class SharedAttributesHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    public static final String VC_HTTP_API_CLAIM = "vc_http_api";
-    public static final String CLAIMS_CLAIM = "claims";
+    public static final String SHARED_CLAIMS = "shared_claims";
     private final ConfigurationService configurationService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SharedAttributesHandler.class);
@@ -68,15 +67,15 @@ public class SharedAttributesHandler
             }
 
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-            Map<String, Object> claims = claimsSet.getJSONObjectClaim(CLAIMS_CLAIM);
+            Map<String, Object> sharedClaims = claimsSet.getJSONObjectClaim(SHARED_CLAIMS);
 
-            if (claims == null || claims.get(VC_HTTP_API_CLAIM) == null) {
-                LOGGER.error("vc_http_api claim not found in JWT");
+            if (sharedClaims == null) {
+                LOGGER.error("shared_claim not found in JWT");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
-                        BAD_REQUEST, ErrorResponse.VC_HTTP_API_CLAIM_MISSING);
+                        BAD_REQUEST, ErrorResponse.SHARED_CLAIM_IS_MISSING);
             }
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(OK, claims.get(VC_HTTP_API_CLAIM));
+            return ApiGatewayResponseGenerator.proxyJsonResponse(OK, sharedClaims);
         } catch (ParseException e) {
             LOGGER.error("Failed to parse", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(

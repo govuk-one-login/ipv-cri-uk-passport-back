@@ -21,7 +21,7 @@ public enum ErrorResponse {
     INVALID_REDIRECT_URL(1012, "Provided redirect URL is not in those configured for client"),
     UNKNOWN_CLIENT_ID(1013, "Unknown client id provided in request params"),
     INVALID_REQUEST_PARAM(1014, "Invalid request param"),
-    VC_HTTP_API_CLAIM_MISSING(1015, "vc_http_api claim missing from shared attribute JWT");
+    SHARED_CLAIM_IS_MISSING(1015, "shared_claim missing from shared attribute JWT");
 
     private final int code;
     private final String message;
