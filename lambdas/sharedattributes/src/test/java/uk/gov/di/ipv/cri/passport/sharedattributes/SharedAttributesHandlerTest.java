@@ -37,8 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
-import static uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler.CLAIMS_CLAIM;
-import static uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler.VC_HTTP_API_CLAIM;
+import static uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler.SHARED_CLAIMS;
 
 @ExtendWith(MockitoExtension.class)
 class SharedAttributesHandlerTest {
@@ -55,16 +54,14 @@ class SharedAttributesHandlerTest {
 
     @BeforeEach
     void setUp() throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException {
-        Map<String, List<String>> vcHttpApiClaim =
+        Map<String, List<String>> shared_claim =
                 Map.of(
                         "givenNames", Arrays.asList("Daniel", "Dan", "Danny"),
                         "dateOfBirths", Arrays.asList("01/01/1980", "02/01/1980"),
                         "addresses", Collections.singletonList("123 random street, M13 7GE"));
 
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder()
-                        .claim(CLAIMS_CLAIM, Map.of(VC_HTTP_API_CLAIM, vcHttpApiClaim))
-                        .build();
+                new JWTClaimsSet.Builder().claim(SHARED_CLAIMS, shared_claim).build();
 
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
         signedJWT.sign(new ECDSASigner(getPrivateKey()));
@@ -221,8 +218,8 @@ class SharedAttributesHandlerTest {
         Map<String, Object> error =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getCode(), error.get("code"));
-        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getMessage(), error.get("message"));
+        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getCode(), error.get("code"));
+        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getMessage(), error.get("message"));
     }
 
     @Test
@@ -250,8 +247,8 @@ class SharedAttributesHandlerTest {
         Map<String, Object> error =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getCode(), error.get("code"));
-        assertEquals(ErrorResponse.VC_HTTP_API_CLAIM_MISSING.getMessage(), error.get("message"));
+        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getCode(), error.get("code"));
+        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getMessage(), error.get("message"));
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
