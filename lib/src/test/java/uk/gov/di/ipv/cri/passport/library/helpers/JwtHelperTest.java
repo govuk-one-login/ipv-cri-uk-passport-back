@@ -30,6 +30,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,7 +71,7 @@ class JwtHelperTest {
                                 UUID.randomUUID().toString(),
                                 UUID.randomUUID().toString(),
                                 new DcsResponse()),
-                        new Evidence());
+                        Collections.singletonList(new Evidence()));
 
         JWTClaimsSet testClaimsSet =
                 new JWTClaimsSet.Builder()
