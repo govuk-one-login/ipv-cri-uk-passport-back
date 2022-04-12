@@ -81,7 +81,7 @@ class JwtHelperTest {
                         .claim("exp", Instant.now().plusSeconds(100000).getEpochSecond())
                         .build();
 
-        SignedJWT signedJWT = JwtHelper.createSignedJwtFromObject(testClaimsSet, ecSigner);
+        SignedJWT signedJWT = JwtHelper.createSignedJwtFromClaimSet(testClaimsSet, ecSigner);
         JWTClaimsSet generatedClaims = signedJWT.getJWTClaimsSet();
 
         assertTrue(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))));

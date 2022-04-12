@@ -156,6 +156,6 @@ public class IssueCredentialHandler
                         .claim(VC_CLAIM, verifiableCredential)
                         .build();
 
-        return JwtHelper.createSignedJwtFromObject(claimsSet, kmsSigner);
+        return JwtHelper.createSignedJwtFromClaimSet(claimsSet, kmsSigner);
     }
 }
