@@ -44,7 +44,7 @@ public class VerifiableCredential {
                         .setBirthDate(
                                 new BirthDate(
                                         passportCheck.getAttributes().getDateOfBirth().toString()))
-                        .setExpiryDate(passportCheck.getAttributes().getExpiryDate())
+                        .setExpiryDate(passportCheck.getAttributes().getExpiryDate().toString())
                         .setRequestId(passportCheck.getAttributes().getRequestId())
                         .setCorrelationId(passportCheck.getAttributes().getCorrelationId())
                         .setDcsResponse(passportCheck.getAttributes().getDcsResponse())

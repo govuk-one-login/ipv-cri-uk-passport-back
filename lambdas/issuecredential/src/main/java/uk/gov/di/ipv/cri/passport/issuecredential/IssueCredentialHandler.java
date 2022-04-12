@@ -4,6 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -28,6 +30,7 @@ import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
 import java.time.Instant;
+import java.util.Map;
 
 import static com.nimbusds.jwt.JWTClaimNames.EXPIRATION_TIME;
 import static com.nimbusds.jwt.JWTClaimNames.ISSUER;
@@ -138,6 +141,7 @@ public class IssueCredentialHandler
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(
             VerifiableCredential verifiableCredential, String subject) throws JOSEException {
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         Instant now = Instant.now();
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()
@@ -153,7 +157,7 @@ public class IssueCredentialHandler
                                 new String[] {
                                     VERIFIABLE_CREDENTIAL_TYPE, IDENTITY_CHECK_CREDENTIAL_TYPE
                                 })
-                        .claim(VC_CLAIM, verifiableCredential)
+                        .claim(VC_CLAIM, mapper.convertValue(verifiableCredential, Map.class))
                         .build();
 
         return JwtHelper.createSignedJwtFromObject(claimsSet, kmsSigner);

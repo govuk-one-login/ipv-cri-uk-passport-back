@@ -23,10 +23,9 @@ public class JwtHelper {
 
     private JwtHelper() {}
 
-    public static <T> SignedJWT createSignedJwtFromObject(T claimInput, JWSSigner signer)
+    public static <T> SignedJWT createSignedJwtFromObject(JWTClaimsSet claimsSet, JWSSigner signer)
             throws JOSEException {
         JWSHeader jwsHeader = generateHeader();
-        JWTClaimsSet claimsSet = generateClaims(claimInput);
         SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
         signedJWT.sign(signer);
         return signedJWT;

@@ -63,7 +63,9 @@ class VerifiableCredentialTest {
         assertEquals(
                 DATE_OF_BIRTH.toString(),
                 verifiableCredential.getCredentialSubject().getBirthDate().getValue());
-        assertEquals(EXPIRY_DATE, verifiableCredential.getCredentialSubject().getExpiryDate());
+        assertEquals(
+                EXPIRY_DATE.toString(),
+                verifiableCredential.getCredentialSubject().getExpiryDate());
         assertEquals(
                 passportCheckDao.getAttributes().getRequestId(),
                 verifiableCredential.getCredentialSubject().getRequestId());

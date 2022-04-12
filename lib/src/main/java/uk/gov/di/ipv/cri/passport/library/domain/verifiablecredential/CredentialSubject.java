@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 public class CredentialSubject {
@@ -19,7 +18,7 @@ public class CredentialSubject {
 
     @JsonProperty
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private final LocalDate expiryDate;
+    private final String expiryDate;
 
     @JsonProperty private final UUID requestId;
     @JsonProperty private final UUID correlationId;
@@ -30,7 +29,7 @@ public class CredentialSubject {
             @JsonProperty(value = "name", required = true) Name name,
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "birthDate", required = true) BirthDate birthDate,
-            @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate,
+            @JsonProperty(value = "expiryDate", required = true) String expiryDate,
             @JsonProperty(value = "requestId", required = true) UUID requestId,
             @JsonProperty(value = "correlationId", required = true) UUID correlationId,
             @JsonProperty(value = "dcsResponse", required = true) DcsResponse dcsResponse) {
@@ -55,7 +54,7 @@ public class CredentialSubject {
         return birthDate;
     }
 
-    public LocalDate getExpiryDate() {
+    public String getExpiryDate() {
         return expiryDate;
     }
 
@@ -75,7 +74,7 @@ public class CredentialSubject {
         private Name name;
         private String passportNumber;
         private BirthDate birthDate;
-        private LocalDate expiryDate;
+        private String expiryDate;
         private UUID requestId;
         private UUID correlationId;
         private DcsResponse dcsResponse;
@@ -95,7 +94,7 @@ public class CredentialSubject {
             return this;
         }
 
-        public Builder setExpiryDate(LocalDate expiryDate) {
+        public Builder setExpiryDate(String expiryDate) {
             this.expiryDate = expiryDate;
             return this;
         }

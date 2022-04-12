@@ -27,6 +27,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
@@ -65,20 +66,30 @@ class JwtHelperTest {
                                                         VALID_UNTIL))),
                                 PASSPORT_NUMBER,
                                 new BirthDate(BIRTH_DATE),
-                                LocalDate.parse(EXPIRY_DATE),
+                                LocalDate.parse(EXPIRY_DATE).toString(),
                                 UUID.randomUUID(),
                                 UUID.randomUUID(),
                                 new DcsResponse()),
                         new Evidence());
 
-        SignedJWT signedJWT = JwtHelper.createSignedJwtFromObject(verifiableCredential, ecSigner);
+        JWTClaimsSet testClaimsSet =
+                new JWTClaimsSet.Builder()
+                        .claim("sub", "test-subject")
+                        .claim("iss", "test-issuer")
+                        .claim("nbf", Instant.now().getEpochSecond())
+                        .claim("vc", verifiableCredential)
+                        .claim("exp", Instant.now().plusSeconds(100000).getEpochSecond())
+                        .build();
+
+        SignedJWT signedJWT = JwtHelper.createSignedJwtFromObject(testClaimsSet, ecSigner);
         JWTClaimsSet generatedClaims = signedJWT.getJWTClaimsSet();
 
         assertTrue(signedJWT.verify(new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1))));
 
         JsonNode claimsSet = objectMapper.readTree(generatedClaims.toString());
 
-        JsonNode credentialSubjectNode = claimsSet.get("credentialSubject");
+        JsonNode vcNode = claimsSet.get("vc");
+        JsonNode credentialSubjectNode = vcNode.get("credentialSubject");
         JsonNode nameNode = credentialSubjectNode.get("name");
 
         assertEquals(GIVEN_NAME, nameNode.get("nameParts").get(0).get("value").asText());
