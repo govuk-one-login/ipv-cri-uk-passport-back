@@ -208,10 +208,10 @@ class IssueCredentialHandlerTest {
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
                 dcsCredential.getGpg45Score().getStrength(),
-                verifiableCredential.getEvidence().getStrength());
+                verifiableCredential.getEvidence().get(0).getStrength());
         assertEquals(
                 dcsCredential.getGpg45Score().getValidity(),
-                verifiableCredential.getEvidence().getValidity());
+                verifiableCredential.getEvidence().get(0).getValidity());
 
         ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
         assertTrue(signedJWT.verify(ecVerifier));

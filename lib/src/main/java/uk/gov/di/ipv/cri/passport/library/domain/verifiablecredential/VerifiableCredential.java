@@ -4,16 +4,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class VerifiableCredential {
 
     @JsonProperty private CredentialSubject credentialSubject;
-    @JsonProperty private Evidence evidence;
+    @JsonProperty private List<Evidence> evidence;
 
     public VerifiableCredential() {}
 
-    public VerifiableCredential(CredentialSubject credentialSubject, Evidence evidence) {
+    public VerifiableCredential(CredentialSubject credentialSubject, List<Evidence> evidence) {
         this.credentialSubject = credentialSubject;
         this.evidence = evidence;
     }
@@ -51,14 +52,15 @@ public class VerifiableCredential {
                         .setDcsResponse(passportCheck.getAttributes().getDcsResponse())
                         .build();
 
-        return new VerifiableCredential(credentialSubject, passportCheck.getGpg45Score());
+        return new VerifiableCredential(
+                credentialSubject, Collections.singletonList(passportCheck.getGpg45Score()));
     }
 
     public CredentialSubject getCredentialSubject() {
         return credentialSubject;
     }
 
-    public Evidence getEvidence() {
+    public List<Evidence> getEvidence() {
         return evidence;
     }
 }
