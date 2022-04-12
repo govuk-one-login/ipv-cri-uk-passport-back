@@ -28,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
@@ -96,7 +95,7 @@ class IssueCredentialHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
-    private final Evidence evidence = new Evidence(new Gpg45Evidence(4, 4));
+    private final Evidence evidence = new Evidence(4, 4);
 
     @BeforeEach
     void setUp() throws Exception {
@@ -207,11 +206,11 @@ class IssueCredentialHandlerTest {
                 dcsCredential.getAttributes().getCorrelationId(),
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
-                dcsCredential.getGpg45Score().getGpg45Evidence().getStrength(),
-                verifiableCredential.getEvidence().getGpg45Evidence().getStrength());
+                dcsCredential.getGpg45Score().getStrength(),
+                verifiableCredential.getEvidence().getStrength());
         assertEquals(
-                dcsCredential.getGpg45Score().getGpg45Evidence().getValidity(),
-                verifiableCredential.getEvidence().getGpg45Evidence().getValidity());
+                dcsCredential.getGpg45Score().getValidity(),
+                verifiableCredential.getEvidence().getValidity());
 
         ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
         assertTrue(signedJWT.verify(ecVerifier));

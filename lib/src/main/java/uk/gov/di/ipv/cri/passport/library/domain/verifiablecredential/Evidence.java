@@ -6,27 +6,34 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 @DynamoDbBean
 @ExcludeFromGeneratedCoverageReport
 public class Evidence {
-    private Gpg45Evidence gpg45Evidence;
+    private int strength;
+    private int validity;
 
     public Evidence() {}
 
-    public Evidence(Gpg45Evidence gpg45Evidence) {
-        this.gpg45Evidence = gpg45Evidence;
+    public Evidence(int strength, int validity) {
+        this.strength = strength;
+        this.validity = validity;
     }
 
-    public Gpg45Evidence getGpg45Evidence() {
-        return gpg45Evidence;
+    public int getStrength() {
+        return strength;
     }
 
-    public void setGpg45Evidence(Gpg45Evidence gpg45Evidence) {
-        this.gpg45Evidence = gpg45Evidence;
+    public void setStrength(int strength) {
+        this.strength = strength;
+    }
+
+    public int getValidity() {
+        return validity;
+    }
+
+    public void setValidity(int validity) {
+        this.validity = validity;
     }
 
     @Override
     public String toString() {
-        return "PassportGpg45Score{"
-                + "evidence="
-                + (gpg45Evidence != null ? gpg45Evidence : "empty")
-                + '}';
+        return "Gpg45Evidence{" + "strength=" + strength + ", validity=" + validity + '}';
     }
 }
