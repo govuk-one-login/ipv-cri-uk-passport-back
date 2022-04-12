@@ -77,10 +77,12 @@ class AuthorizationCodeHandlerTest {
                     "expiryDate", EXPIRY_DATE);
 
     private final DcsResponse validDcsResponse =
-            new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+            new DcsResponse(
+                    UUID.randomUUID().toString(), UUID.randomUUID().toString(), false, true, null);
 
     private final DcsResponse invalidDcsResponse =
-            new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, false, null);
+            new DcsResponse(
+                    UUID.randomUUID().toString(), UUID.randomUUID().toString(), false, false, null);
 
     @Mock Context context;
     @Mock PassportService passportService;
@@ -272,8 +274,8 @@ class AuthorizationCodeHandlerTest {
 
         DcsResponse errorDcsResponse =
                 new DcsResponse(
-                        UUID.randomUUID(),
-                        UUID.randomUUID(),
+                        UUID.randomUUID().toString(),
+                        UUID.randomUUID().toString(),
                         true,
                         false,
                         List.of("Test DCS error message"));

@@ -85,7 +85,8 @@ class IssueCredentialHandlerTest {
     private Map<String, String> responseBody;
 
     private final DcsResponse validDcsResponse =
-            new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+            new DcsResponse(
+                    UUID.randomUUID().toString(), UUID.randomUUID().toString(), false, true, null);
 
     private final PassportAttributes attributes =
             new PassportAttributes(
@@ -200,10 +201,10 @@ class IssueCredentialHandlerTest {
                 dcsCredential.getAttributes().getExpiryDate().toString(),
                 verifiableCredential.getCredentialSubject().getExpiryDate());
         assertEquals(
-                dcsCredential.getAttributes().getRequestId(),
+                dcsCredential.getAttributes().getRequestId().toString(),
                 verifiableCredential.getCredentialSubject().getRequestId());
         assertEquals(
-                dcsCredential.getAttributes().getCorrelationId(),
+                dcsCredential.getAttributes().getCorrelationId().toString(),
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
                 dcsCredential.getGpg45Score().getStrength(),

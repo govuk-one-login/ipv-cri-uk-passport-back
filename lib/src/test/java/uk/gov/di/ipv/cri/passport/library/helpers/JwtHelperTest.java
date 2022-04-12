@@ -67,8 +67,8 @@ class JwtHelperTest {
                                 PASSPORT_NUMBER,
                                 new BirthDate(BIRTH_DATE),
                                 LocalDate.parse(EXPIRY_DATE).toString(),
-                                UUID.randomUUID(),
-                                UUID.randomUUID(),
+                                UUID.randomUUID().toString(),
+                                UUID.randomUUID().toString(),
                                 new DcsResponse()),
                         new Evidence());
 

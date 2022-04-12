@@ -32,8 +32,8 @@ class VerifiableCredentialTest {
         Evidence evidence = new Evidence(4, 4);
         attributes.setDcsResponse(
                 new DcsResponse(
-                        UUID.randomUUID(),
-                        UUID.randomUUID(),
+                        UUID.randomUUID().toString(),
+                        UUID.randomUUID().toString(),
                         true,
                         false,
                         Collections.emptyList()));
@@ -67,10 +67,10 @@ class VerifiableCredentialTest {
                 EXPIRY_DATE.toString(),
                 verifiableCredential.getCredentialSubject().getExpiryDate());
         assertEquals(
-                passportCheckDao.getAttributes().getRequestId(),
+                passportCheckDao.getAttributes().getRequestId().toString(),
                 verifiableCredential.getCredentialSubject().getRequestId());
         assertEquals(
-                passportCheckDao.getAttributes().getCorrelationId(),
+                passportCheckDao.getAttributes().getCorrelationId().toString(),
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
                 passportCheckDao.getAttributes().getDcsResponse(),
