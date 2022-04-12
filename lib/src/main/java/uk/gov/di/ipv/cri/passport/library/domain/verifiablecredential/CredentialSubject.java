@@ -5,9 +5,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 
-import java.time.LocalDate;
-import java.util.UUID;
-
 public class CredentialSubject {
 
     @JsonProperty private final Name name;
@@ -19,10 +16,10 @@ public class CredentialSubject {
 
     @JsonProperty
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private final LocalDate expiryDate;
+    private final String expiryDate;
 
-    @JsonProperty private final UUID requestId;
-    @JsonProperty private final UUID correlationId;
+    @JsonProperty private final String requestId;
+    @JsonProperty private final String correlationId;
     @JsonProperty private final DcsResponse dcsResponse;
 
     @JsonCreator
@@ -30,9 +27,9 @@ public class CredentialSubject {
             @JsonProperty(value = "name", required = true) Name name,
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "birthDate", required = true) BirthDate birthDate,
-            @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate,
-            @JsonProperty(value = "requestId", required = true) UUID requestId,
-            @JsonProperty(value = "correlationId", required = true) UUID correlationId,
+            @JsonProperty(value = "expiryDate", required = true) String expiryDate,
+            @JsonProperty(value = "requestId", required = true) String requestId,
+            @JsonProperty(value = "correlationId", required = true) String correlationId,
             @JsonProperty(value = "dcsResponse", required = true) DcsResponse dcsResponse) {
         this.name = name;
         this.passportNumber = passportNumber;
@@ -55,15 +52,15 @@ public class CredentialSubject {
         return birthDate;
     }
 
-    public LocalDate getExpiryDate() {
+    public String getExpiryDate() {
         return expiryDate;
     }
 
-    public UUID getRequestId() {
+    public String getRequestId() {
         return requestId;
     }
 
-    public UUID getCorrelationId() {
+    public String getCorrelationId() {
         return correlationId;
     }
 
@@ -75,9 +72,9 @@ public class CredentialSubject {
         private Name name;
         private String passportNumber;
         private BirthDate birthDate;
-        private LocalDate expiryDate;
-        private UUID requestId;
-        private UUID correlationId;
+        private String expiryDate;
+        private String requestId;
+        private String correlationId;
         private DcsResponse dcsResponse;
 
         public Builder setName(Name name) {
@@ -95,17 +92,17 @@ public class CredentialSubject {
             return this;
         }
 
-        public Builder setExpiryDate(LocalDate expiryDate) {
+        public Builder setExpiryDate(String expiryDate) {
             this.expiryDate = expiryDate;
             return this;
         }
 
-        public Builder setRequestId(UUID requestId) {
+        public Builder setRequestId(String requestId) {
             this.requestId = requestId;
             return this;
         }
 
-        public Builder setCorrelationId(UUID correlationId) {
+        public Builder setCorrelationId(String correlationId) {
             this.correlationId = correlationId;
             return this;
         }

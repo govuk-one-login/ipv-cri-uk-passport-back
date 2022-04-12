@@ -122,7 +122,12 @@ class DcsCryptographyServiceTest {
                 .thenReturn(TestUtils.getDcsSigningCertificate(BASE64_DCS_SIGNING_CERT));
         when(configurationService.getPassportCriPrivateKey()).thenReturn(getEncryptionPrivateKey());
         DcsResponse expectedDcsResponse =
-                new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+                new DcsResponse(
+                        UUID.randomUUID().toString(),
+                        UUID.randomUUID().toString(),
+                        false,
+                        true,
+                        null);
         String dcsResponse =
                 generateDCSResponse(objectMapper.writeValueAsString(expectedDcsResponse));
         DcsSignedEncryptedResponse dcsResponseItem = new DcsSignedEncryptedResponse(dcsResponse);

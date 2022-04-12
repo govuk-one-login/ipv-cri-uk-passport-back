@@ -85,7 +85,8 @@ class IssueCredentialHandlerTest {
     private Map<String, String> responseBody;
 
     private final DcsResponse validDcsResponse =
-            new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+            new DcsResponse(
+                    UUID.randomUUID().toString(), UUID.randomUUID().toString(), false, true, null);
 
     private final PassportAttributes attributes =
             new PassportAttributes(
@@ -147,6 +148,7 @@ class IssueCredentialHandlerTest {
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(dcsCredential);
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -155,14 +157,13 @@ class IssueCredentialHandlerTest {
         JsonNode claimsSet = objectMapper.readTree(signedJWT.getJWTClaimsSet().toString());
 
         assertEquals(200, response.getStatusCode());
-        assertEquals(7, claimsSet.get("claims").size());
+        assertEquals(7, claimsSet.size());
 
-        JsonNode claims = claimsSet.get("claims");
-        JsonNode vcNode = claims.get("vc");
+        JsonNode vcNode = claimsSet.get("vc");
         VerifiableCredential verifiableCredential =
                 objectMapper.convertValue(vcNode, VerifiableCredential.class);
 
-        assertEquals(SUBJECT, claims.get("sub").asText());
+        assertEquals(SUBJECT, claimsSet.get("sub").asText());
 
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();
@@ -197,13 +198,13 @@ class IssueCredentialHandlerTest {
                 dcsCredential.getAttributes().getDateOfBirth().toString(),
                 verifiableCredential.getCredentialSubject().getBirthDate().getValue());
         assertEquals(
-                dcsCredential.getAttributes().getExpiryDate(),
+                dcsCredential.getAttributes().getExpiryDate().toString(),
                 verifiableCredential.getCredentialSubject().getExpiryDate());
         assertEquals(
-                dcsCredential.getAttributes().getRequestId(),
+                dcsCredential.getAttributes().getRequestId().toString(),
                 verifiableCredential.getCredentialSubject().getRequestId());
         assertEquals(
-                dcsCredential.getAttributes().getCorrelationId(),
+                dcsCredential.getAttributes().getCorrelationId().toString(),
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
                 dcsCredential.getGpg45Score().getStrength(),

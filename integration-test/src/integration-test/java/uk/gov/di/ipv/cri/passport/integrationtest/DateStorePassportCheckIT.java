@@ -114,7 +114,12 @@ public class DateStorePassportCheckIT {
     private PassportCheckDao createPassportCheckDao() {
         String resourceId = UUID.randomUUID().toString();
         DcsResponse dcsResponse =
-                new DcsResponse(UUID.randomUUID(), UUID.randomUUID(), false, true, null);
+                new DcsResponse(
+                        UUID.randomUUID().toString(),
+                        UUID.randomUUID().toString(),
+                        false,
+                        true,
+                        null);
         PassportAttributes passportAttributes =
                 new PassportAttributes(
                         "passport-number",

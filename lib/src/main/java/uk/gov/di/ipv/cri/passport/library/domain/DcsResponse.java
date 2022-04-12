@@ -6,13 +6,12 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.util.List;
-import java.util.UUID;
 
 @DynamoDbBean
 @ExcludeFromGeneratedCoverageReport
 public class DcsResponse {
-    private UUID correlationId;
-    private UUID requestId;
+    private String correlationId;
+    private String requestId;
     private boolean error;
     private boolean valid;
     private List<String> errorMessage;
@@ -21,8 +20,8 @@ public class DcsResponse {
 
     @JsonCreator
     public DcsResponse(
-            @JsonProperty(value = "correlationId", required = true) UUID correlationId,
-            @JsonProperty(value = "requestId", required = true) UUID requestId,
+            @JsonProperty(value = "correlationId", required = true) String correlationId,
+            @JsonProperty(value = "requestId", required = true) String requestId,
             @JsonProperty(value = "error") boolean error,
             @JsonProperty(value = "valid") boolean valid,
             @JsonProperty(value = "errorMessage") List<String> errorMessage) {
@@ -33,19 +32,19 @@ public class DcsResponse {
         this.errorMessage = errorMessage;
     }
 
-    public UUID getCorrelationId() {
+    public String getCorrelationId() {
         return correlationId;
     }
 
-    public void setCorrelationId(UUID correlationId) {
+    public void setCorrelationId(String correlationId) {
         this.correlationId = correlationId;
     }
 
-    public UUID getRequestId() {
+    public String getRequestId() {
         return requestId;
     }
 
-    public void setRequestId(UUID requestId) {
+    public void setRequestId(String requestId) {
         this.requestId = requestId;
     }
 
