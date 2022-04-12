@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -124,7 +123,7 @@ public class DateStorePassportCheckIT {
                         LocalDate.of(1900, 1, 1),
                         LocalDate.of(2025, 2, 2));
         passportAttributes.setDcsResponse(dcsResponse);
-        Evidence evidence = new Evidence(new Gpg45Evidence(5, 5));
+        Evidence evidence = new Evidence(5, 5);
         createdItemIds.add(resourceId);
 
         return new PassportCheckDao(resourceId, passportAttributes, evidence);

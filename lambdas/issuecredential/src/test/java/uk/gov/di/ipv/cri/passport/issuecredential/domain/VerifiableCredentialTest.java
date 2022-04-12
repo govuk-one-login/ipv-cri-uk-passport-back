@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -30,7 +29,7 @@ class VerifiableCredentialTest {
         PassportAttributes attributes =
                 new PassportAttributes(
                         PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
-        Evidence evidence = new Evidence(new Gpg45Evidence(4, 4));
+        Evidence evidence = new Evidence(4, 4);
         attributes.setDcsResponse(
                 new DcsResponse(
                         UUID.randomUUID(),

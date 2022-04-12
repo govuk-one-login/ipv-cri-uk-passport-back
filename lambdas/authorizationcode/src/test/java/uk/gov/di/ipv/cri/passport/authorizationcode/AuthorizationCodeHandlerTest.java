@@ -21,7 +21,7 @@ import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValida
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -57,8 +57,8 @@ class AuthorizationCodeHandlerTest {
     public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
-    public static final Gpg45Evidence VALID_GPG45_SCORE = new Gpg45Evidence(4, 2);
-    public static final Gpg45Evidence INVALID_GPG45_SCORE = new Gpg45Evidence(4, 0);
+    public static final Evidence VALID_GPG45_SCORE = new Evidence(4, 2);
+    public static final Evidence INVALID_GPG45_SCORE = new Evidence(4, 0);
     private static final Map<String, String> VALID_QUERY_PARAMS =
             Map.of(
                     OAuth2RequestParams.REDIRECT_URI, "http://example.com",
@@ -334,18 +334,10 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
         assertEquals(
                 VALID_GPG45_SCORE.getStrength(),
-                persistedPassportCheckDao
-                        .getValue()
-                        .getGpg45Score()
-                        .getGpg45Evidence()
-                        .getStrength());
+                persistedPassportCheckDao.getValue().getGpg45Score().getStrength());
         assertEquals(
                 VALID_GPG45_SCORE.getValidity(),
-                persistedPassportCheckDao
-                        .getValue()
-                        .getGpg45Score()
-                        .getGpg45Evidence()
-                        .getValidity());
+                persistedPassportCheckDao.getValue().getGpg45Score().getValidity());
         assertEquals(
                 validDcsResponse,
                 persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
@@ -387,18 +379,10 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
         assertEquals(
                 INVALID_GPG45_SCORE.getStrength(),
-                persistedPassportCheckDao
-                        .getValue()
-                        .getGpg45Score()
-                        .getGpg45Evidence()
-                        .getStrength());
+                persistedPassportCheckDao.getValue().getGpg45Score().getStrength());
         assertEquals(
                 INVALID_GPG45_SCORE.getValidity(),
-                persistedPassportCheckDao
-                        .getValue()
-                        .getGpg45Score()
-                        .getGpg45Evidence()
-                        .getValidity());
+                persistedPassportCheckDao.getValue().getGpg45Score().getValidity());
         assertEquals(
                 invalidDcsResponse,
                 persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());

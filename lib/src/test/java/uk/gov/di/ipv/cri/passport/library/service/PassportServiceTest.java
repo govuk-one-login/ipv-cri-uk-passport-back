@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -118,7 +117,7 @@ class PassportServiceTest {
                         List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
-        Evidence evidence = new Evidence(new Gpg45Evidence(4, 4));
+        Evidence evidence = new Evidence(4, 4);
         PassportCheckDao dcsResponse = new PassportCheckDao("UUID", passportAttributes, evidence);
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);

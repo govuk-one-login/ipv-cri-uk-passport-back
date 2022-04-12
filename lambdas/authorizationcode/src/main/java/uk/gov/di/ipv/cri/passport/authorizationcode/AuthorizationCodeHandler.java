@@ -20,7 +20,6 @@ import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Gpg45Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
@@ -159,10 +158,8 @@ public class AuthorizationCodeHandler
                 dcsResponse.isValid()
                         ? MAX_PASSPORT_GPG45_VALIDITY_VALUE
                         : MIN_PASSPORT_GPG45_VALUE;
-        Gpg45Evidence gpg45Evidence =
-                new Gpg45Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
 
-        return new Evidence(gpg45Evidence);
+        return new Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
     }
 
     private PassportAttributes parsePassportFormRequest(String input)
