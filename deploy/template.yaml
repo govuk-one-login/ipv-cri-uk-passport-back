@@ -40,6 +40,7 @@ Resources:
           VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId"
           MAX_JWT_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
           VERIFIABLE_CREDENTIAL_ISSUER_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"
+          SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
@@ -51,6 +52,8 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+        - SQSSendMessagePolicy:
+            QueueName: !ImportValue AuditEventQueueName
         - Statement:
             - Sid: kmsSigningKeyPermission
               Effect: Allow
@@ -58,6 +61,13 @@ Resources:
                 - 'kms:sign'
               Resource:
                 - !ImportValue PassportCriVcSigningKeyArn
+            - Sid: auditEventQueueKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
         IPVCriUKPassportAPI:
           Type: Api
