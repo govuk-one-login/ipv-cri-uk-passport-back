@@ -21,7 +21,9 @@ public enum ErrorResponse {
     INVALID_REDIRECT_URL(1012, "Provided redirect URL is not in those configured for client"),
     UNKNOWN_CLIENT_ID(1013, "Unknown client id provided in request params"),
     INVALID_REQUEST_PARAM(1014, "Invalid request param"),
-    SHARED_CLAIM_IS_MISSING(1015, "shared_claim missing from shared attribute JWT");
+    SHARED_CLAIM_IS_MISSING(1015, "shared_claim missing from shared attribute JWT"),
+    FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE(
+            1016, "Failed to send message to aws SQS audit event queue");
 
     private final int code;
     private final String message;

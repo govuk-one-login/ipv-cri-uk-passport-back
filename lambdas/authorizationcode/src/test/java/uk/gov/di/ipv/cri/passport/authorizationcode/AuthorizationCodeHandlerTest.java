@@ -18,13 +18,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
@@ -89,6 +92,7 @@ class AuthorizationCodeHandlerTest {
     @Mock AuthorizationCodeService authorizationCodeService;
     @Mock ConfigurationService configurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
+    @Mock AuditService auditService;
     @Mock AuthRequestValidator authRequestValidator;
     @Mock JWSObject jwsObject;
 
@@ -105,6 +109,7 @@ class AuthorizationCodeHandlerTest {
                         authorizationCodeService,
                         configurationService,
                         dcsCryptographyService,
+                        auditService,
                         authRequestValidator);
     }
 
@@ -112,7 +117,7 @@ class AuthorizationCodeHandlerTest {
     void shouldReturn200WithCorrectFormData()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
-                    EmptyDcsResponseException {
+                    EmptyDcsResponseException, SqsException {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
@@ -134,6 +139,8 @@ class AuthorizationCodeHandlerTest {
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
+
+        verify(auditService).sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }

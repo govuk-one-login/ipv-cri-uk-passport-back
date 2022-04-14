@@ -145,6 +145,7 @@ Resources:
           DCS_TLS_ROOT_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsRootCertificate"
           DCS_TLS_INTERMEDIATE_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsIntermediateCertificate"
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
+          SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
@@ -154,6 +155,16 @@ Resources:
             TableName: !Ref CRIPassportAuthCodesTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/*
+        - SQSSendMessagePolicy:
+            QueueName: !ImportValue AuditEventQueueName
+        - Statement:
+            - Sid: auditEventQueueKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
         IPVCriUKPassportAPI:
           Type: Api

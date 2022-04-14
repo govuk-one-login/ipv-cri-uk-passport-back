@@ -25,14 +25,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
+import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
+import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
@@ -54,6 +57,7 @@ import java.util.function.Predicate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
@@ -74,6 +78,8 @@ class IssueCredentialHandlerTest {
     @Mock private DcsPassportCheckService mockDcsPassportCheckService;
 
     @Mock private AccessTokenService mockAccessTokenService;
+
+    @Mock private AuditService mockAuditService;
 
     @Mock private ConfigurationService mockConfigurationService;
 
@@ -109,11 +115,12 @@ class IssueCredentialHandlerTest {
                         mockDcsPassportCheckService,
                         mockAccessTokenService,
                         mockConfigurationService,
+                        mockAuditService,
                         ecSigner);
     }
 
     @Test
-    void shouldReturn200OnSuccessfulDcsCredentialRequest() {
+    void shouldReturn200OnSuccessfulDcsCredentialRequest() throws SqsException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
         Map<String, String> headers =
@@ -129,6 +136,8 @@ class IssueCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
+
+        verify(mockAuditService).sendAuditEvent(AuditEventTypes.PASSPORT_CREDENTIAL_ISSUED);
 
         assertEquals(200, response.getStatusCode());
     }

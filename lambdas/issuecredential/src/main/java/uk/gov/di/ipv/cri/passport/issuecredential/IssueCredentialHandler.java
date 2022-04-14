@@ -17,13 +17,17 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
+import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.KmsSigner;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
+import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
@@ -50,16 +54,19 @@ public class IssueCredentialHandler
     private final DcsPassportCheckService dcsPassportCheckService;
     private final AccessTokenService accessTokenService;
     private final ConfigurationService configurationService;
+    private final AuditService auditService;
     private final JWSSigner kmsSigner;
 
     public IssueCredentialHandler(
             DcsPassportCheckService dcsPassportCheckService,
             AccessTokenService accessTokenService,
             ConfigurationService configurationService,
+            AuditService auditService,
             JWSSigner kmsSigner) {
         this.configurationService = configurationService;
         this.dcsPassportCheckService = dcsPassportCheckService;
         this.accessTokenService = accessTokenService;
+        this.auditService = auditService;
         this.kmsSigner = kmsSigner;
     }
 
@@ -68,6 +75,8 @@ public class IssueCredentialHandler
         this.configurationService = new ConfigurationService();
         this.dcsPassportCheckService = new DcsPassportCheckService(configurationService);
         this.accessTokenService = new AccessTokenService(configurationService);
+        this.auditService =
+                new AuditService(AuditService.getDefaultSqsClient(), configurationService);
         this.kmsSigner =
                 new KmsSigner(configurationService.getVerifiableCredentialKmsSigningKeyId());
     }
@@ -106,6 +115,8 @@ public class IssueCredentialHandler
             SignedJWT signedJWT =
                     generateAndSignVerifiableCredentialJwt(verifiableCredential, subject);
 
+            auditService.sendAuditEvent(AuditEventTypes.PASSPORT_CREDENTIAL_ISSUED);
+
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
         } catch (ParseException e) {
@@ -126,6 +137,11 @@ public class IssueCredentialHandler
                     OAuth2Error.SERVER_ERROR
                             .appendDescription(" " + e.getMessage())
                             .toJSONObject());
+        } catch (SqsException e) {
+            LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_BAD_REQUEST,
+                    ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
         }
     }
 
