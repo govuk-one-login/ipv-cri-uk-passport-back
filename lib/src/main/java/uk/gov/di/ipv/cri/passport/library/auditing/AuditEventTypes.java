@@ -5,4 +5,5 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 @ExcludeFromGeneratedCoverageReport
 public enum AuditEventTypes {
     PASSPORT_REQUEST_SENT_TO_DCS,
+    PASSPORT_CREDENTIAL_ISSUED
 }
