@@ -78,6 +78,10 @@ public class ConfigurationService {
         return System.getenv("CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME");
     }
 
+    public String getSqsAuditEventQueueUrl() {
+        return System.getenv("SQS_AUDIT_EVENT_QUEUE_URL");
+    }
+
     private String getParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.get(System.getenv(environmentVariable));
     }

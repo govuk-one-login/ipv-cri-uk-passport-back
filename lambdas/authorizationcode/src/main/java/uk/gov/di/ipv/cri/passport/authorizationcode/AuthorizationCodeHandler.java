@@ -16,6 +16,7 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
@@ -24,8 +25,10 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.IpvCryptoException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
@@ -58,6 +61,7 @@ public class AuthorizationCodeHandler
     private final AuthorizationCodeService authorizationCodeService;
     private final ConfigurationService configurationService;
     private final DcsCryptographyService dcsCryptographyService;
+    private final AuditService auditService;
     private final AuthRequestValidator authRequestValidator;
 
     public AuthorizationCodeHandler(
@@ -65,11 +69,13 @@ public class AuthorizationCodeHandler
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
             DcsCryptographyService dcsCryptographyService,
+            AuditService auditService,
             AuthRequestValidator authRequestValidator) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
+        this.auditService = auditService;
         this.authRequestValidator = authRequestValidator;
     }
 
@@ -80,6 +86,8 @@ public class AuthorizationCodeHandler
         this.passportService = new PassportService(configurationService);
         this.authorizationCodeService = new AuthorizationCodeService(configurationService);
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
+        this.auditService =
+                new AuditService(AuditService.getDefaultSqsClient(), configurationService);
         this.authRequestValidator = new AuthRequestValidator(configurationService);
     }
 
@@ -101,6 +109,9 @@ public class AuthorizationCodeHandler
             PassportAttributes passportAttributes = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(passportAttributes);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
+
+            auditService.sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
+
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
             passportAttributes.setDcsResponse(unwrappedDcsResponse);
 
@@ -129,6 +140,11 @@ public class AuthorizationCodeHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
+        } catch (SqsException e) {
+            LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_BAD_REQUEST,
+                    ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
         }
     }
 
