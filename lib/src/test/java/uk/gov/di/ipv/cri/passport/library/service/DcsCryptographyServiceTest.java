@@ -44,6 +44,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.Base64;
@@ -78,6 +79,29 @@ class DcsCryptographyServiceTest {
     @BeforeEach
     void setUp() {
         underTest = new DcsCryptographyService(configurationService);
+    }
+
+    @Test
+    void decryptingWithKms() throws Exception {
+//        var header =
+//                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A128CBC_HS256)
+//                        .type(new JOSEObjectType("JWE"))
+//                        .build();
+//        JWEObject jweObject = new JWEObject(header, new Payload("Decrypt me!"));
+//
+//        String pubKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtJTS5j+DsSIR0y1ZiRxq8j77ZekHVnspDc6ZdxURWLoDmRJh3qeepOkcLEByNob2bFUUEnzU3FXNrEPevWqaRufssShFKXS1D1WYZpepcfDmHdTuBt0N3shtU8ydRJuJ36FZtzol/vLFD8TfAIj1XChepKiu9DTQ7bOSXmZ+nfin34yasawZBlbc0gnvhpYrrlunnpWpY6o6UPMbgfBUcqu8vV35YkDF7yBQjV9zLFKgdiEMX2o3oPL8qhN8RtFMBphKDcY4+YTiIoDpSVqk1yIh/ia66GChbcSxYaAKqNJ/AOSXdl2qNKrru8YJByC8+saiw23dm8F5nakQvvkffQIDAQAB";
+//        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+//        RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(pubKey)));
+//        jweObject.encrypt(new RSAEncrypter(publicKey));
+
+//      Generated with the above code
+        String jweObjectString = "eyJ0eXAiOiJKV0UiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.ZpVOfw61XyBBgsR4CRNRMn2oj_S65pMJO-iaEHpR6QrPcIuD4ysZexolo28vsZyZNR-kfVdw_5CjQanwMS-yw3U3nSUvXUrTs3uco-FSXulIeDYTRbBtQuDyvBMVoos6DyIfC6eBj30GMe5g6DF5KJ1Q0eXQdF0kyM9olg76uYAUqZ5rW52rC_SOHb5_tMj7UbO2IViIStdzLgVfgnJr7Ms4bvG0C8-mk4Otd7m2Km2-DNyGaNuFQSKclAGu7Zgg-qDyhH4V1Z6WUHt79TuG4TxseUr-6oaFFVD23JYSBy7Aypt0321ycq13qcN-PBiOWtumeW5-_CQuHLaPuOc4-w.RO9IB2KcS2hD3dWlKXSreQ.93Ntu3e0vNSYv4hoMwZ3Aw.YRvWo4bwsP_l7dL_29imGg";
+        JWEObject jweObject = JWEObject.parse(jweObjectString);
+
+        jweObject.decrypt(new KmsRsaDecrypter("6cb3602b-da86-4d53-b2bb-67044cccd931"));
+        String s = jweObject.getPayload().toString();
+
+        assertEquals("Decrypt me!", s);
     }
 
     @Test
