@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 
 import java.net.URI;
 import java.text.ParseException;
@@ -28,9 +29,12 @@ public class JarValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarValidator.class);
     private static final String REDIRECT_URI_CLAIM = "redirect_uri";
 
+    private final KmsRsaDecrypter kmsRsaDecrypter;
     private final ConfigurationService configurationService;
 
-    public JarValidator(ConfigurationService configurationService) {
+    public JarValidator(
+            KmsRsaDecrypter kmsRsaDecrypter, ConfigurationService configurationService) {
+        this.kmsRsaDecrypter = kmsRsaDecrypter;
         this.configurationService = configurationService;
     }
 
@@ -38,12 +42,19 @@ public class JarValidator {
         try {
             JWEObject jweObject = JWEObject.parse(jweString);
 
-            // Decrypt functionality to go here...
+            jweObject.decrypt(kmsRsaDecrypter);
 
             return jweObject.getPayload().toSignedJWT();
         } catch (ParseException e) {
             LOGGER.error("Failed to parse request body into a JWE");
-            throw new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT);
+            throw new JarValidationException(
+                    OAuth2Error.INVALID_REQUEST_OBJECT.setDescription(
+                            "Failed to parse the request body into a JWE"));
+        } catch (JOSEException e) {
+            LOGGER.error("Failed to decrypt the JWE");
+            throw new JarValidationException(
+                    OAuth2Error.INVALID_REQUEST_OBJECT.setDescription(
+                            "Failed to decrypt the contents of the JAR"));
         }
     }
 

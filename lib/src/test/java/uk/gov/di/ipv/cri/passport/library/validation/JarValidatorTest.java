@@ -20,7 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
@@ -37,6 +39,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
@@ -50,6 +53,8 @@ class JarValidatorTest {
 
     @Mock private ConfigurationService configurationService;
 
+    @Mock private KmsRsaDecrypter kmsRsaDecrypter;
+
     private JarValidator jarValidator;
 
     private final String audienceClaim = "test-audience";
@@ -62,7 +67,25 @@ class JarValidatorTest {
 
     @BeforeEach
     void setUp() {
-        jarValidator = new JarValidator(configurationService);
+        jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
+    }
+
+    @Test
+    void shouldReturnSignedJwtOnSuccessfulDecryption()
+            throws JOSEException, NoSuchAlgorithmException, InvalidKeySpecException, ParseException,
+                    JarValidationException {
+        SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
+        when(kmsRsaDecrypter.decrypt(any(), any(), any(), any(), any()))
+                .thenReturn(signedJWT.serialize().getBytes(StandardCharsets.UTF_8));
+
+        String jweObjectString =
+                "eyJ0eXAiOiJKV0UiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.ZpVOfw61XyBBgsR4CRNRMn2oj_S65pMJO-iaEHpR6QrPcIuD4ysZexolo28vsZyZNR-kfVdw_5CjQanwMS-yw3U3nSUvXUrTs3uco-FSXulIeDYTRbBtQuDyvBMVoos6DyIfC6eBj30GMe5g6DF5KJ1Q0eXQdF0kyM9olg76uYAUqZ5rW52rC_SOHb5_tMj7UbO2IViIStdzLgVfgnJr7Ms4bvG0C8-mk4Otd7m2Km2-DNyGaNuFQSKclAGu7Zgg-qDyhH4V1Z6WUHt79TuG4TxseUr-6oaFFVD23JYSBy7Aypt0321ycq13qcN-PBiOWtumeW5-_CQuHLaPuOc4-w.RO9IB2KcS2hD3dWlKXSreQ.93Ntu3e0vNSYv4hoMwZ3Aw.YRvWo4bwsP_l7dL_29imGg";
+
+        SignedJWT decryptedJwt = jarValidator.decryptJWE(jweObjectString);
+        JWTClaimsSet claimsSet = decryptedJwt.getJWTClaimsSet();
+        assertEquals(redirectUriClaim, claimsSet.getStringClaim("redirect_uri"));
+        assertEquals(Collections.singletonList(audienceClaim), claimsSet.getAudience());
+        assertEquals(subjectClaim, claimsSet.getSubject());
     }
 
     @Test
@@ -70,6 +93,19 @@ class JarValidatorTest {
         String invalidJWE = "invalid-jwe-value";
         try {
             jarValidator.decryptJWE(invalidJWE);
+            fail("Should throw a SharedAttributesValidationException");
+        } catch (JarValidationException e) {
+            assertEquals(
+                    OAuth2Error.INVALID_REQUEST_OBJECT.getCode(), e.getErrorObject().getCode());
+        }
+    }
+
+    @Test
+    void shouldThrowExceptionIfDecrptionFails() {
+        String jweObjectString =
+                "eyJ0eXAiOiJKV0UiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.ZpVOfw61XyBBgsR4CRNRMn2oj_S65pMJO-iaEHpR6QrPcIuD4ysZexolo28vsZyZNR-kfVdw_5CjQanwMS-yw3U3nSUvXUrTs3uco-FSXulIeDYTRbBtQuDyvBMVoos6DyIfC6eBj30GMe5g6DF5KJ1Q0eXQdF0kyM9olg76uYAUqZ5rW52rC_SOHb5_tMj7UbO2IViIStdzLgVfgnJr7Ms4bvG0C8-mk4Otd7m2Km2-DNyGaNuFQSKclAGu7Zgg-qDyhH4V1Z6WUHt79TuG4TxseUr-6oaFFVD23JYSBy7Aypt0321ycq13qcN-PBiOWtumeW5-_CQuHLaPuOc4-w.RO9IB2KcS2hD3dWlKXSreQ.93Ntu3e0vNSYv4hoMwZ3Aw.YRvWo4bwsP_l7dL_29imGg";
+        try {
+            jarValidator.decryptJWE(jweObjectString);
             fail("Should throw a SharedAttributesValidationException");
         } catch (JarValidationException e) {
             assertEquals(

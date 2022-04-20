@@ -15,6 +15,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
@@ -26,6 +27,7 @@ public class SharedAttributesHandler
     public static final String SHARED_CLAIMS = "shared_claims";
 
     private final ConfigurationService configurationService;
+    private final KmsRsaDecrypter kmsRsaDecrypter;
     private final JarValidator jarValidator;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SharedAttributesHandler.class);
@@ -34,15 +36,19 @@ public class SharedAttributesHandler
     private static final String CLIENT_ID = "client_id";
 
     public SharedAttributesHandler(
-            ConfigurationService configurationService, JarValidator jarValidator) {
+            ConfigurationService configurationService,
+            KmsRsaDecrypter kmsRsaDecrypter,
+            JarValidator jarValidator) {
         this.configurationService = configurationService;
+        this.kmsRsaDecrypter = kmsRsaDecrypter;
         this.jarValidator = jarValidator;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public SharedAttributesHandler() {
         this.configurationService = new ConfigurationService();
-        this.jarValidator = new JarValidator(configurationService);
+        this.kmsRsaDecrypter = new KmsRsaDecrypter(configurationService.getJarKmsEncryptionKeyId());
+        this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
     }
 
     @Override

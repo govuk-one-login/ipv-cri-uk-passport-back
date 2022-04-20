@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.security.KeyFactory;
@@ -53,6 +54,8 @@ class SharedAttributesHandlerTest {
 
     @Mock private ConfigurationService configurationService;
 
+    @Mock private KmsRsaDecrypter kmsRsaDecrypter;
+
     @Mock private JarValidator jarValidator;
 
     @Mock private JWTClaimsSet mockJwtClaimSet;
@@ -77,7 +80,8 @@ class SharedAttributesHandlerTest {
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
         signedJWT.sign(new ECDSASigner(getPrivateKey()));
 
-        underTest = new SharedAttributesHandler(configurationService, jarValidator);
+        underTest =
+                new SharedAttributesHandler(configurationService, kmsRsaDecrypter, jarValidator);
     }
 
     @Test
