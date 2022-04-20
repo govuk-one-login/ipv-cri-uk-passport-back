@@ -247,6 +247,10 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv("VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID_PARAM"));
     }
 
+    public String getJarKmsEncryptionKeyId() {
+        return ssmProvider.get(System.getenv("JAR_ENCRYPTION_KEY_ID_PARAM"));
+    }
+
     public long maxJwtTtl() {
         return Long.parseLong(ssmProvider.get(System.getenv("MAX_JWT_TTL")));
     }
