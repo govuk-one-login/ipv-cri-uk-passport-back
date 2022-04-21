@@ -4,6 +4,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
@@ -116,6 +117,10 @@ public class ConfigurationService {
         return getCertificateFromStoreUsingEnv("DCS_SIGNING_CERT_PARAM");
     }
 
+    public Certificate getJARSigningCert() throws CertificateException {
+        return getCertificateFromStoreUsingEnv("JAR_SIGNING_CERT_PARAM");
+    }
+
     public PrivateKey getPassportCriPrivateKey()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
@@ -212,11 +217,25 @@ public class ConfigurationService {
         return Arrays.asList(redirectUrlStrings.split(CLIENT_REDIRECT_URL_SEPARATOR));
     }
 
+    public String getClientIssuer(String clientId) throws UnknownClientException {
+        return ssmProvider.get(
+                String.format(
+                        "%s/%s/jwtAuthentication/issuer",
+                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
+    }
+
+    public String getClientSigningAlgorithm(String clientId) throws UnknownClientException {
+        return ssmProvider.get(
+                String.format(
+                        "%s/%s/jwtAuthentication/signingAlgorithm",
+                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
+    }
+
     public String getAudienceForClients() {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUDIENCE");
     }
 
-    public String getClientAuthenticationMethod(String clientId) {
+    public String getClientAuthenticationMethod(String clientId) throws ParameterNotFoundException {
         return ssmProvider.get(
                 String.format(
                         "%s/%s/jwtAuthentication/authenticationMethod",
