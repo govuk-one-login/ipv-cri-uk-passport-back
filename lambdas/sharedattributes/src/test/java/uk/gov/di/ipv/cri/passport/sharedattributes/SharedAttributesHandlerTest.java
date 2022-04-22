@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
-import uk.gov.di.ipv.cri.passport.library.exceptions.SharedAttributesValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
@@ -138,7 +138,7 @@ class SharedAttributesHandlerTest {
 
     @Test
     void shouldReturn400IfFailedToParseJWTClaimSet()
-            throws JsonProcessingException, SharedAttributesValidationException, ParseException {
+            throws JsonProcessingException, JarValidationException, ParseException {
         when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
 
         JWTClaimsSet myMock = mock(JWTClaimsSet.class);
@@ -179,9 +179,7 @@ class SharedAttributesHandlerTest {
     void shouldReturn302WhenValidationFails() throws Exception {
         when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
-                .thenThrow(
-                        new SharedAttributesValidationException(
-                                OAuth2Error.INVALID_REQUEST_OBJECT));
+                .thenThrow(new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT));
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();

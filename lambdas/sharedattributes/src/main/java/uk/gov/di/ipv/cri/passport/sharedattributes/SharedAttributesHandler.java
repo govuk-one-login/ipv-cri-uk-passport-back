@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
-import uk.gov.di.ipv.cri.passport.library.exceptions.SharedAttributesValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -74,7 +74,7 @@ public class SharedAttributesHandler
             }
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, sharedClaims);
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             LOGGER.error("JAR validation failed: ", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());

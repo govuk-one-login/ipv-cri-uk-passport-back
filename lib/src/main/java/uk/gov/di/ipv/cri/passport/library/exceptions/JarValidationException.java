@@ -4,10 +4,10 @@ import com.nimbusds.oauth2.sdk.ErrorObject;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 @ExcludeFromGeneratedCoverageReport
-public class SharedAttributesValidationException extends Exception {
+public class JarValidationException extends Exception {
     private final ErrorObject errorObject;
 
-    public SharedAttributesValidationException(ErrorObject errorObject) {
+    public JarValidationException(ErrorObject errorObject) {
         this.errorObject = errorObject;
     }
 

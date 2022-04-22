@@ -13,17 +13,16 @@ import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
-import uk.gov.di.ipv.cri.passport.library.exceptions.SharedAttributesValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.net.URI;
 import java.text.ParseException;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 
 public class JarValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarValidator.class);
@@ -35,7 +34,7 @@ public class JarValidator {
         this.configurationService = configurationService;
     }
 
-    public SignedJWT decryptJWE(String jweString) throws SharedAttributesValidationException {
+    public SignedJWT decryptJWE(String jweString) throws JarValidationException {
         try {
             JWEObject jweObject = JWEObject.parse(jweString);
 
@@ -44,49 +43,45 @@ public class JarValidator {
             return jweObject.getPayload().toSignedJWT();
         } catch (ParseException e) {
             LOGGER.error("Failed to parse request body into a JWE");
-            throw new SharedAttributesValidationException(OAuth2Error.INVALID_REQUEST_OBJECT);
+            throw new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT);
         }
     }
 
     public JWTClaimsSet validateRequestJwt(SignedJWT signedJWT, String clientId)
-            throws SharedAttributesValidationException {
+            throws JarValidationException {
         validateClientId(clientId);
-        validateJWTHeader(signedJWT, clientId);
+        validateJWTHeader(signedJWT);
         validateSignature(signedJWT, clientId);
-        JWTClaimsSet claimsSet = validateClaimSet(signedJWT, clientId);
+        JWTClaimsSet claimsSet = getValidatedClaimSet(signedJWT, clientId);
         validateRedirectUri(claimsSet, clientId);
 
         return claimsSet;
     }
 
-    private void validateClientId(String clientId) throws SharedAttributesValidationException {
+    private void validateClientId(String clientId) throws JarValidationException {
         try {
             configurationService.getClientAuthenticationMethod(clientId);
         } catch (ParameterNotFoundException e) {
             LOGGER.error("Unknown client id provided {}", clientId);
-            throw new SharedAttributesValidationException(
+            throw new JarValidationException(
                     OAuth2Error.INVALID_CLIENT.setDescription("Unknown client id was provided"));
         }
     }
 
-    private void validateJWTHeader(SignedJWT signedJWT, String clientId)
-            throws SharedAttributesValidationException {
-        JWSAlgorithm configuredAlgorithm =
-                JWSAlgorithm.parse(configurationService.getClientSigningAlgorithm(clientId));
+    private void validateJWTHeader(SignedJWT signedJWT) throws JarValidationException {
         JWSAlgorithm jwtAlgorithm = signedJWT.getHeader().getAlgorithm();
-        if (jwtAlgorithm != configuredAlgorithm) {
+        if (jwtAlgorithm != JWSAlgorithm.ES256) {
             LOGGER.error(
-                    "jwt signing algorithm {} does not match signing algorithm configured for client: {}",
-                    jwtAlgorithm,
-                    configuredAlgorithm);
-            throw new SharedAttributesValidationException(
+                    "jwt signing algorithm {} does not match expected signing algorithm ES256",
+                    jwtAlgorithm);
+            throw new JarValidationException(
                     OAuth2Error.INVALID_REQUEST_OBJECT.setDescription(
-                            "Signing algorithm used does not match required algorithm configured for client"));
+                            "Signing algorithm used does not match required algorithm"));
         }
     }
 
     private void validateSignature(SignedJWT signedJWT, String clientId)
-            throws SharedAttributesValidationException {
+            throws JarValidationException {
         try {
             SignedJWT concatSignatureJwt;
             if (JwtHelper.signatureIsDerFormat(signedJWT)) {
@@ -101,20 +96,20 @@ public class JarValidator {
 
             if (!valid) {
                 LOGGER.error("JWT signature validation failed");
-                throw new SharedAttributesValidationException(
+                throw new JarValidationException(
                         OAuth2Error.INVALID_REQUEST_OBJECT.setDescription(
                                 "JWT signature validation failed"));
             }
         } catch (JOSEException | ParseException e) {
             LOGGER.error("Failed to parse JWT when attempting signature validation");
-            throw new SharedAttributesValidationException(
+            throw new JarValidationException(
                     OAuth2Error.INVALID_REQUEST_OBJECT.setDescription(
                             "Failed to parse JWT when attempting signature validation"));
         }
     }
 
-    private JWTClaimsSet validateClaimSet(SignedJWT signedJWT, String clientId)
-            throws SharedAttributesValidationException {
+    private JWTClaimsSet getValidatedClaimSet(SignedJWT signedJWT, String clientId)
+            throws JarValidationException {
 
         String criAudience = configurationService.getAudienceForClients();
         String clientIssuer = configurationService.getClientIssuer(clientId);
@@ -126,43 +121,42 @@ public class JarValidator {
                                 .issuer(clientIssuer)
                                 .claim("response_type", "code")
                                 .build(),
-                        new HashSet<>(
-                                Arrays.asList(
-                                        JWTClaimNames.EXPIRATION_TIME,
-                                        JWTClaimNames.NOT_BEFORE,
-                                        JWTClaimNames.ISSUED_AT,
-                                        JWTClaimNames.SUBJECT)));
+                        Set.of(
+                                JWTClaimNames.EXPIRATION_TIME,
+                                JWTClaimNames.NOT_BEFORE,
+                                JWTClaimNames.ISSUED_AT,
+                                JWTClaimNames.SUBJECT));
 
         try {
             verifier.verify(signedJWT.getJWTClaimsSet(), null);
 
-            validateDateClaims(signedJWT.getJWTClaimsSet());
+            validateMaxAllowedJarTtl(signedJWT.getJWTClaimsSet());
 
             return signedJWT.getJWTClaimsSet();
         } catch (BadJWTException | ParseException e) {
             LOGGER.error("Claim set validation failed");
-            throw new SharedAttributesValidationException(
+            throw new JarValidationException(
                     OAuth2Error.INVALID_GRANT.setDescription(e.getMessage()));
         }
     }
 
-    private void validateDateClaims(JWTClaimsSet claimsSet)
-            throws SharedAttributesValidationException {
-        Date expirationTime = claimsSet.getExpirationTime();
+    private void validateMaxAllowedJarTtl(JWTClaimsSet claimsSet) throws JarValidationException {
         String maxAllowedTtl = configurationService.getMaxClientAuthTokenTtl();
+        LocalDateTime maximumExpirationTime =
+                LocalDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
+        LocalDateTime expirationTime =
+                LocalDateTime.ofInstant(claimsSet.getExpirationTime().toInstant(), ZoneOffset.UTC);
 
-        OffsetDateTime offsetDateTime =
-                OffsetDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
-        if (expirationTime.getTime() / 1000L > offsetDateTime.toEpochSecond()) {
+        if (expirationTime.isAfter(maximumExpirationTime)) {
             LOGGER.error("Client JWT expiry date is too far in the future");
-            throw new SharedAttributesValidationException(
+            throw new JarValidationException(
                     OAuth2Error.INVALID_GRANT.setDescription(
                             "The client JWT expiry date has surpassed the maximum allowed ttl value"));
         }
     }
 
     private void validateRedirectUri(JWTClaimsSet claimsSet, String clientId)
-            throws SharedAttributesValidationException {
+            throws JarValidationException {
         try {
             URI redirectUri = claimsSet.getURIClaim(REDIRECT_URI_CLAIM);
             List<String> allowedRedirectUris = configurationService.getClientRedirectUrls(clientId);
@@ -172,14 +166,14 @@ public class JarValidator {
                         "Invalid redirect_uri claim ({}) provided for client: {}",
                         redirectUri,
                         clientId);
-                throw new SharedAttributesValidationException(
+                throw new JarValidationException(
                         OAuth2Error.INVALID_GRANT.setDescription(
                                 "Invalid redirct_uri claim provided for configured client"));
             }
         } catch (ParseException e) {
             LOGGER.error(
                     "Failed to parse JWT claim set in order to access to the redirect_uri claim");
-            throw new SharedAttributesValidationException(
+            throw new JarValidationException(
                     OAuth2Error.INVALID_REQUEST_OBJECT.setDescription(
                             "Failed to parse JWT claim set in order to access redirect_uri claim"));
         }

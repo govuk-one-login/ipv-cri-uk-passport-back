@@ -5,6 +5,7 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -17,12 +18,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
-import uk.gov.di.ipv.cri.passport.library.exceptions.SharedAttributesValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_2;
+import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.RSA_PRIVATE_KEY;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.RSA_PUBLIC_KEY;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,7 +71,7 @@ class JarValidatorTest {
         try {
             jarValidator.decryptJWE(invalidJWE);
             fail("Should throw a SharedAttributesValidationException");
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             assertEquals(
                     OAuth2Error.INVALID_REQUEST_OBJECT.getCode(), e.getErrorObject().getCode());
         }
@@ -78,8 +81,6 @@ class JarValidatorTest {
     void shouldPassValidationChecksOnValidJARRequest()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -92,7 +93,7 @@ class JarValidatorTest {
 
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             e.printStackTrace();
             fail();
         }
@@ -110,7 +111,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_CLIENT.getHTTPStatusCode(),
@@ -122,24 +123,27 @@ class JarValidatorTest {
 
     @Test
     void shouldFailValidationChecksOnValidJWTalgHeader()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.RS512.toString());
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
 
-        SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
+        RSASSASigner signer = new RSASSASigner(getRsaPrivateKey());
+
+        SignedJWT signedJWT =
+                new SignedJWT(
+                        new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build(),
+                        generateClaimsSet(getValidClaimsSetValues()));
+        signedJWT.sign(signer);
 
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_REQUEST_OBJECT.getHTTPStatusCode(),
                     errorObject.getHTTPStatusCode());
             assertEquals(OAuth2Error.INVALID_REQUEST_OBJECT.getCode(), errorObject.getCode());
             assertEquals(
-                    "Signing algorithm used does not match required algorithm configured for client",
+                    "Signing algorithm used does not match required algorithm",
                     errorObject.getDescription());
         }
     }
@@ -148,8 +152,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidJWTSignature()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_2));
 
@@ -158,7 +160,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_REQUEST_OBJECT.getHTTPStatusCode(),
@@ -172,8 +174,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidPublicJwk()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenThrow(new ParseException("test-error", 0));
 
@@ -182,7 +182,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_REQUEST_OBJECT.getHTTPStatusCode(),
@@ -198,8 +198,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnMissingRequiredClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -219,7 +217,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -234,8 +232,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidAudienceClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -269,7 +265,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -282,8 +278,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidIssuerClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -317,7 +311,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -332,8 +326,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidResponseTypeClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -367,7 +359,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -382,8 +374,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnExpiredJWT()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -417,7 +407,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -430,8 +420,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnFutureNbfClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -465,7 +453,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -478,8 +466,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnExpiryClaimToFarInFuture()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -514,7 +500,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -529,8 +515,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidRedirectUriClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -544,7 +528,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -559,8 +543,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnParseFailureOfRedirectUri()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningAlgorithm(anyString()))
-                .thenReturn(JWSAlgorithm.ES256.toString());
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -595,7 +577,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (SharedAttributesValidationException e) {
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_REQUEST_OBJECT.getHTTPStatusCode(),
@@ -667,6 +649,15 @@ class JarValidatorTest {
                         .generatePrivate(
                                 new PKCS8EncodedKeySpec(
                                         Base64.getDecoder().decode(EC_PRIVATE_KEY_1)));
+    }
+
+    private RSAPrivateKey getRsaPrivateKey()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
+        return (RSAPrivateKey)
+                KeyFactory.getInstance("RSA")
+                        .generatePrivate(
+                                new PKCS8EncodedKeySpec(
+                                        Base64.getDecoder().decode(RSA_PRIVATE_KEY)));
     }
 
     private RSAPublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {

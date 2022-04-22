@@ -224,13 +224,6 @@ public class ConfigurationService {
                         System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
     }
 
-    public String getClientSigningAlgorithm(String clientId) throws UnknownClientException {
-        return ssmProvider.get(
-                String.format(
-                        "%s/%s/jwtAuthentication/signingAlgorithm",
-                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
-    }
-
     public String getAudienceForClients() {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUDIENCE");
     }
