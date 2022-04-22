@@ -140,7 +140,7 @@ public class JarValidator {
 
             return signedJWT.getJWTClaimsSet();
         } catch (BadJWTException | ParseException e) {
-            LOGGER.error("Claim set validation failed: {}", e.getMessage());
+            LOGGER.error("Claim set validation failed");
             throw new SharedAttributesValidationException(
                     OAuth2Error.INVALID_GRANT.setDescription(e.getMessage()));
         }
