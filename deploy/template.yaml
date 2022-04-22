@@ -187,9 +187,12 @@ Resources:
       Environment:
         Variables:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
+          CRI_PASSPORT_SESSIONS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CriPassportSessionsTable.Arn]]
       Policies:
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CriPassportSessionsTable
       Events:
         IPVCriUKPassportAPI:
           Type: Api
@@ -232,6 +235,18 @@ Resources:
           AttributeType: "S"
       KeySchema:
         - AttributeName: "accessToken"
+          KeyType: "HASH"
+
+  CriPassportSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "cri-passport-sessions-${Environment}"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "criPassportSessionId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "criPassportSessionId"
           KeyType: "HASH"
 
 Outputs:
