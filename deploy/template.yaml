@@ -173,14 +173,14 @@ Resources:
             Path: /authorization
             Method: POST
 
-  IPVCriUKPassportSharedAttributesFunction:
+  IPVCriUKPassportJwTAuthorizationRequestFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "ipv-passport-shared-attributes-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler::handleRequest
+      FunctionName: !Sub "ipv-passport-jwt-authorization-request-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.jwtauthorizationrequest.JwtAuthorizationRequestHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/sharedattributes
+      CodeUri: ../lambdas/jwtauthorizationrequest
       Architectures:
         - x86_64
       MemorySize: 512
@@ -203,7 +203,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportAPI
-            Path: /shared-attributes
+            Path: /jwt-authorization-request
             Method: POST
 
   DCSResponseTable:

@@ -5,5 +5,5 @@ include "lib",
 		"lambdas:issuecredential",
 		"lambdas:authorizationcode",
 		"lambdas:stubdcs",
-		"lambdas:sharedattributes",
+		"lambdas:jwtauthorizationrequest",
 		"integration-test"

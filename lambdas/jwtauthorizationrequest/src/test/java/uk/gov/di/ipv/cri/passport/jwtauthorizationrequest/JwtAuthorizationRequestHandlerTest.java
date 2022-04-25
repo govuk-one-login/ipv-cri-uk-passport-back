@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.sharedattributes;
+package uk.gov.di.ipv.cri.passport.jwtauthorizationrequest;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -31,9 +32,11 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,10 +47,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
-import static uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler.SHARED_CLAIMS;
 
 @ExtendWith(MockitoExtension.class)
-class SharedAttributesHandlerTest {
+class JwtAuthorizationRequestHandlerTest {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -57,7 +59,7 @@ class SharedAttributesHandlerTest {
 
     @Mock private JWTClaimsSet mockJwtClaimSet;
 
-    private SharedAttributesHandler underTest;
+    private JwtAuthorizationRequestHandler underTest;
 
     private SignedJWT signedJWT;
 
@@ -72,12 +74,24 @@ class SharedAttributesHandlerTest {
                         "addresses", Collections.singletonList("123 random street, M13 7GE"));
 
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder().claim(SHARED_CLAIMS, shared_claim).build();
+                new JWTClaimsSet.Builder()
+                        .expirationTime(new Date(Instant.now().plusSeconds(1000).getEpochSecond()))
+                        .issueTime(new Date())
+                        .notBeforeTime(new Date())
+                        .subject("test-user-id")
+                        .audience("test-audience")
+                        .issuer("test-issuer")
+                        .claim("response_type", "code")
+                        .claim("redirect_uri", "http://example.com")
+                        .claim("state", "test-state")
+                        .claim("client_id", "test-client")
+                        .claim("shared_claims", shared_claim)
+                        .build();
 
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
         signedJWT.sign(new ECDSASigner(getPrivateKey()));
 
-        underTest = new SharedAttributesHandler(configurationService, jarValidator);
+        underTest = new JwtAuthorizationRequestHandler(configurationService, jarValidator);
     }
 
     @Test
@@ -110,10 +124,23 @@ class SharedAttributesHandlerTest {
 
         Map<String, Object> claims =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-        assertEquals(Arrays.asList("01/01/1980", "02/01/1980"), claims.get("dateOfBirths"));
+
+        AuthParams authParams =
+                OBJECT_MAPPER.convertValue(claims.get("authParams"), new TypeReference<>() {});
+
+        assertEquals("test-user-id", claims.get("user_id"));
+        assertEquals("code", authParams.getResponseType());
+        assertEquals("test-client", authParams.getClientId());
+        assertEquals("test-state", authParams.getState());
+        assertEquals("http://example.com", authParams.getRedirectUri());
+
+        Map<String, Object> sharedClaims =
+                OBJECT_MAPPER.convertValue(claims.get("shared_claims"), new TypeReference<>() {});
+        assertEquals(Arrays.asList("01/01/1980", "02/01/1980"), sharedClaims.get("dateOfBirths"));
         assertEquals(
-                Collections.singletonList("123 random street, M13 7GE"), claims.get("addresses"));
-        assertEquals(Arrays.asList("Daniel", "Dan", "Danny"), claims.get("givenNames"));
+                Collections.singletonList("123 random street, M13 7GE"),
+                sharedClaims.get("addresses"));
+        assertEquals(Arrays.asList("Daniel", "Dan", "Danny"), sharedClaims.get("givenNames"));
     }
 
     @Test
@@ -194,32 +221,6 @@ class SharedAttributesHandlerTest {
         assertEquals(
                 OAuth2Error.INVALID_REQUEST_OBJECT.getDescription(),
                 errorResponse.getDescription());
-    }
-
-    @Test
-    void shouldReturn400WhenSharedClaimsClaimMissing() throws Exception {
-        JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder().claim("NO_SHARED_CLAIMS_CLAIM_PRESENT", "Nope").build();
-
-        when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(claimsSet);
-
-        SignedJWT signedJwtWithoutClaim =
-                new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
-        signedJwtWithoutClaim.sign(new ECDSASigner(getPrivateKey()));
-
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
-        event.setBody(signedJwtWithoutClaim.serialize());
-
-        var response = underTest.handleRequest(event, context);
-
-        Map<String, Object> error =
-                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-        assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getCode(), error.get("code"));
-        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getMessage(), error.get("message"));
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
