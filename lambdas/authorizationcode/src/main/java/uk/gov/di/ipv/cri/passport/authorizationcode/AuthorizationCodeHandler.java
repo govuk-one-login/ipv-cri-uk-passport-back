@@ -27,6 +27,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithEr
 import uk.gov.di.ipv.cri.passport.library.exceptions.IpvCryptoException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
@@ -95,9 +96,11 @@ public class AuthorizationCodeHandler
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
         Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
+        String userId = RequestHelper.getHeaderByKey(input.getHeaders(), "user_id");
 
         try {
-            var validationResult = authRequestValidator.validateRequest(queryStringParameters);
+            var validationResult =
+                    authRequestValidator.validateRequest(queryStringParameters, userId);
             if (validationResult.isPresent()) {
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_BAD_REQUEST, validationResult.get());
@@ -121,7 +124,8 @@ public class AuthorizationCodeHandler
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
                             passportAttributes,
-                            generateGpg45Score(unwrappedDcsResponse));
+                            generateGpg45Score(unwrappedDcsResponse),
+                            userId);
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();

@@ -12,13 +12,16 @@ public class PassportCheckDao {
     private String resourceId;
     private PassportAttributes attributes;
     private Evidence gpg45Score;
+    private String userId;
 
     public PassportCheckDao() {}
 
-    public PassportCheckDao(String resourceId, PassportAttributes attributes, Evidence gpg45Score) {
+    public PassportCheckDao(
+            String resourceId, PassportAttributes attributes, Evidence gpg45Score, String userId) {
         this.resourceId = resourceId;
         this.attributes = attributes;
         this.gpg45Score = gpg45Score;
+        this.userId = userId;
     }
 
     @DynamoDbPartitionKey
@@ -44,5 +47,13 @@ public class PassportCheckDao {
 
     public void setGpg45Score(Evidence gpg45Score) {
         this.gpg45Score = gpg45Score;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

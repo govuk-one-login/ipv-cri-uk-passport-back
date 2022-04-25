@@ -104,10 +104,12 @@ class IssueCredentialHandlerTest {
 
     private final Evidence evidence = new Evidence(4, 4);
 
+    private final String userId = "test-user-id";
+
     @BeforeEach
     void setUp() throws Exception {
         attributes.setDcsResponse(validDcsResponse);
-        dcsCredential = new PassportCheckDao(TEST_RESOURCE_ID, attributes, evidence);
+        dcsCredential = new PassportCheckDao(TEST_RESOURCE_ID, attributes, evidence, userId);
         responseBody = new HashMap<>();
         ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
         issueCredentialHandler =

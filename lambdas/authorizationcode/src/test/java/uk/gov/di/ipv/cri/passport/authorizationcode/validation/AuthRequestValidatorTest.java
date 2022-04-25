@@ -44,14 +44,14 @@ class AuthRequestValidatorTest {
         when(mockConfigurationService.getClientRedirectUrls("12345"))
                 .thenReturn(List.of("http://example.com"));
 
-        var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS);
+        var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS, "test-user-id");
 
         assertFalse(validationResult.isPresent());
     }
 
     @Test
     void validateRequestReturnsErrorResponseForNullParams() {
-        var validationResult = validator.validateRequest(null);
+        var validationResult = validator.validateRequest(null, "test-user-id");
 
         assertTrue(validationResult.isPresent());
         assertEquals(
@@ -63,7 +63,7 @@ class AuthRequestValidatorTest {
 
     @Test
     void validateRequestReturnsErrorResponseForEmptyParameters() {
-        var validationResult = validator.validateRequest(Collections.emptyMap());
+        var validationResult = validator.validateRequest(Collections.emptyMap(), "test-user-id");
 
         assertTrue(validationResult.isPresent());
         assertEquals(
@@ -81,7 +81,7 @@ class AuthRequestValidatorTest {
             invalidQueryStringParams.remove(paramToTest);
 
             Optional<ErrorResponse> validationResult =
-                    validator.validateRequest(invalidQueryStringParams);
+                    validator.validateRequest(invalidQueryStringParams, "test-user-id");
 
             assertTrue(validationResult.isPresent());
             assertEquals(
@@ -103,13 +103,25 @@ class AuthRequestValidatorTest {
         when(mockConfigurationService.getClientRedirectUrls("12345"))
                 .thenReturn(registeredRedirectUrls);
 
-        var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS);
+        var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS, "test-user-id");
 
         assertTrue(validationResult.isPresent());
         assertEquals(
                 ErrorResponse.INVALID_REDIRECT_URL.getCode(), validationResult.get().getCode());
         assertEquals(
                 ErrorResponse.INVALID_REDIRECT_URL.getMessage(),
+                validationResult.get().getMessage());
+    }
+
+    @Test
+    void validateRequestReturnsErrorIfMissingUserId() {
+        var validationResult = validator.validateRequest(VALID_QUERY_STRING_PARAMS, null);
+
+        assertTrue(validationResult.isPresent());
+        assertEquals(
+                ErrorResponse.MISSING_USER_ID_HEADER.getCode(), validationResult.get().getCode());
+        assertEquals(
+                ErrorResponse.MISSING_USER_ID_HEADER.getMessage(),
                 validationResult.get().getMessage());
     }
 }

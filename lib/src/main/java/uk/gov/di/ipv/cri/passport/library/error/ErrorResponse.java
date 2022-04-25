@@ -23,7 +23,8 @@ public enum ErrorResponse {
     INVALID_REQUEST_PARAM(1014, "Invalid request param"),
     SHARED_CLAIM_IS_MISSING(1015, "shared_claim missing from shared attribute JWT"),
     FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE(
-            1016, "Failed to send message to aws SQS audit event queue");
+            1016, "Failed to send message to aws SQS audit event queue"),
+    MISSING_USER_ID_HEADER(1017, "Missing user_id header in authorisation request");
 
     private final int code;
     private final String message;
