@@ -36,6 +36,7 @@ public class DateStorePassportCheckIT {
     private static final String RESOURCE_ID_PARAM = "resourceId";
     private static final String ATTRIBUTES_PARAM = "attributes";
     private static final String GPG45_SCORE_PARAM = "gpg45Score";
+    private static final String USER_ID_PARAM = "userId";
     private static final List<String> createdItemIds = new ArrayList<>();
 
     private static DataStore<PassportCheckDao> dcsResponseDataStore;
@@ -94,6 +95,9 @@ public class DateStorePassportCheckIT {
                 OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
         Evidence savedEvidence = OBJECT_MAPPER.readValue(gpg45ScoreJson, Evidence.class);
         assertEquals(passportCheckDao.getGpg45Score().toString(), savedEvidence.toString());
+
+        String userId = savedPassportCheck.getString(USER_ID_PARAM);
+        assertEquals(passportCheckDao.getUserId(), userId);
     }
 
     @Test
@@ -109,6 +113,7 @@ public class DateStorePassportCheckIT {
                 passportCheckDao.getAttributes().toString(), result.getAttributes().toString());
         assertEquals(
                 passportCheckDao.getGpg45Score().toString(), result.getGpg45Score().toString());
+        assertEquals(passportCheckDao.getUserId(), result.getUserId());
     }
 
     private PassportCheckDao createPassportCheckDao() {
@@ -131,6 +136,6 @@ public class DateStorePassportCheckIT {
         Evidence evidence = new Evidence(5, 5);
         createdItemIds.add(resourceId);
 
-        return new PassportCheckDao(resourceId, passportAttributes, evidence);
+        return new PassportCheckDao(resourceId, passportAttributes, evidence, "test-user-id");
     }
 }
