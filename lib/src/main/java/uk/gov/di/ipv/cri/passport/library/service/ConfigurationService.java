@@ -251,6 +251,10 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv("JAR_ENCRYPTION_KEY_ID_PARAM"));
     }
 
+    public String getJarKmsPublickKey() {
+        return ssmProvider.get(System.getenv("JAR_KMS_PUBLIC_KEY_PARAM"));
+    }
+
     public long maxJwtTtl() {
         return Long.parseLong(ssmProvider.get(System.getenv("MAX_JWT_TTL")));
     }

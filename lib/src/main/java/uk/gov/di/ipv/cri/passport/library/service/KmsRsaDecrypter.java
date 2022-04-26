@@ -9,28 +9,39 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEAlgorithm;
 import com.nimbusds.jose.JWEDecrypter;
 import com.nimbusds.jose.JWEHeader;
+import com.nimbusds.jose.crypto.impl.AlgorithmSupportMessage;
 import com.nimbusds.jose.crypto.impl.ContentCryptoProvider;
 import com.nimbusds.jose.jca.JWEJCAContext;
 import com.nimbusds.jose.util.Base64URL;
+import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 import javax.crypto.spec.SecretKeySpec;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.amazonaws.services.kms.model.EncryptionAlgorithmSpec.RSAES_OAEP_SHA_256;
-import static com.nimbusds.jose.EncryptionMethod.A128CBC_HS256;
 import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP_256;
 
+@ExcludeFromGeneratedCoverageReport
 public class KmsRsaDecrypter implements JWEDecrypter {
+    private static final Set<JWEAlgorithm> SUPPORTED_ALGORITHMS = Set.of(JWEAlgorithm.RSA_OAEP_256);
+    private static final Set<EncryptionMethod> SUPPORTED_ENCRYPTION_METHODS =
+            Set.of(EncryptionMethod.A256GCM);
 
-    private final AWSKMS kmsClient = AWSKMSClientBuilder.defaultClient();
-
+    private final AWSKMS kmsClient;
     private final String keyId;
     private final JWEJCAContext jwejcaContext = new JWEJCAContext();
 
     public KmsRsaDecrypter(String keyId) {
         this.keyId = keyId;
+        this.kmsClient = AWSKMSClientBuilder.defaultClient();
+    }
+
+    public KmsRsaDecrypter(String keyId, AWSKMS kmsClient) {
+        this.keyId = keyId;
+        this.kmsClient = kmsClient;
     }
 
     @Override
@@ -41,6 +52,25 @@ public class KmsRsaDecrypter implements JWEDecrypter {
             Base64URL cipherText,
             Base64URL authTag)
             throws JOSEException {
+        if (Objects.isNull(encryptedKey)) {
+            throw new JOSEException("Missing JWE encrypted key");
+        }
+
+        if (Objects.isNull(iv)) {
+            throw new JOSEException("Missing JWE initialization vector (IV)");
+        }
+
+        if (Objects.isNull(authTag)) {
+            throw new JOSEException("Missing JWE authentication tag");
+        }
+
+        JWEAlgorithm alg = header.getAlgorithm();
+
+        if (!SUPPORTED_ALGORITHMS.contains(alg)) {
+            throw new JOSEException(
+                    AlgorithmSupportMessage.unsupportedJWEAlgorithm(alg, supportedJWEAlgorithms()));
+        }
+
         DecryptRequest encryptedKeyDecryptRequest =
                 new DecryptRequest()
                         .withCiphertextBlob(ByteBuffer.wrap(encryptedKey.decode()))
@@ -63,7 +93,7 @@ public class KmsRsaDecrypter implements JWEDecrypter {
 
     @Override
     public Set<EncryptionMethod> supportedEncryptionMethods() {
-        return Set.of(A128CBC_HS256);
+        return SUPPORTED_ENCRYPTION_METHODS;
     }
 
     @Override
