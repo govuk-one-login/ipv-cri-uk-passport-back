@@ -188,6 +188,8 @@ Resources:
         Variables:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           JAR_ENCRYPTION_KEY_ID_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId"
+          # for use in the integration-test
+          JAR_KMS_PUBLIC_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsPublicKey"
       Policies:
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
