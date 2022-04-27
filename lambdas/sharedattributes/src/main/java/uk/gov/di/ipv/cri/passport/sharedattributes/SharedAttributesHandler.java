@@ -76,7 +76,7 @@ public class SharedAttributesHandler
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, sharedClaims);
         } catch (JarValidationException e) {
-            LOGGER.error("JAR validation failed: ", e);
+            LOGGER.error("JAR validation failed: {}", e.getErrorObject().getDescription());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
         } catch (ParseException e) {
