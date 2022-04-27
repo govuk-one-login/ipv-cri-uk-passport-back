@@ -5,20 +5,25 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.ErrorObject;
+import com.nimbusds.oauth2.sdk.OAuth2Error;
+import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -34,9 +39,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
-import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 import static uk.gov.di.ipv.cri.passport.sharedattributes.SharedAttributesHandler.SHARED_CLAIMS;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +52,10 @@ class SharedAttributesHandlerTest {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Mock private ConfigurationService configurationService;
+
+    @Mock private JarValidator jarValidator;
+
+    @Mock private JWTClaimsSet mockJwtClaimSet;
 
     private SharedAttributesHandler underTest;
 
@@ -66,13 +77,13 @@ class SharedAttributesHandlerTest {
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
         signedJWT.sign(new ECDSASigner(getPrivateKey()));
 
-        underTest = new SharedAttributesHandler(configurationService);
+        underTest = new SharedAttributesHandler(configurationService, jarValidator);
     }
 
     @Test
     void shouldReturn200WhenGivenValidJWT() throws Exception {
-        when(configurationService.getClientSigningPublicJwk("TEST"))
-                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+        when(jarValidator.validateRequestJwt(any(), anyString()))
+                .thenReturn(signedJWT.getJWTClaimsSet());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
@@ -86,8 +97,9 @@ class SharedAttributesHandlerTest {
 
     @Test
     void shouldReturnClaimsAsJsonFromJWT() throws Exception {
-        when(configurationService.getClientSigningPublicJwk("TEST"))
-                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+        when(jarValidator.validateRequestJwt(any(), anyString()))
+                .thenReturn(signedJWT.getJWTClaimsSet());
+
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
@@ -123,12 +135,19 @@ class SharedAttributesHandlerTest {
     }
 
     @Test
-    void shouldReturn400IfFailedToParseJWT() throws JsonProcessingException {
+    void shouldReturn400IfFailedToParseJWTClaimSet()
+            throws JsonProcessingException, JarValidationException, ParseException {
+
+        JWTClaimsSet myMock = mock(JWTClaimsSet.class);
+        when(myMock.getJSONObjectClaim(anyString()))
+                .thenThrow(new ParseException("Failed to parse jwt claim set", 0));
+        when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(myMock);
+
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody("Not a valid JWT");
+        event.setBody(signedJWT.serialize());
 
         var response = underTest.handleRequest(event, context);
 
@@ -154,9 +173,9 @@ class SharedAttributesHandlerTest {
     }
 
     @Test
-    void shouldReturn400WhenSignatureVerificationFails() throws Exception {
-        when(configurationService.getClientSigningPublicJwk("TEST"))
-                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+    void shouldReturn302WhenValidationFails() throws Exception {
+        when(jarValidator.validateRequestJwt(any(), anyString()))
+                .thenThrow(new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT));
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
@@ -168,69 +187,21 @@ class SharedAttributesHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        Map<String, Object> error =
-                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-        assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.JWT_SIGNATURE_IS_INVALID.getCode(), error.get("code"));
-        assertEquals(ErrorResponse.JWT_SIGNATURE_IS_INVALID.getMessage(), error.get("message"));
+        ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
+
+        assertEquals(302, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_REQUEST_OBJECT.getCode(), errorResponse.getCode());
+        assertEquals(
+                OAuth2Error.INVALID_REQUEST_OBJECT.getDescription(),
+                errorResponse.getDescription());
     }
 
     @Test
-    void shouldReturn400WhenJwkParsingFails() throws Exception {
-        when(configurationService.getClientSigningPublicJwk("TEST"))
-                .thenThrow(new ParseException("Failed to parse JWK", 0));
-
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
-        event.setBody(signedJWT.serialize());
-
-        var response = underTest.handleRequest(event, context);
-
-        Map<String, Object> error =
-                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-        assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.FAILED_TO_PARSE.getCode(), error.get("code"));
-        assertEquals(ErrorResponse.FAILED_TO_PARSE.getMessage(), error.get("message"));
-    }
-
-    @Test
-    void shouldReturn400WhenClaimsClaimMissing() throws Exception {
-        when(configurationService.getClientSigningPublicJwk("TEST"))
-                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-
+    void shouldReturn400WhenSharedClaimsClaimMissing() throws Exception {
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder().claim("NO_CLAIMS_CLAIM_PRESENT", "Nope").build();
+                new JWTClaimsSet.Builder().claim("NO_SHARED_CLAIMS_CLAIM_PRESENT", "Nope").build();
 
-        SignedJWT signedJwtWithoutClaim =
-                new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
-        signedJwtWithoutClaim.sign(new ECDSASigner(getPrivateKey()));
-
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
-        event.setBody(signedJwtWithoutClaim.serialize());
-
-        var response = underTest.handleRequest(event, context);
-
-        Map<String, Object> error =
-                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-        assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getCode(), error.get("code"));
-        assertEquals(ErrorResponse.SHARED_CLAIM_IS_MISSING.getMessage(), error.get("message"));
-    }
-
-    @Test
-    void shouldReturn400WhenVcHttpApiClaimMissingFromClaimsClaim() throws Exception {
-        when(configurationService.getClientSigningPublicJwk("TEST"))
-                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-
-        JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder()
-                        .claim("claims", Map.of("not_vc_http_api_claim", "nope"))
-                        .build();
+        when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(claimsSet);
 
         SignedJWT signedJwtWithoutClaim =
                 new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
@@ -257,5 +228,13 @@ class SharedAttributesHandlerTest {
                         .generatePrivate(
                                 new PKCS8EncodedKeySpec(
                                         Base64.getDecoder().decode(EC_PRIVATE_KEY_1)));
+    }
+
+    private ErrorObject createErrorObjectFromResponse(String responseBody)
+            throws com.nimbusds.oauth2.sdk.ParseException {
+        HTTPResponse httpErrorResponse = new HTTPResponse(400);
+        httpErrorResponse.setContentType(ContentType.APPLICATION_JSON.getType());
+        httpErrorResponse.setContent(responseBody);
+        return ErrorObject.parse(httpErrorResponse);
     }
 }
