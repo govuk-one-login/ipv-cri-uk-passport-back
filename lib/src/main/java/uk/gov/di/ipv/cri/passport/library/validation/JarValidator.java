@@ -34,17 +34,10 @@ public class JarValidator {
         this.configurationService = configurationService;
     }
 
-    public SignedJWT decryptJWE(String jweString) throws JarValidationException {
-        try {
-            JWEObject jweObject = JWEObject.parse(jweString);
+    public SignedJWT decryptJWE(JWEObject jweObject) {
+        // Decrypt functionality to go here...
 
-            // Decrypt functionality to go here...
-
-            return jweObject.getPayload().toSignedJWT();
-        } catch (ParseException e) {
-            LOGGER.error("Failed to parse request body into a JWE");
-            throw new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT);
-        }
+        return jweObject.getPayload().toSignedJWT();
     }
 
     public JWTClaimsSet validateRequestJwt(SignedJWT signedJWT, String clientId)

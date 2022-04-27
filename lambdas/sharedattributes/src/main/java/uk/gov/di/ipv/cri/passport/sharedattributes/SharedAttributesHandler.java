@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -62,7 +63,7 @@ public class SharedAttributesHandler
         }
 
         try {
-            SignedJWT signedJWT = jarValidator.decryptJWE(input.getBody());
+            SignedJWT signedJWT = decryptRequest(input.getBody());
 
             JWTClaimsSet claimsSet = jarValidator.validateRequestJwt(signedJWT, clientId);
 
@@ -82,6 +83,16 @@ public class SharedAttributesHandler
             LOGGER.error("Failed to parse claim set when attempting to retrieve shared_claim");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE);
+        }
+    }
+
+    private SignedJWT decryptRequest(String jarString) throws ParseException {
+        try {
+            JWEObject jweObject = JWEObject.parse(jarString);
+            return jarValidator.decryptJWE(jweObject);
+        } catch (ParseException e) {
+            LOGGER.info("The JAR is not currently encrypted. Skipping the decryption step.");
+            return SignedJWT.parse(jarString);
         }
     }
 }

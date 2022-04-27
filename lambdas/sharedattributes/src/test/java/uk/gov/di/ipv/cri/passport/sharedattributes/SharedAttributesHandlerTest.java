@@ -82,7 +82,6 @@ class SharedAttributesHandlerTest {
 
     @Test
     void shouldReturn200WhenGivenValidJWT() throws Exception {
-        when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
 
@@ -98,7 +97,6 @@ class SharedAttributesHandlerTest {
 
     @Test
     void shouldReturnClaimsAsJsonFromJWT() throws Exception {
-        when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
 
@@ -139,7 +137,6 @@ class SharedAttributesHandlerTest {
     @Test
     void shouldReturn400IfFailedToParseJWTClaimSet()
             throws JsonProcessingException, JarValidationException, ParseException {
-        when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
 
         JWTClaimsSet myMock = mock(JWTClaimsSet.class);
         when(myMock.getJSONObjectClaim(anyString()))
@@ -150,7 +147,7 @@ class SharedAttributesHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody("Not a valid JWT");
+        event.setBody(signedJWT.serialize());
 
         var response = underTest.handleRequest(event, context);
 
@@ -177,7 +174,6 @@ class SharedAttributesHandlerTest {
 
     @Test
     void shouldReturn302WhenValidationFails() throws Exception {
-        when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenThrow(new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT));
 
@@ -205,7 +201,6 @@ class SharedAttributesHandlerTest {
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder().claim("NO_SHARED_CLAIMS_CLAIM_PRESENT", "Nope").build();
 
-        when(jarValidator.decryptJWE(anyString())).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(claimsSet);
 
         SignedJWT signedJwtWithoutClaim =

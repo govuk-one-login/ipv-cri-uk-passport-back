@@ -66,18 +66,6 @@ class JarValidatorTest {
     }
 
     @Test
-    void shouldThrowExceptionIfDecrptionParsingFails() {
-        String invalidJWE = "invalid-jwe-value";
-        try {
-            jarValidator.decryptJWE(invalidJWE);
-            fail("Should throw a SharedAttributesValidationException");
-        } catch (JarValidationException e) {
-            assertEquals(
-                    OAuth2Error.INVALID_REQUEST_OBJECT.getCode(), e.getErrorObject().getCode());
-        }
-    }
-
-    @Test
     void shouldPassValidationChecksOnValidJARRequest()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
