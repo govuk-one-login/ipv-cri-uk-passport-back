@@ -37,7 +37,8 @@ class VerifiableCredentialTest {
                         true,
                         false,
                         Collections.emptyList()));
-        PassportCheckDao passportCheckDao = new PassportCheckDao(RESOURCE_ID, attributes, evidence);
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao(RESOURCE_ID, attributes, evidence, "test-user-id");
 
         VerifiableCredential verifiableCredential =
                 VerifiableCredential.fromPassportCheckDao(passportCheckDao);

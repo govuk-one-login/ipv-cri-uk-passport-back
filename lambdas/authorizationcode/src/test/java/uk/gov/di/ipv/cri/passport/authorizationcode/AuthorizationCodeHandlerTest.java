@@ -54,7 +54,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorizationCodeHandlerTest {
-    private static final Map<String, String> TEST_EVENT_HEADERS = Map.of("ipv-session-id", "12345");
+    private static final Map<String, String> TEST_EVENT_HEADERS =
+            Map.of("ipv-session-id", "12345", "user_id", "test-user-id");
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
     public static final List<String> FORENAMES = List.of("Tubbs");
@@ -127,7 +128,7 @@ class AuthorizationCodeHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(any())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -136,6 +137,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -159,7 +161,7 @@ class AuthorizationCodeHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(any())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -168,6 +170,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -191,11 +194,12 @@ class AuthorizationCodeHandlerTest {
 
     @Test
     void shouldReturn400IfRequestFailsValidation() throws Exception {
-        when(authRequestValidator.validateRequest(anyMap()))
+        when(authRequestValidator.validateRequest(anyMap(), any()))
                 .thenReturn(Optional.of(ErrorResponse.MISSING_QUERY_PARAMETERS));
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setQueryStringParameters(new HashMap<>());
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -214,7 +218,8 @@ class AuthorizationCodeHandlerTest {
 
     @Test
     void shouldReturn400IfDataIsMissing() throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
         var formFields = validPassportFormData.keySet();
         for (String keyToRemove : formFields) {
             var event = new APIGatewayProxyRequestEvent();
@@ -224,6 +229,7 @@ class AuthorizationCodeHandlerTest {
             params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
             params.put(OAuth2RequestParams.SCOPE, "openid");
             event.setQueryStringParameters(params);
+            event.setHeaders(Map.of("user_id", "test-user-id"));
             event.setBody(
                     objectMapper.writeValueAsString(
                             new HashMap<>(validPassportFormData).remove(keyToRemove)));
@@ -243,7 +249,8 @@ class AuthorizationCodeHandlerTest {
 
     @Test
     void shouldReturn400IfDateStringsAreWrongFormat() throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
 
         var mangledDateInput = new HashMap<>(validPassportFormData);
         mangledDateInput.put("dateOfBirth", "28-09-1984");
@@ -255,6 +262,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(mangledDateInput));
 
         var response = underTest.handleRequest(event, context);
@@ -277,7 +285,8 @@ class AuthorizationCodeHandlerTest {
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
                 .thenReturn(jwsObject);
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
 
         DcsResponse errorDcsResponse =
                 new DcsResponse(
@@ -296,6 +305,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -321,7 +331,8 @@ class AuthorizationCodeHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -330,6 +341,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         underTest.handleRequest(event, context);
@@ -366,7 +378,8 @@ class AuthorizationCodeHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(invalidDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -375,6 +388,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         underTest.handleRequest(event, context);
@@ -411,7 +425,8 @@ class AuthorizationCodeHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
@@ -420,6 +435,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
+        event.setHeaders(Map.of("user_id", "test-user-id"));
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         underTest.handleRequest(event, context);
@@ -448,7 +464,8 @@ class AuthorizationCodeHandlerTest {
     @Test
     void shouldReturn400IfCanNotParseAuthRequestFromQueryStringParams()
             throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap())).thenReturn(Optional.empty());
+        when(authRequestValidator.validateRequest(anyMap(), anyString()))
+                .thenReturn(Optional.empty());
 
         List<String> paramsToRemove =
                 List.of(

@@ -118,7 +118,8 @@ class PassportServiceTest {
                         LocalDate.now(),
                         LocalDate.now());
         Evidence evidence = new Evidence(4, 4);
-        PassportCheckDao dcsResponse = new PassportCheckDao("UUID", passportAttributes, evidence);
+        PassportCheckDao dcsResponse =
+                new PassportCheckDao("UUID", passportAttributes, evidence, "test-user-id");
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

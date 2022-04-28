@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.passport.authorizationcode.validation;
 
+import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
@@ -24,10 +25,15 @@ public class AuthRequestValidator {
     }
 
     public Optional<ErrorResponse> validateRequest(
-            Map<String, List<String>> queryStringParameters) {
+            Map<String, List<String>> queryStringParameters, String userId) {
         if (queryStringParamsMissing(queryStringParameters)) {
             LOGGER.error("Missing required query parameters for authorisation request");
             return Optional.of(ErrorResponse.MISSING_QUERY_PARAMETERS);
+        }
+
+        if (StringUtils.isBlank(userId)) {
+            LOGGER.error("Missing user_id header for authorisation request");
+            return Optional.of(ErrorResponse.MISSING_USER_ID_HEADER);
         }
 
         return validateRedirectUrl(queryStringParameters);
