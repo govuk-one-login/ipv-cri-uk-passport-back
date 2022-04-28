@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.sharedattributes;
+package uk.gov.di.ipv.cri.passport.jwtauthorizationrequest;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -11,6 +11,8 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
+import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
@@ -19,29 +21,31 @@ import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
-import java.util.Map;
 
-public class SharedAttributesHandler
+public class JwtAuthorizationRequestHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-
-    public static final String SHARED_CLAIMS = "shared_claims";
 
     private final ConfigurationService configurationService;
     private final JarValidator jarValidator;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SharedAttributesHandler.class);
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(JwtAuthorizationRequestHandler.class);
     private static final Integer OK = 200;
     private static final Integer BAD_REQUEST = 400;
+    private static final String RESPONSE_TYPE = "response_type";
     private static final String CLIENT_ID = "client_id";
+    private static final String STATE = "state";
+    private static final String REDIRECT_URI = "redirect_uri";
+    private static final String SHARED_CLAIMS = "shared_claims";
 
-    public SharedAttributesHandler(
+    public JwtAuthorizationRequestHandler(
             ConfigurationService configurationService, JarValidator jarValidator) {
         this.configurationService = configurationService;
         this.jarValidator = jarValidator;
     }
 
     @ExcludeFromGeneratedCoverageReport
-    public SharedAttributesHandler() {
+    public JwtAuthorizationRequestHandler() {
         this.configurationService = new ConfigurationService();
         this.jarValidator = new JarValidator(configurationService);
     }
@@ -67,20 +71,15 @@ public class SharedAttributesHandler
 
             JWTClaimsSet claimsSet = jarValidator.validateRequestJwt(signedJWT, clientId);
 
-            Map<String, Object> sharedClaims = claimsSet.getJSONObjectClaim(SHARED_CLAIMS);
-            if (sharedClaims == null) {
-                LOGGER.error("shared_claim not found in JWT");
-                return ApiGatewayResponseGenerator.proxyJsonResponse(
-                        BAD_REQUEST, ErrorResponse.SHARED_CLAIM_IS_MISSING);
-            }
+            JarResponse response = generateJarResponse(claimsSet);
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(OK, sharedClaims);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(OK, response);
         } catch (JarValidationException e) {
             LOGGER.error("JAR validation failed: {}", e.getErrorObject().getDescription());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
         } catch (ParseException e) {
-            LOGGER.error("Failed to parse claim set when attempting to retrieve shared_claim");
+            LOGGER.error("Failed to parse claim set when attempting to retrieve JAR claims");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE);
         }
@@ -94,5 +93,17 @@ public class SharedAttributesHandler
             LOGGER.info("The JAR is not currently encrypted. Skipping the decryption step.");
             return SignedJWT.parse(jarString);
         }
+    }
+
+    private JarResponse generateJarResponse(JWTClaimsSet claimsSet) throws ParseException {
+        AuthParams authParams =
+                new AuthParams(
+                        claimsSet.getStringClaim(RESPONSE_TYPE),
+                        claimsSet.getStringClaim(CLIENT_ID),
+                        claimsSet.getStringClaim(STATE),
+                        claimsSet.getStringClaim(REDIRECT_URI));
+
+        return new JarResponse(
+                authParams, claimsSet.getSubject(), claimsSet.getJSONObjectClaim(SHARED_CLAIMS));
     }
 }
