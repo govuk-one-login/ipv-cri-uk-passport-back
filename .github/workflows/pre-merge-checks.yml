@@ -53,6 +53,8 @@ jobs:
       - name: Integration tests
         env:
           DCS_RESPONSE_TABLE_NAME: dcs-response-build
+          JAR_ENCRYPTION_KEY_ID_PARAM: 180539d5-50e0-4984-8000-3aceadc942be
+          JAR_KMS_PUBLIC_KEY_PARAM: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAugDcZBuOLGOMbZbmDndZjP0JGGZzsCleOoo2/X8ahXZfFYZ2u1zotnYqQE5QI1BfDNOivw2jYaUcxgudPsqPj8uBfgunA/hnjZ9T5A20g9uRrX0aW5vk629ZU2u2hp64cCkDzrsbq3Iz74STSSA9ZN2HHO+L9qZmNzMp/Vg1jJwGpDsJXxARoCf2GBU8cWy3f1upvcgFR23OVXJO7+ou/9KFSUr7ksagwvrq880wNa7dvbPyQzwZBCuCoGyK2IhkovMeSJPomjKkzC8yS7hA0bai+V/9TiFa68T9nF/oucJIb2CRPvYmI2iScrq4FparBfn2sZH9LBz4EAyvB3TuvQIDAQAB
         run: ./gradlew intTest
 
       - name: Perform Static Analysis
