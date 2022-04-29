@@ -29,8 +29,6 @@ class KmsRsaDecrypterIT {
 
     @Test
     void decryptWithKms() throws Exception {
-        // Will replace with values from the config service once the keys have been generated in kms
-
         String getJarKmsEncryptionKeyId = System.getenv("JAR_ENCRYPTION_KEY_ID_PARAM");
         if (getJarKmsEncryptionKeyId == null) {
             throw new IllegalArgumentException(
