@@ -18,6 +18,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
@@ -26,6 +27,7 @@ public class JwtAuthorizationRequestHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private final ConfigurationService configurationService;
+    private final KmsRsaDecrypter kmsRsaDecrypter;
     private final JarValidator jarValidator;
 
     private static final Logger LOGGER =
@@ -39,15 +41,19 @@ public class JwtAuthorizationRequestHandler
     private static final String SHARED_CLAIMS = "shared_claims";
 
     public JwtAuthorizationRequestHandler(
-            ConfigurationService configurationService, JarValidator jarValidator) {
+            ConfigurationService configurationService,
+            KmsRsaDecrypter kmsRsaDecrypter,
+            JarValidator jarValidator) {
         this.configurationService = configurationService;
+        this.kmsRsaDecrypter = kmsRsaDecrypter;
         this.jarValidator = jarValidator;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public JwtAuthorizationRequestHandler() {
         this.configurationService = new ConfigurationService();
-        this.jarValidator = new JarValidator(configurationService);
+        this.kmsRsaDecrypter = new KmsRsaDecrypter(configurationService.getJarKmsEncryptionKeyId());
+        this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
     }
 
     @Override
@@ -85,7 +91,8 @@ public class JwtAuthorizationRequestHandler
         }
     }
 
-    private SignedJWT decryptRequest(String jarString) throws ParseException {
+    private SignedJWT decryptRequest(String jarString)
+            throws ParseException, JarValidationException {
         try {
             JWEObject jweObject = JWEObject.parse(jarString);
             return jarValidator.decryptJWE(jweObject);
