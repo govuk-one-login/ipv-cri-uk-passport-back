@@ -91,7 +91,8 @@ public class JwtAuthorizationRequestHandler
         }
     }
 
-    private SignedJWT decryptRequest(String jarString) throws JarValidationException, ParseException {
+    private SignedJWT decryptRequest(String jarString)
+            throws JarValidationException, ParseException {
         try {
             JWEObject jweObject = JWEObject.parse(jarString);
             return jarValidator.decryptJWE(jweObject);

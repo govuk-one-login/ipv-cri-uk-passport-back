@@ -30,11 +30,21 @@ class KmsRsaDecrypterIT {
     @Test
     void decryptWithKms() throws Exception {
         // Will replace with values from the config service once the keys have been generated in kms
-        // String kmsId = configurationService.getJarKmsEncryptionKeyId();
-        // String pubKey = configurationService.getJarKmsPublickKey();
-        String kmsId = "6cb3602b-da86-4d53-b2bb-67044cccd931";
-        String pubKey =
-                "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtJTS5j+DsSIR0y1ZiRxq8j77ZekHVnspDc6ZdxURWLoDmRJh3qeepOkcLEByNob2bFUUEnzU3FXNrEPevWqaRufssShFKXS1D1WYZpepcfDmHdTuBt0N3shtU8ydRJuJ36FZtzol/vLFD8TfAIj1XChepKiu9DTQ7bOSXmZ+nfin34yasawZBlbc0gnvhpYrrlunnpWpY6o6UPMbgfBUcqu8vV35YkDF7yBQjV9zLFKgdiEMX2o3oPL8qhN8RtFMBphKDcY4+YTiIoDpSVqk1yIh/ia66GChbcSxYaAKqNJ/AOSXdl2qNKrru8YJByC8+saiw23dm8F5nakQvvkffQIDAQAB";
+
+        String getJarKmsEncryptionKeyId = System.getenv("JAR_ENCRYPTION_KEY_ID_PARAM");
+        if (getJarKmsEncryptionKeyId == null) {
+            throw new IllegalArgumentException(
+                    "The environment variable 'JAR_ENCRYPTION_KEY_ID_PARAM' must be provided to run this test");
+        }
+
+        String getJarKmsPublickKey = System.getenv("JAR_KMS_PUBLIC_KEY_PARAM");
+        if (getJarKmsPublickKey == null) {
+            throw new IllegalArgumentException(
+                    "The environment variable 'JAR_KMS_PUBLIC_KEY_PARAM' must be provided to run this test");
+        }
+
+        String kmsId = configurationService.getJarKmsEncryptionKeyId();
+        String pubKey = configurationService.getJarKmsPublickKey();
 
         var header =
                 new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)

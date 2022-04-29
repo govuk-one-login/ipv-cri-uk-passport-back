@@ -95,7 +95,8 @@ class JwtAuthorizationRequestHandlerTest {
         signedJWT.sign(new ECDSASigner(getPrivateKey()));
 
         underTest =
-                new JwtAuthorizationRequestHandler(configurationService, kmsRsaDecrypter, jarValidator);
+                new JwtAuthorizationRequestHandler(
+                        configurationService, kmsRsaDecrypter, jarValidator);
     }
 
     @Test
