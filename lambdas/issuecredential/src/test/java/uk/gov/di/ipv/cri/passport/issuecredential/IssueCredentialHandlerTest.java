@@ -153,8 +153,6 @@ class IssueCredentialHandlerTest {
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
-        setRequestBodyAsPlainJWT(event);
-
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
@@ -174,7 +172,7 @@ class IssueCredentialHandlerTest {
         VerifiableCredential verifiableCredential =
                 objectMapper.convertValue(vcNode, VerifiableCredential.class);
 
-        assertEquals(SUBJECT, claimsSet.get("sub").asText());
+        assertEquals(dcsCredential.getUserId(), claimsSet.get("sub").asText());
 
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();
@@ -226,24 +224,6 @@ class IssueCredentialHandlerTest {
 
         ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
         assertTrue(signedJWT.verify(ecVerifier));
-    }
-
-    @Test
-    void shouldReturnErrorResponseWhenRequestJWTSubjectIsNull() throws JsonProcessingException {
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-        Map<String, String> headers = Collections.singletonMap("Authorization", null);
-        event.setHeaders(headers);
-
-        APIGatewayProxyResponseEvent response =
-                issueCredentialHandler.handleRequest(event, mockContext);
-        responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
-        assertEquals(OAuth2Error.INVALID_REQUEST.getHTTPStatusCode(), response.getStatusCode());
-        assertEquals(OAuth2Error.INVALID_REQUEST.getCode(), responseBody.get("error"));
-        assertEquals(
-                OAuth2Error.INVALID_REQUEST.getDescription()
-                        + " Subject is missing from Request JWT",
-                responseBody.get("error_description"));
     }
 
     @Test

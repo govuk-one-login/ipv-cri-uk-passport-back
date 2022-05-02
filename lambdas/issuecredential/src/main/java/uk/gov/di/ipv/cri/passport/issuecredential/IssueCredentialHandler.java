@@ -7,7 +7,6 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -88,8 +87,6 @@ public class IssueCredentialHandler
             String accessTokenString =
                     RequestHelper.getHeaderByKey(input.getHeaders(), AUTHORIZATION_HEADER_KEY);
 
-            String subject = getSubjectFromBody(input);
-
             // Performs validation on header value and throws a ParseException if invalid
             AccessToken.parse(accessTokenString);
 
@@ -113,7 +110,8 @@ public class IssueCredentialHandler
                     VerifiableCredential.fromPassportCheckDao(passportCheck);
 
             SignedJWT signedJWT =
-                    generateAndSignVerifiableCredentialJwt(verifiableCredential, subject);
+                    generateAndSignVerifiableCredentialJwt(
+                            verifiableCredential, passportCheck.getUserId());
 
             auditService.sendAuditEvent(AuditEventTypes.PASSPORT_CREDENTIAL_ISSUED);
 
@@ -123,13 +121,6 @@ public class IssueCredentialHandler
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
-        } catch (java.text.ParseException e) {
-            LOGGER.error("Failed to parse request body: '{}'", e.getMessage());
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    OAuth2Error.INVALID_REQUEST.getHTTPStatusCode(),
-                    OAuth2Error.INVALID_REQUEST
-                            .appendDescription(" " + e.getMessage())
-                            .toJSONObject());
         } catch (JOSEException e) {
             LOGGER.error("Failed to sign verifiable credential: '{}'", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -143,13 +134,6 @@ public class IssueCredentialHandler
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
         }
-    }
-
-    private String getSubjectFromBody(APIGatewayProxyRequestEvent input)
-            throws java.text.ParseException {
-        if (input.getBody() == null)
-            throw new java.text.ParseException("Subject is missing from Request JWT", 0);
-        return PlainJWT.parse(input.getBody()).getJWTClaimsSet().getSubject();
     }
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(
