@@ -189,6 +189,9 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
+          JAR_ENCRYPTION_KEY_ID_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId"
+          # for use in the integration-test
+          JAR_KMS_PUBLIC_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey"
       Policies:
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
@@ -198,6 +201,18 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+        - Statement:
+            - Sid: jarKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue PassportCriEncryptionKeyArn
       Events:
         IPVCriUKPassportAPI:
           Type: Api

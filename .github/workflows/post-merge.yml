@@ -46,7 +46,9 @@ jobs:
       - name: Integration tests
         env:
           DCS_RESPONSE_TABLE_NAME: dcs-response-build
-        run: ./gradlew intTest
+          JAR_ENCRYPTION_KEY_ID_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
+          JAR_KMS_PUBLIC_KEY_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+          run: ./gradlew intTest
 
       - name: SAM validate
         working-directory: ./deploy
