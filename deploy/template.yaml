@@ -205,6 +205,14 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+        - Statement:
+            - Sid: jarKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue PassportCriEncryptionKeyArn
       Events:
         IPVCriUKPassportAPI:
           Type: Api
