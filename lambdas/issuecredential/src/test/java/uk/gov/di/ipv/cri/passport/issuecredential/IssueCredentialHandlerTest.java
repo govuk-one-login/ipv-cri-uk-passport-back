@@ -26,8 +26,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
@@ -94,8 +94,8 @@ class IssueCredentialHandlerTest {
             new DcsResponse(
                     UUID.randomUUID().toString(), UUID.randomUUID().toString(), false, true, null);
 
-    private final PassportAttributes attributes =
-            new PassportAttributes(
+    private final DcsPayload attributes =
+            new DcsPayload(
                     PASSPORT_NUMBER,
                     SURNAME,
                     FORENAMES,
@@ -184,7 +184,7 @@ class IssueCredentialHandlerTest {
                                                 .and(
                                                         hasValue(
                                                                 dcsCredential
-                                                                        .getAttributes()
+                                                                        .getDcsPayload()
                                                                         .getSurname()))
                                                 .test(o)));
         assertTrue(
@@ -195,25 +195,25 @@ class IssueCredentialHandlerTest {
                                                 .and(
                                                         hasValue(
                                                                 dcsCredential
-                                                                        .getAttributes()
+                                                                        .getDcsPayload()
                                                                         .getForenames()
                                                                         .get(0)))
                                                 .test(o)));
 
         assertEquals(
-                dcsCredential.getAttributes().getPassportNumber(),
+                dcsCredential.getDcsPayload().getPassportNumber(),
                 verifiableCredential.getCredentialSubject().getPassportNumber());
         assertEquals(
-                dcsCredential.getAttributes().getDateOfBirth().toString(),
+                dcsCredential.getDcsPayload().getDateOfBirth().toString(),
                 verifiableCredential.getCredentialSubject().getBirthDate().getValue());
         assertEquals(
-                dcsCredential.getAttributes().getExpiryDate().toString(),
+                dcsCredential.getDcsPayload().getExpiryDate().toString(),
                 verifiableCredential.getCredentialSubject().getExpiryDate());
         assertEquals(
-                dcsCredential.getAttributes().getRequestId().toString(),
+                dcsCredential.getDcsPayload().getRequestId().toString(),
                 verifiableCredential.getCredentialSubject().getRequestId());
         assertEquals(
-                dcsCredential.getAttributes().getCorrelationId().toString(),
+                dcsCredential.getDcsPayload().getCorrelationId().toString(),
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
                 dcsCredential.getGpg45Score().getStrength(),

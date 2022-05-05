@@ -17,9 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
@@ -109,21 +109,21 @@ public class AuthorizationCodeHandler
             AuthenticationRequest authenticationRequest =
                     AuthenticationRequest.parse(queryStringParameters);
 
-            PassportAttributes passportAttributes = parsePassportFormRequest(input.getBody());
-            JWSObject preparedDcsPayload = preparePayload(passportAttributes);
+            DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
+            JWSObject preparedDcsPayload = preparePayload(dcsPayload);
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
             auditService.sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
 
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
-            passportAttributes.setDcsResponse(unwrappedDcsResponse);
+            dcsPayload.setDcsResponse(unwrappedDcsResponse);
 
             validateDcsResponse(unwrappedDcsResponse);
 
             PassportCheckDao passportCheckDao =
                     new PassportCheckDao(
                             UUID.randomUUID().toString(),
-                            passportAttributes,
+                            dcsPayload,
                             generateGpg45Score(unwrappedDcsResponse),
                             userId);
             passportService.persistDcsResponse(passportCheckDao);
@@ -167,7 +167,7 @@ public class AuthorizationCodeHandler
             throws HttpResponseExceptionWithErrorBody {
         if (dcsResponse.isError()) {
             String errorMessage = dcsResponse.getErrorMessage().toString();
-            LOGGER.error("DCS encounterd error: {}", errorMessage);
+            LOGGER.error("DCS encountered an error: {}", errorMessage);
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.DCS_RETURNED_AN_ERROR);
         }
@@ -182,11 +182,11 @@ public class AuthorizationCodeHandler
         return new Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
     }
 
-    private PassportAttributes parsePassportFormRequest(String input)
+    private DcsPayload parsePassportFormRequest(String input)
             throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Parsing passport form data into payload for DCS");
         try {
-            return objectMapper.readValue(input, PassportAttributes.class);
+            return objectMapper.readValue(input, DcsPayload.class);
         } catch (JsonProcessingException e) {
             LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
             throw new HttpResponseExceptionWithErrorBody(
@@ -194,11 +194,11 @@ public class AuthorizationCodeHandler
         }
     }
 
-    private JWSObject preparePayload(PassportAttributes passportAttributes)
+    private JWSObject preparePayload(DcsPayload dcsPayload)
             throws HttpResponseExceptionWithErrorBody {
         LOGGER.info("Preparing payload for DCS");
         try {
-            return dcsCryptographyService.preparePayload(passportAttributes);
+            return dcsCryptographyService.preparePayload(dcsPayload);
         } catch (CertificateException
                 | NoSuchAlgorithmException
                 | InvalidKeySpecException

@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @DynamoDbBean
 @ExcludeFromGeneratedCoverageReport
-public class PassportAttributes {
+public class DcsPayload {
     private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIMESTAMP_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
@@ -36,10 +36,10 @@ public class PassportAttributes {
     @JsonFormat(pattern = DATE_FORMAT, timezone = TIME_ZONE)
     public LocalDate expiryDate;
 
-    public PassportAttributes() {}
+    public DcsPayload() {}
 
     @JsonCreator
-    public PassportAttributes(
+    public DcsPayload(
             @JsonProperty(value = "passportNumber", required = true) String passportNumber,
             @JsonProperty(value = "surname", required = true) String surname,
             @JsonProperty(value = "forenames", required = true) List<String> forenames,

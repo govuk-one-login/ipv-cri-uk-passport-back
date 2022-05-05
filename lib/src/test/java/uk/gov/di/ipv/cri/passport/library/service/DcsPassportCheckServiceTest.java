@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -21,7 +21,7 @@ class DcsPassportCheckServiceTest {
 
     @Mock private DataStore<PassportCheckDao> mockDataStore;
 
-    @Mock PassportAttributes passportAttributes;
+    @Mock DcsPayload dcsPayload;
 
     @Mock Evidence gpg45Score;
 
@@ -36,10 +36,7 @@ class DcsPassportCheckServiceTest {
     void shouldReturnCredentialsFromDataStore() {
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(
-                        UUID.randomUUID().toString(),
-                        passportAttributes,
-                        gpg45Score,
-                        "test-user-id");
+                        UUID.randomUUID().toString(), dcsPayload, gpg45Score, "test-user-id");
 
         when(mockDataStore.getItem(anyString())).thenReturn(passportCheckDao);
 
@@ -47,10 +44,10 @@ class DcsPassportCheckServiceTest {
                 dcsPassportCheckService.getDcsPassportCheck("dcs-credential-id-1");
 
         assertEquals(passportCheckDao.getResourceId(), credential.getResourceId());
-        assertEquals(passportCheckDao.getAttributes(), credential.getAttributes());
+        assertEquals(passportCheckDao.getDcsPayload(), credential.getDcsPayload());
         assertEquals(
-                passportCheckDao.getAttributes().getDcsResponse(),
-                credential.getAttributes().getDcsResponse());
+                passportCheckDao.getDcsPayload().getDcsResponse(),
+                credential.getDcsPayload().getDcsResponse());
         assertEquals(passportCheckDao.getUserId(), credential.getUserId());
     }
 }

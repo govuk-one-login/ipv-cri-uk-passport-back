@@ -1,8 +1,8 @@
 package uk.gov.di.ipv.cri.passport.issuecredential.domain;
 
 import org.junit.jupiter.api.Test;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -26,8 +26,8 @@ class VerifiableCredentialTest {
     @Test
     void shouldConvertPassportCheckDaoToPassportCredentialIssuerResponse() {
 
-        PassportAttributes attributes =
-                new PassportAttributes(
+        DcsPayload attributes =
+                new DcsPayload(
                         PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
         Evidence evidence = new Evidence(4, 4);
         attributes.setDcsResponse(
@@ -68,13 +68,13 @@ class VerifiableCredentialTest {
                 EXPIRY_DATE.toString(),
                 verifiableCredential.getCredentialSubject().getExpiryDate());
         assertEquals(
-                passportCheckDao.getAttributes().getRequestId().toString(),
+                passportCheckDao.getDcsPayload().getRequestId().toString(),
                 verifiableCredential.getCredentialSubject().getRequestId());
         assertEquals(
-                passportCheckDao.getAttributes().getCorrelationId().toString(),
+                passportCheckDao.getDcsPayload().getCorrelationId().toString(),
                 verifiableCredential.getCredentialSubject().getCorrelationId());
         assertEquals(
-                passportCheckDao.getAttributes().getDcsResponse(),
+                passportCheckDao.getDcsPayload().getDcsResponse(),
                 verifiableCredential.getCredentialSubject().getDcsResponse());
     }
 }

@@ -24,7 +24,7 @@ public class VerifiableCredential {
 
         // Add Forenames to NameParts
         passportCheck
-                .getAttributes()
+                .getDcsPayload()
                 .getForenames()
                 .forEach(
                         givenName ->
@@ -36,20 +36,20 @@ public class VerifiableCredential {
         nameParts.add(
                 new NameParts(
                         NamePartType.FAMILY_NAME.getName(),
-                        passportCheck.getAttributes().getSurname()));
+                        passportCheck.getDcsPayload().getSurname()));
 
         CredentialSubject credentialSubject =
                 new CredentialSubject.Builder()
                         .setName(new Name(nameParts))
-                        .setPassportNumber(passportCheck.getAttributes().getPassportNumber())
+                        .setPassportNumber(passportCheck.getDcsPayload().getPassportNumber())
                         .setBirthDate(
                                 new BirthDate(
-                                        passportCheck.getAttributes().getDateOfBirth().toString()))
-                        .setExpiryDate(passportCheck.getAttributes().getExpiryDate().toString())
-                        .setRequestId(passportCheck.getAttributes().getRequestId().toString())
+                                        passportCheck.getDcsPayload().getDateOfBirth().toString()))
+                        .setExpiryDate(passportCheck.getDcsPayload().getExpiryDate().toString())
+                        .setRequestId(passportCheck.getDcsPayload().getRequestId().toString())
                         .setCorrelationId(
-                                passportCheck.getAttributes().getCorrelationId().toString())
-                        .setDcsResponse(passportCheck.getAttributes().getDcsResponse())
+                                passportCheck.getDcsPayload().getCorrelationId().toString())
+                        .setDcsResponse(passportCheck.getDcsPayload().getDcsResponse())
                         .build();
 
         return new VerifiableCredential(

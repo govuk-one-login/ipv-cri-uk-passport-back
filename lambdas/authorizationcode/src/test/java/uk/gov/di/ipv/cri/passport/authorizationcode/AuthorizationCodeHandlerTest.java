@@ -19,9 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
@@ -123,8 +123,7 @@ class AuthorizationCodeHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
-                .thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
@@ -156,8 +155,7 @@ class AuthorizationCodeHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
-                .thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
@@ -283,8 +281,7 @@ class AuthorizationCodeHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
-                .thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(authRequestValidator.validateRequest(anyMap(), anyString()))
                 .thenReturn(Optional.empty());
 
@@ -326,8 +323,7 @@ class AuthorizationCodeHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
-                .thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
@@ -352,7 +348,7 @@ class AuthorizationCodeHandlerTest {
         verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
         assertEquals(
                 validPassportFormData.get("passportNumber"),
-                persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
+                persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
                 VALID_GPG45_SCORE.getStrength(),
                 persistedPassportCheckDao.getValue().getGpg45Score().getStrength());
@@ -361,7 +357,7 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getGpg45Score().getValidity());
         assertEquals(
                 validDcsResponse,
-                persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+                persistedPassportCheckDao.getValue().getDcsPayload().getDcsResponse());
     }
 
     @Test
@@ -373,8 +369,7 @@ class AuthorizationCodeHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
-                .thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(invalidDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
@@ -399,7 +394,7 @@ class AuthorizationCodeHandlerTest {
         verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
         assertEquals(
                 validPassportFormData.get("passportNumber"),
-                persistedPassportCheckDao.getValue().getAttributes().getPassportNumber());
+                persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
                 INVALID_GPG45_SCORE.getStrength(),
                 persistedPassportCheckDao.getValue().getGpg45Score().getStrength());
@@ -408,7 +403,7 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getGpg45Score().getValidity());
         assertEquals(
                 invalidDcsResponse,
-                persistedPassportCheckDao.getValue().getAttributes().getDcsResponse());
+                persistedPassportCheckDao.getValue().getDcsPayload().getDcsResponse());
     }
 
     @Test
@@ -420,8 +415,7 @@ class AuthorizationCodeHandlerTest {
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(PassportAttributes.class)))
-                .thenReturn(jwsObject);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
