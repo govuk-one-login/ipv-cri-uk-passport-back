@@ -1,27 +1,32 @@
 package uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
+
+import java.util.List;
+import java.util.UUID;
 
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.EVIDENCE_TYPE_IDENTITY_CHECK;
 
 @DynamoDbBean
 @ExcludeFromGeneratedCoverageReport
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Evidence {
 
     private String type = EVIDENCE_TYPE_IDENTITY_CHECK;
-    private String txn;
+    private UUID txn;
     private int strength;
     private int validity;
+    private List<ContraIndicators> ci;
 
-    public Evidence(
-            @JsonProperty("strength") int strength,
-            @JsonProperty("validity") int validity,
-            @JsonProperty("txn") String txn) {
+    public Evidence() {}
+
+    public Evidence(UUID txn, int strength, int validity, List<ContraIndicators> ci) {
+        this.txn = txn;
         this.strength = strength;
         this.validity = validity;
-        this.txn = txn;
+        this.ci = ci;
     }
 
     public String getType() {
@@ -32,11 +37,11 @@ public class Evidence {
         this.type = type;
     }
 
-    public String getTxn() {
+    public UUID getTxn() {
         return txn;
     }
 
-    public void setTxn(String txn) {
+    public void setTxn(UUID txn) {
         this.txn = txn;
     }
 
@@ -56,6 +61,14 @@ public class Evidence {
         this.validity = validity;
     }
 
+    public List<ContraIndicators> getCi() {
+        return ci;
+    }
+
+    public void setCi(List<ContraIndicators> ci) {
+        this.ci = ci;
+    }
+
     @Override
     public String toString() {
         return "Evidence{"
@@ -67,6 +80,8 @@ public class Evidence {
                 + strength
                 + ", validity="
                 + validity
+                + ", ci="
+                + ci
                 + '}';
     }
 }

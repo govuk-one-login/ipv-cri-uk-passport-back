@@ -20,6 +20,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
@@ -173,13 +174,11 @@ public class AuthorizationCodeHandler
     }
 
     private Evidence generateGpg45Score(DcsResponse dcsResponse) {
-        int validity =
-                dcsResponse.isValid()
-                        ? MAX_PASSPORT_GPG45_VALIDITY_VALUE
-                        : MIN_PASSPORT_GPG45_VALUE;
-
         return new Evidence(
-                MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity, UUID.randomUUID().toString());
+                UUID.randomUUID(),
+                MAX_PASSPORT_GPG45_STRENGTH_VALUE,
+                calculateValidity(dcsResponse),
+                calculateContraIndicators(dcsResponse));
     }
 
     private DcsPayload parsePassportFormRequest(String input)
@@ -238,5 +237,13 @@ public class AuthorizationCodeHandler
                     HttpStatus.SC_INTERNAL_SERVER_ERROR,
                     ErrorResponse.FAILED_TO_UNWRAP_DCS_RESPONSE);
         }
+    }
+
+    private int calculateValidity(DcsResponse dcsResponse) {
+        return dcsResponse.isValid() ? MAX_PASSPORT_GPG45_VALIDITY_VALUE : MIN_PASSPORT_GPG45_VALUE;
+    }
+
+    private List<ContraIndicators> calculateContraIndicators(DcsResponse dcsResponse) {
+        return dcsResponse.isValid() ? null : List.of(ContraIndicators.D02);
     }
 }

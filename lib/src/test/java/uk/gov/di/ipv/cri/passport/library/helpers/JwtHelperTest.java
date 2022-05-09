@@ -64,8 +64,7 @@ class JwtHelperTest {
                                 new BirthDate(BIRTH_DATE),
                                 new Passport(
                                         PASSPORT_NUMBER, LocalDate.parse(EXPIRY_DATE).toString())),
-                        Collections.singletonList(
-                                new Evidence(4, 2, UUID.randomUUID().toString())));
+                        Collections.singletonList(new Evidence(UUID.randomUUID(), 4, 2, null)));
 
         JWTClaimsSet testClaimsSet =
                 new JWTClaimsSet.Builder()

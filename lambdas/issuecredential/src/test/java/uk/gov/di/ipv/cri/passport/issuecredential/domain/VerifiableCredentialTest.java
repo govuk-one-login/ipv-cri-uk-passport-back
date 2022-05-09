@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.passport.issuecredential.domain;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -31,7 +32,7 @@ class VerifiableCredentialTest {
                 new DcsPayload(
                         PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
 
-        Evidence evidence = new Evidence(4, 2, UUID.randomUUID().toString());
+        Evidence evidence = new Evidence(UUID.randomUUID(), 4, 2, null);
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(RESOURCE_ID, dcsPayload, evidence, "test-user-id");
 
@@ -66,7 +67,9 @@ class VerifiableCredentialTest {
         assertEquals(
                 EVIDENCE_TYPE_IDENTITY_CHECK, verifiableCredential.getEvidence().get(0).getType());
         assertDoesNotThrow(
-                () -> UUID.fromString(verifiableCredential.getEvidence().get(0).getTxn()));
+                () ->
+                        UUID.fromString(
+                                verifiableCredential.getEvidence().get(0).getTxn().toString()));
         assertEquals(4, verifiableCredential.getEvidence().get(0).getStrength());
         assertEquals(2, verifiableCredential.getEvidence().get(0).getValidity());
     }
@@ -94,10 +97,10 @@ class VerifiableCredentialTest {
                         + "    }\n"
                         + "  },\n"
                         + "  \"evidence\" : [ {\n"
-                        + "    \"strength\" : 4,\n"
-                        + "    \"validity\" : 2,\n"
+                        + "    \"type\" : \"IdentityCheck\",\n"
                         + "    \"txn\" : \"b46cbad4-2680-433f-b12c-b09fc27f281f\",\n"
-                        + "    \"type\" : \"IdentityCheck\"\n"
+                        + "    \"strength\" : 4,\n"
+                        + "    \"validity\" : 2\n"
                         + "  } ],\n"
                         + "  \"type\" : [ \"VerifiableCredential\", \"IdentityCheckCredential\" ]\n"
                         + "}";
@@ -105,7 +108,62 @@ class VerifiableCredentialTest {
         DcsPayload dcsPayload =
                 new DcsPayload(
                         PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
-        Evidence evidence = new Evidence(4, 2, "b46cbad4-2680-433f-b12c-b09fc27f281f");
+        Evidence evidence =
+                new Evidence(UUID.fromString("b46cbad4-2680-433f-b12c-b09fc27f281f"), 4, 2, null);
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao(RESOURCE_ID, dcsPayload, evidence, "test-user-id");
+
+        VerifiableCredential verifiableCredential =
+                VerifiableCredential.fromPassportCheckDao(passportCheckDao);
+
+        assertEquals(
+                expectedJson,
+                new ObjectMapper()
+                        .writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(verifiableCredential));
+    }
+
+    @Test
+    void itDeserializesIntoTheCorrectJsonWhenThereAreContraIndicators() throws Exception {
+        String expectedJson =
+                "{\n"
+                        + "  \"credentialSubject\" : {\n"
+                        + "    \"name\" : {\n"
+                        + "      \"nameParts\" : [ {\n"
+                        + "        \"type\" : \"GivenName\",\n"
+                        + "        \"value\" : \"givenNames\"\n"
+                        + "      }, {\n"
+                        + "        \"type\" : \"FamilyName\",\n"
+                        + "        \"value\" : \"familyName\"\n"
+                        + "      } ]\n"
+                        + "    },\n"
+                        + "    \"birthDate\" : {\n"
+                        + "      \"value\" : \"1984-09-28\"\n"
+                        + "    },\n"
+                        + "    \"passport\" : {\n"
+                        + "      \"documentNumber\" : \"passportNumber\",\n"
+                        + "      \"expiryDate\" : \"2034-09-28\"\n"
+                        + "    }\n"
+                        + "  },\n"
+                        + "  \"evidence\" : [ {\n"
+                        + "    \"type\" : \"IdentityCheck\",\n"
+                        + "    \"txn\" : \"b46cbad4-2680-433f-b12c-b09fc27f281f\",\n"
+                        + "    \"strength\" : 4,\n"
+                        + "    \"validity\" : 2,\n"
+                        + "    \"ci\" : [ \"D02\" ]\n"
+                        + "  } ],\n"
+                        + "  \"type\" : [ \"VerifiableCredential\", \"IdentityCheckCredential\" ]\n"
+                        + "}";
+
+        DcsPayload dcsPayload =
+                new DcsPayload(
+                        PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
+        Evidence evidence =
+                new Evidence(
+                        UUID.fromString("b46cbad4-2680-433f-b12c-b09fc27f281f"),
+                        4,
+                        2,
+                        List.of(ContraIndicators.D02));
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(RESOURCE_ID, dcsPayload, evidence, "test-user-id");
 

@@ -22,6 +22,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
@@ -45,6 +46,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -61,10 +63,10 @@ class AuthorizationCodeHandlerTest {
     public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
-    public static final Evidence VALID_GPG45_SCORE =
-            new Evidence(4, 2, UUID.randomUUID().toString());
-    public static final Evidence INVALID_GPG45_SCORE =
-            new Evidence(4, 0, UUID.randomUUID().toString());
+    public static final Evidence VALID_PASSPORT_EVIDENCE =
+            new Evidence(UUID.randomUUID(), 4, 2, null);
+    public static final Evidence INVALID_PASSPORT_EVIDENCE =
+            new Evidence(UUID.randomUUID(), 4, 0, List.of(ContraIndicators.D02));
     private static final Map<String, String> VALID_QUERY_PARAMS =
             Map.of(
                     OAuth2RequestParams.REDIRECT_URI, "http://example.com",
@@ -317,7 +319,7 @@ class AuthorizationCodeHandlerTest {
     }
 
     @Test
-    void shouldPersistPassportCheckDaoWithValidGpg45Score()
+    void shouldPersistPassportCheckDaoWithValidPassport()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException {
@@ -352,16 +354,16 @@ class AuthorizationCodeHandlerTest {
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
-                VALID_GPG45_SCORE.getStrength(),
+                VALID_PASSPORT_EVIDENCE.getStrength(),
                 persistedPassportCheckDao.getValue().getEvidence().getStrength());
         assertEquals(
-                VALID_GPG45_SCORE.getValidity(),
+                VALID_PASSPORT_EVIDENCE.getValidity(),
                 persistedPassportCheckDao.getValue().getEvidence().getValidity());
-        ;
+        assertNull(persistedPassportCheckDao.getValue().getEvidence().getCi());
     }
 
     @Test
-    void shouldPersistPassportCheckDaoWithInValidGpg45Score()
+    void shouldPersistPassportCheckDaoWithInValidPassport()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException {
@@ -396,12 +398,14 @@ class AuthorizationCodeHandlerTest {
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
-                INVALID_GPG45_SCORE.getStrength(),
+                INVALID_PASSPORT_EVIDENCE.getStrength(),
                 persistedPassportCheckDao.getValue().getEvidence().getStrength());
         assertEquals(
-                INVALID_GPG45_SCORE.getValidity(),
+                INVALID_PASSPORT_EVIDENCE.getValidity(),
                 persistedPassportCheckDao.getValue().getEvidence().getValidity());
-        ;
+        assertEquals(
+                INVALID_PASSPORT_EVIDENCE.getCi(),
+                persistedPassportCheckDao.getValue().getEvidence().getCi());
     }
 
     @Test

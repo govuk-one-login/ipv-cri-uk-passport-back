@@ -129,7 +129,7 @@ public class DateStorePassportCheckIT {
                         List.of("family-name"),
                         LocalDate.of(1900, 1, 1),
                         LocalDate.of(2025, 2, 2));
-        Evidence evidence = new Evidence(4, 2, UUID.randomUUID().toString());
+        Evidence evidence = new Evidence(UUID.randomUUID(), 4, 2, null);
         createdItemIds.add(resourceId);
 
         return new PassportCheckDao(resourceId, dcsPayload, evidence, "test-user-id");

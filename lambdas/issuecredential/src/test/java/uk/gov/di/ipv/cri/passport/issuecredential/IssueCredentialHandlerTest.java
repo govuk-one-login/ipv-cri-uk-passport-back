@@ -54,6 +54,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -99,7 +100,7 @@ class IssueCredentialHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
-    private final Evidence evidence = new Evidence(4, 2, UUID.randomUUID().toString());
+    private final Evidence evidence = new Evidence(UUID.randomUUID(), 4, 2, null);
 
     private final String userId = "test-user-id";
 
@@ -166,8 +167,7 @@ class IssueCredentialHandlerTest {
 
         JsonNode vcNode = claimsSet.get("vc");
         VerifiableCredential verifiableCredential =
-                objectMapper.convertValue(vcNode, VerifiableCredential.class);
-
+                objectMapper.readValue(vcNode.asText(), VerifiableCredential.class);
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();
 
@@ -227,6 +227,8 @@ class IssueCredentialHandlerTest {
         assertEquals(
                 passportCheckDao.getEvidence().getValidity(),
                 verifiableCredential.getEvidence().get(0).getValidity());
+
+        assertNull(verifiableCredential.getEvidence().get(0).getCi());
 
         ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
         assertTrue(signedJWT.verify(ecVerifier));
