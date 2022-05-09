@@ -20,6 +20,34 @@ Resources:
     Properties:
       Name: IPV CRI UK Passport API Gateway
       StageName: !Sub ${Environment}
+      AccessLogSetting:
+        DestinationArn: !GetAtt IPVCriUKPassportAPILogGroup.Arn
+        Format: >-
+          {
+          "requestId":"$context.requestId",
+          "ip":"$context.identity.sourceIp",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "path":"$context.path",
+          "routeKey":"$context.routeKey",
+          "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLatency":"$context.responseLatency",
+          "responseLength":"$context.responseLength"
+          }
+
+  IPVCriUKPassportAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
+      RetentionInDays: 14
+
+  IPVCriUKPassportAPILogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportAPILogGroup
 
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
@@ -76,6 +104,19 @@ Resources:
             Path: /credentials/issue
             Method: POST
 
+  IPVCriUKPassportIssueCredentialFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportIssueCredentialFunction}"
+
+  IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportIssueCredentialFunctionLogGroup
+
   IPVCriUKPassportAccessTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -115,6 +156,19 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportAPI
             Path: /token
             Method: POST
+
+  IPVCriUKPassportAccessTokenFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportAccessTokenFunction}"
+
+  IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportAccessTokenFunctionLogGroup
 
   IPVCriUKPassportAuthorizationCodeFunction:
     Type: AWS::Serverless::Function
@@ -173,6 +227,19 @@ Resources:
             Path: /authorization
             Method: POST
 
+  IPVCriUKPassportAuthorizationCodeFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportAuthorizationCodeFunction}"
+
+  IPVCriUKPassportAuthorizationCodeFunctionLogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportAuthorizationCodeFunctionLogGroup
+
   IPVCriUKPassportJwTAuthorizationRequestFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -220,6 +287,19 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportAPI
             Path: /jwt-authorization-request
             Method: POST
+
+  IPVCriUKPassportJwTAuthorizationRequestFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportJwTAuthorizationRequestFunction}"
+
+  IPVCriUKPassportJwTAuthorizationRequestFunctionLogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportJwTAuthorizationRequestFunctionLogGroup
 
   DCSResponseTable:
     Type: AWS::DynamoDB::Table
