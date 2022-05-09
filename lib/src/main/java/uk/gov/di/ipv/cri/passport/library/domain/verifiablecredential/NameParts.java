@@ -9,21 +9,10 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 public class NameParts {
     private String value;
     private String type;
-    private String validFrom;
-    private String validUntil;
 
     public NameParts(
-            @JsonProperty(value = "value", required = true) String value,
             @JsonProperty(value = "type", required = true) String type,
-            @JsonProperty(value = "validFrom") String validFrom,
-            @JsonProperty(value = "validUntil") String validUntil) {
-        this.value = value;
-        this.type = type;
-        this.validFrom = validFrom;
-        this.validUntil = validUntil;
-    }
-
-    public NameParts(String type, String value) {
+            @JsonProperty(value = "value", required = true) String value) {
         this.value = value;
         this.type = type;
     }
@@ -44,37 +33,8 @@ public class NameParts {
         this.type = type;
     }
 
-    public String getValidFrom() {
-        return validFrom;
-    }
-
-    public void setValidFrom(String validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    public String getValidUntil() {
-        return validUntil;
-    }
-
-    public void setValidUntil(String validUntil) {
-        this.validUntil = validUntil;
-    }
-
     @Override
     public String toString() {
-        return "NameParts{"
-                + "value='"
-                + value
-                + '\''
-                + ", type='"
-                + type
-                + '\''
-                + ", validFrom='"
-                + validFrom
-                + '\''
-                + ", validUntil='"
-                + validUntil
-                + '\''
-                + '}';
+        return "NameParts{" + "value='" + value + '\'' + ", type='" + type + '\'' + '}';
     }
 }

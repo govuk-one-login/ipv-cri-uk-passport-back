@@ -7,14 +7,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.IDENTITY_CHECK_CREDENTIAL_TYPE;
+import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VERIFIABLE_CREDENTIAL_TYPE;
+
 public class VerifiableCredential {
 
-    @JsonProperty private CredentialSubject credentialSubject;
-    @JsonProperty private List<Evidence> evidence;
+    private final List<String> type =
+            List.of(VERIFIABLE_CREDENTIAL_TYPE, IDENTITY_CHECK_CREDENTIAL_TYPE);
+    private final CredentialSubject credentialSubject;
+    private final List<Evidence> evidence;
 
-    public VerifiableCredential() {}
-
-    public VerifiableCredential(CredentialSubject credentialSubject, List<Evidence> evidence) {
+    public VerifiableCredential(
+            @JsonProperty("credentialSubject") CredentialSubject credentialSubject,
+            @JsonProperty("evidence") List<Evidence> evidence) {
         this.credentialSubject = credentialSubject;
         this.evidence = evidence;
     }
@@ -39,21 +44,19 @@ public class VerifiableCredential {
                         passportCheck.getDcsPayload().getSurname()));
 
         CredentialSubject credentialSubject =
-                new CredentialSubject.Builder()
-                        .setName(new Name(nameParts))
-                        .setPassportNumber(passportCheck.getDcsPayload().getPassportNumber())
-                        .setBirthDate(
-                                new BirthDate(
-                                        passportCheck.getDcsPayload().getDateOfBirth().toString()))
-                        .setExpiryDate(passportCheck.getDcsPayload().getExpiryDate().toString())
-                        .setRequestId(passportCheck.getDcsPayload().getRequestId().toString())
-                        .setCorrelationId(
-                                passportCheck.getDcsPayload().getCorrelationId().toString())
-                        .setDcsResponse(passportCheck.getDcsPayload().getDcsResponse())
-                        .build();
+                new CredentialSubject(
+                        new Name(nameParts),
+                        new BirthDate(passportCheck.getDcsPayload().getDateOfBirth().toString()),
+                        new Passport(
+                                passportCheck.getDcsPayload().getPassportNumber(),
+                                passportCheck.getDcsPayload().getExpiryDate().toString()));
 
         return new VerifiableCredential(
-                credentialSubject, Collections.singletonList(passportCheck.getGpg45Score()));
+                credentialSubject, Collections.singletonList(passportCheck.getEvidence()));
+    }
+
+    public List<String> getType() {
+        return type;
     }
 
     public CredentialSubject getCredentialSubject() {

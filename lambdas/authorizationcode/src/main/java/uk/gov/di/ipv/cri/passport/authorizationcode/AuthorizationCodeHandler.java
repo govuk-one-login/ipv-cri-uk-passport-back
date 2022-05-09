@@ -116,7 +116,6 @@ public class AuthorizationCodeHandler
             auditService.sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
 
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
-            dcsPayload.setDcsResponse(unwrappedDcsResponse);
 
             validateDcsResponse(unwrappedDcsResponse);
 
@@ -179,7 +178,8 @@ public class AuthorizationCodeHandler
                         ? MAX_PASSPORT_GPG45_VALIDITY_VALUE
                         : MIN_PASSPORT_GPG45_VALUE;
 
-        return new Evidence(MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity);
+        return new Evidence(
+                MAX_PASSPORT_GPG45_STRENGTH_VALUE, validity, UUID.randomUUID().toString());
     }
 
     private DcsPayload parsePassportFormRequest(String input)

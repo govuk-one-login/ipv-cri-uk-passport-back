@@ -27,7 +27,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
-import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
@@ -59,6 +58,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.IDENTITY_CHECK_CREDENTIAL_TYPE;
+import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VERIFIABLE_CREDENTIAL_TYPE;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 
@@ -87,14 +88,10 @@ class IssueCredentialHandlerTest {
             new ObjectMapper().registerModule(new JavaTimeModule());
 
     private IssueCredentialHandler issueCredentialHandler;
-    private PassportCheckDao dcsCredential;
+    private PassportCheckDao passportCheckDao;
     private Map<String, String> responseBody;
 
-    private final DcsResponse validDcsResponse =
-            new DcsResponse(
-                    UUID.randomUUID().toString(), UUID.randomUUID().toString(), false, true, null);
-
-    private final DcsPayload attributes =
+    private final DcsPayload dcsPayload =
             new DcsPayload(
                     PASSPORT_NUMBER,
                     SURNAME,
@@ -102,14 +99,13 @@ class IssueCredentialHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
-    private final Evidence evidence = new Evidence(4, 4);
+    private final Evidence evidence = new Evidence(4, 2, UUID.randomUUID().toString());
 
     private final String userId = "test-user-id";
 
     @BeforeEach
     void setUp() throws Exception {
-        attributes.setDcsResponse(validDcsResponse);
-        dcsCredential = new PassportCheckDao(TEST_RESOURCE_ID, attributes, evidence, userId);
+        passportCheckDao = new PassportCheckDao(TEST_RESOURCE_ID, dcsPayload, evidence, userId);
         responseBody = new HashMap<>();
         ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
         issueCredentialHandler =
@@ -134,7 +130,7 @@ class IssueCredentialHandlerTest {
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
-                .thenReturn(dcsCredential);
+                .thenReturn(passportCheckDao);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -156,7 +152,7 @@ class IssueCredentialHandlerTest {
         when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
                 .thenReturn(TEST_RESOURCE_ID);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
-                .thenReturn(dcsCredential);
+                .thenReturn(passportCheckDao);
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
 
         APIGatewayProxyResponseEvent response =
@@ -166,16 +162,21 @@ class IssueCredentialHandlerTest {
         JsonNode claimsSet = objectMapper.readTree(signedJWT.getJWTClaimsSet().toString());
 
         assertEquals(200, response.getStatusCode());
-        assertEquals(7, claimsSet.size());
+        assertEquals(5, claimsSet.size());
 
         JsonNode vcNode = claimsSet.get("vc");
         VerifiableCredential verifiableCredential =
                 objectMapper.convertValue(vcNode, VerifiableCredential.class);
 
-        assertEquals(dcsCredential.getUserId(), claimsSet.get("sub").asText());
-
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();
+
+        assertEquals(passportCheckDao.getUserId(), claimsSet.get("sub").asText());
+
+        assertEquals(
+                List.of(VERIFIABLE_CREDENTIAL_TYPE, IDENTITY_CHECK_CREDENTIAL_TYPE),
+                verifiableCredential.getType());
+
         assertTrue(
                 nameParts.stream()
                         .anyMatch(
@@ -183,7 +184,7 @@ class IssueCredentialHandlerTest {
                                         isType(NamePartType.FAMILY_NAME)
                                                 .and(
                                                         hasValue(
-                                                                dcsCredential
+                                                                passportCheckDao
                                                                         .getDcsPayload()
                                                                         .getSurname()))
                                                 .test(o)));
@@ -194,32 +195,37 @@ class IssueCredentialHandlerTest {
                                         isType(NamePartType.GIVEN_NAME)
                                                 .and(
                                                         hasValue(
-                                                                dcsCredential
+                                                                passportCheckDao
                                                                         .getDcsPayload()
                                                                         .getForenames()
                                                                         .get(0)))
                                                 .test(o)));
 
         assertEquals(
-                dcsCredential.getDcsPayload().getPassportNumber(),
-                verifiableCredential.getCredentialSubject().getPassportNumber());
-        assertEquals(
-                dcsCredential.getDcsPayload().getDateOfBirth().toString(),
+                passportCheckDao.getDcsPayload().getDateOfBirth().toString(),
                 verifiableCredential.getCredentialSubject().getBirthDate().getValue());
+
         assertEquals(
-                dcsCredential.getDcsPayload().getExpiryDate().toString(),
-                verifiableCredential.getCredentialSubject().getExpiryDate());
+                passportCheckDao.getDcsPayload().getPassportNumber(),
+                verifiableCredential.getCredentialSubject().getPassport().getDocumentNumber());
+
         assertEquals(
-                dcsCredential.getDcsPayload().getRequestId().toString(),
-                verifiableCredential.getCredentialSubject().getRequestId());
+                passportCheckDao.getDcsPayload().getExpiryDate().toString(),
+                verifiableCredential.getCredentialSubject().getPassport().getExpiryDate());
+
         assertEquals(
-                dcsCredential.getDcsPayload().getCorrelationId().toString(),
-                verifiableCredential.getCredentialSubject().getCorrelationId());
+                passportCheckDao.getEvidence().getTxn(),
+                verifiableCredential.getEvidence().get(0).getTxn());
+
         assertEquals(
-                dcsCredential.getGpg45Score().getStrength(),
+                passportCheckDao.getEvidence().getType(),
+                verifiableCredential.getEvidence().get(0).getType());
+
+        assertEquals(
+                passportCheckDao.getEvidence().getStrength(),
                 verifiableCredential.getEvidence().get(0).getStrength());
         assertEquals(
-                dcsCredential.getGpg45Score().getValidity(),
+                passportCheckDao.getEvidence().getValidity(),
                 verifiableCredential.getEvidence().get(0).getValidity());
 
         ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));

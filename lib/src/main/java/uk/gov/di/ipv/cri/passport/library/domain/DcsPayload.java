@@ -25,7 +25,6 @@ public class DcsPayload {
     @JsonProperty private String timestamp;
     @JsonProperty private String passportNumber;
     @JsonProperty private String surname;
-    @JsonProperty private DcsResponse dcsResponse;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public List<String> forenames;
@@ -95,14 +94,6 @@ public class DcsPayload {
         this.surname = surname;
     }
 
-    public DcsResponse getDcsResponse() {
-        return dcsResponse;
-    }
-
-    public void setDcsResponse(DcsResponse dcsResponse) {
-        this.dcsResponse = dcsResponse;
-    }
-
     public List<String> getForenames() {
         return forenames;
     }
@@ -136,15 +127,10 @@ public class DcsPayload {
                 + requestId
                 + ", timestamp='"
                 + timestamp
-                + '\''
                 + ", passportNumber='"
                 + passportNumber
-                + '\''
                 + ", surname='"
                 + surname
-                + '\''
-                + ", dcsResponse="
-                + (dcsResponse != null ? dcsResponse : "empty")
                 + ", forenames="
                 + forenames
                 + ", dateOfBirth="

@@ -26,6 +26,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -117,7 +118,7 @@ class PassportServiceTest {
                         List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
-        Evidence evidence = new Evidence(4, 4);
+        Evidence evidence = new Evidence(4, 4, UUID.randomUUID().toString());
         PassportCheckDao dcsResponse =
                 new PassportCheckDao("UUID", dcsPayload, evidence, "test-user-id");
         underTest.persistDcsResponse(dcsResponse);

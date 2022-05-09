@@ -61,8 +61,10 @@ class AuthorizationCodeHandlerTest {
     public static final List<String> FORENAMES = List.of("Tubbs");
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
-    public static final Evidence VALID_GPG45_SCORE = new Evidence(4, 2);
-    public static final Evidence INVALID_GPG45_SCORE = new Evidence(4, 0);
+    public static final Evidence VALID_GPG45_SCORE =
+            new Evidence(4, 2, UUID.randomUUID().toString());
+    public static final Evidence INVALID_GPG45_SCORE =
+            new Evidence(4, 0, UUID.randomUUID().toString());
     private static final Map<String, String> VALID_QUERY_PARAMS =
             Map.of(
                     OAuth2RequestParams.REDIRECT_URI, "http://example.com",
@@ -351,13 +353,11 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
                 VALID_GPG45_SCORE.getStrength(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getStrength());
+                persistedPassportCheckDao.getValue().getEvidence().getStrength());
         assertEquals(
                 VALID_GPG45_SCORE.getValidity(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getValidity());
-        assertEquals(
-                validDcsResponse,
-                persistedPassportCheckDao.getValue().getDcsPayload().getDcsResponse());
+                persistedPassportCheckDao.getValue().getEvidence().getValidity());
+        ;
     }
 
     @Test
@@ -397,13 +397,11 @@ class AuthorizationCodeHandlerTest {
                 persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
                 INVALID_GPG45_SCORE.getStrength(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getStrength());
+                persistedPassportCheckDao.getValue().getEvidence().getStrength());
         assertEquals(
                 INVALID_GPG45_SCORE.getValidity(),
-                persistedPassportCheckDao.getValue().getGpg45Score().getValidity());
-        assertEquals(
-                invalidDcsResponse,
-                persistedPassportCheckDao.getValue().getDcsPayload().getDcsResponse());
+                persistedPassportCheckDao.getValue().getEvidence().getValidity());
+        ;
     }
 
     @Test

@@ -11,16 +11,16 @@ import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 public class PassportCheckDao {
     private String resourceId;
     private DcsPayload dcsPayload;
-    private Evidence gpg45Score;
+    private Evidence evidence;
     private String userId;
 
     public PassportCheckDao() {}
 
     public PassportCheckDao(
-            String resourceId, DcsPayload dcsPayload, Evidence gpg45Score, String userId) {
+            String resourceId, DcsPayload dcsPayload, Evidence evidence, String userId) {
         this.resourceId = resourceId;
         this.dcsPayload = dcsPayload;
-        this.gpg45Score = gpg45Score;
+        this.evidence = evidence;
         this.userId = userId;
     }
 
@@ -41,12 +41,12 @@ public class PassportCheckDao {
         this.dcsPayload = dcsPayload;
     }
 
-    public Evidence getGpg45Score() {
-        return gpg45Score;
+    public Evidence getEvidence() {
+        return evidence;
     }
 
-    public void setGpg45Score(Evidence gpg45Score) {
-        this.gpg45Score = gpg45Score;
+    public void setEvidence(Evidence evidence) {
+        this.evidence = evidence;
     }
 
     public String getUserId() {
