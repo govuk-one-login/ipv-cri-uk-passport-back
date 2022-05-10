@@ -3,33 +3,35 @@ package uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 public class CredentialSubject {
 
-    private final Name name;
+    private final List<Name> name;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private final BirthDate birthDate;
+    private final List<BirthDate> birthDate;
 
-    private final Passport passport;
+    private final List<Passport> passport;
 
     public CredentialSubject(
-            @JsonProperty(value = "name", required = true) Name name,
-            @JsonProperty(value = "birthDate", required = true) BirthDate birthDate,
-            @JsonProperty(value = "passport", required = true) Passport passport) {
+            @JsonProperty(value = "name", required = true) List<Name> name,
+            @JsonProperty(value = "birthDate", required = true) List<BirthDate> birthDate,
+            @JsonProperty(value = "passport", required = true) List<Passport> passport) {
         this.name = name;
         this.birthDate = birthDate;
         this.passport = passport;
     }
 
-    public Name getName() {
+    public List<Name> getName() {
         return name;
     }
 
-    public BirthDate getBirthDate() {
+    public List<BirthDate> getBirthDate() {
         return birthDate;
     }
 
-    public Passport getPassport() {
+    public List<Passport> getPassport() {
         return passport;
     }
 }

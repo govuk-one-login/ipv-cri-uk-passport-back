@@ -45,11 +45,14 @@ public class VerifiableCredential {
 
         CredentialSubject credentialSubject =
                 new CredentialSubject(
-                        new Name(nameParts),
-                        new BirthDate(passportCheck.getDcsPayload().getDateOfBirth().toString()),
-                        new Passport(
-                                passportCheck.getDcsPayload().getPassportNumber(),
-                                passportCheck.getDcsPayload().getExpiryDate().toString()));
+                        List.of(new Name(nameParts)),
+                        List.of(
+                                new BirthDate(
+                                        passportCheck.getDcsPayload().getDateOfBirth().toString())),
+                        List.of(
+                                new Passport(
+                                        passportCheck.getDcsPayload().getPassportNumber(),
+                                        passportCheck.getDcsPayload().getExpiryDate().toString())));
 
         return new VerifiableCredential(
                 credentialSubject, Collections.singletonList(passportCheck.getEvidence()));

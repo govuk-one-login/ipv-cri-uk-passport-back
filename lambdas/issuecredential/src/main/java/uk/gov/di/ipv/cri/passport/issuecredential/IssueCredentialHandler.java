@@ -4,8 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -45,7 +43,6 @@ public class IssueCredentialHandler
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IssueCredentialHandler.class);
     private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final DcsPassportCheckService dcsPassportCheckService;
     private final AccessTokenService accessTokenService;
@@ -118,7 +115,7 @@ public class IssueCredentialHandler
             LOGGER.error("Failed to parse access token");
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
-        } catch (JOSEException | JsonProcessingException e) {
+        } catch (JOSEException e) {
             LOGGER.error("Failed to sign verifiable credential: '{}'", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     OAuth2Error.SERVER_ERROR.getHTTPStatusCode(),
@@ -134,8 +131,7 @@ public class IssueCredentialHandler
     }
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(
-            VerifiableCredential verifiableCredential, String subject)
-            throws JOSEException, JsonProcessingException {
+            VerifiableCredential verifiableCredential, String subject) throws JOSEException {
         Instant now = Instant.now();
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()

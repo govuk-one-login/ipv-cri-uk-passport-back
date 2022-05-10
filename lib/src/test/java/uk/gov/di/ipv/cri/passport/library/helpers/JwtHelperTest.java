@@ -56,14 +56,17 @@ class JwtHelperTest {
         VerifiableCredential verifiableCredential =
                 new VerifiableCredential(
                         new CredentialSubject(
-                                new Name(
-                                        List.of(
-                                                new NameParts(
-                                                        NamePartType.GIVEN_NAME.getName(),
-                                                        GIVEN_NAME))),
-                                new BirthDate(BIRTH_DATE),
-                                new Passport(
-                                        PASSPORT_NUMBER, LocalDate.parse(EXPIRY_DATE).toString())),
+                                List.of(
+                                        new Name(
+                                                List.of(
+                                                        new NameParts(
+                                                                NamePartType.GIVEN_NAME.getName(),
+                                                                GIVEN_NAME)))),
+                                List.of(new BirthDate(BIRTH_DATE)),
+                                List.of(
+                                        new Passport(
+                                                PASSPORT_NUMBER,
+                                                LocalDate.parse(EXPIRY_DATE).toString()))),
                         Collections.singletonList(
                                 new Evidence(UUID.randomUUID().toString(), 4, 2, null)));
 
@@ -89,13 +92,13 @@ class JwtHelperTest {
         JsonNode birthDateNode = credentialSubjectNode.get("birthDate");
         JsonNode passportNode = credentialSubjectNode.get("passport");
 
-        assertEquals(GIVEN_NAME, nameNode.get("nameParts").get(0).get("value").asText());
+        assertEquals(GIVEN_NAME, nameNode.get(0).get("nameParts").get(0).get("value").asText());
         assertEquals(
                 NamePartType.GIVEN_NAME.getName(),
-                nameNode.get("nameParts").get(0).get("type").asText());
-        assertEquals(BIRTH_DATE, birthDateNode.get("value").asText());
-        assertEquals(PASSPORT_NUMBER, passportNode.get("documentNumber").asText());
-        assertEquals(EXPIRY_DATE, passportNode.get("expiryDate").asText());
+                nameNode.get(0).get("nameParts").get(0).get("type").asText());
+        assertEquals(BIRTH_DATE, birthDateNode.get(0).get("value").asText());
+        assertEquals(PASSPORT_NUMBER, passportNode.get(0).get("documentNumber").asText());
+        assertEquals(EXPIRY_DATE, passportNode.get(0).get("expiryDate").asText());
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {

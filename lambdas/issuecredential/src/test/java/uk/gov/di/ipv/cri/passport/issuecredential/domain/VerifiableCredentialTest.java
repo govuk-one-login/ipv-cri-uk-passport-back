@@ -44,6 +44,7 @@ class VerifiableCredentialTest {
                 verifiableCredential
                         .getCredentialSubject()
                         .getName()
+                        .get(0)
                         .getNameParts()
                         .get(1)
                         .getValue());
@@ -52,18 +53,23 @@ class VerifiableCredentialTest {
                 verifiableCredential
                         .getCredentialSubject()
                         .getName()
+                        .get(0)
                         .getNameParts()
                         .get(0)
                         .getValue());
         assertEquals(
                 DATE_OF_BIRTH.toString(),
-                verifiableCredential.getCredentialSubject().getBirthDate().getValue());
+                verifiableCredential.getCredentialSubject().getBirthDate().get(0).getValue());
         assertEquals(
                 PASSPORT_NUMBER,
-                verifiableCredential.getCredentialSubject().getPassport().getDocumentNumber());
+                verifiableCredential
+                        .getCredentialSubject()
+                        .getPassport()
+                        .get(0)
+                        .getDocumentNumber());
         assertEquals(
                 EXPIRY_DATE.toString(),
-                verifiableCredential.getCredentialSubject().getPassport().getExpiryDate());
+                verifiableCredential.getCredentialSubject().getPassport().get(0).getExpiryDate());
         assertEquals(
                 EVIDENCE_TYPE_IDENTITY_CHECK, verifiableCredential.getEvidence().get(0).getType());
         assertDoesNotThrow(
@@ -79,7 +85,7 @@ class VerifiableCredentialTest {
         String expectedJson =
                 "{\n"
                         + "  \"credentialSubject\" : {\n"
-                        + "    \"name\" : {\n"
+                        + "    \"name\" : [ {\n"
                         + "      \"nameParts\" : [ {\n"
                         + "        \"type\" : \"GivenName\",\n"
                         + "        \"value\" : \"givenNames\"\n"
@@ -87,14 +93,14 @@ class VerifiableCredentialTest {
                         + "        \"type\" : \"FamilyName\",\n"
                         + "        \"value\" : \"familyName\"\n"
                         + "      } ]\n"
-                        + "    },\n"
-                        + "    \"birthDate\" : {\n"
+                        + "    } ],\n"
+                        + "    \"birthDate\" : [ {\n"
                         + "      \"value\" : \"1984-09-28\"\n"
-                        + "    },\n"
-                        + "    \"passport\" : {\n"
+                        + "    } ],\n"
+                        + "    \"passport\" : [ {\n"
                         + "      \"documentNumber\" : \"passportNumber\",\n"
                         + "      \"expiryDate\" : \"2034-09-28\"\n"
-                        + "    }\n"
+                        + "    } ]\n"
                         + "  },\n"
                         + "  \"evidence\" : [ {\n"
                         + "    \"type\" : \"IdentityCheck\",\n"
@@ -127,7 +133,7 @@ class VerifiableCredentialTest {
         String expectedJson =
                 "{\n"
                         + "  \"credentialSubject\" : {\n"
-                        + "    \"name\" : {\n"
+                        + "    \"name\" : [ {\n"
                         + "      \"nameParts\" : [ {\n"
                         + "        \"type\" : \"GivenName\",\n"
                         + "        \"value\" : \"givenNames\"\n"
@@ -135,14 +141,14 @@ class VerifiableCredentialTest {
                         + "        \"type\" : \"FamilyName\",\n"
                         + "        \"value\" : \"familyName\"\n"
                         + "      } ]\n"
-                        + "    },\n"
-                        + "    \"birthDate\" : {\n"
+                        + "    } ],\n"
+                        + "    \"birthDate\" : [ {\n"
                         + "      \"value\" : \"1984-09-28\"\n"
-                        + "    },\n"
-                        + "    \"passport\" : {\n"
+                        + "    } ],\n"
+                        + "    \"passport\" : [ {\n"
                         + "      \"documentNumber\" : \"passportNumber\",\n"
                         + "      \"expiryDate\" : \"2034-09-28\"\n"
-                        + "    }\n"
+                        + "    } ]\n"
                         + "  },\n"
                         + "  \"evidence\" : [ {\n"
                         + "    \"type\" : \"IdentityCheck\",\n"
