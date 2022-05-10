@@ -15,16 +15,16 @@ public class Evidence {
 
     private String type = EVIDENCE_TYPE_IDENTITY_CHECK;
     private String txn;
-    private int strength;
-    private int validity;
+    private int strengthScore;
+    private int validityScore;
     private List<ContraIndicators> ci;
 
     public Evidence() {}
 
-    public Evidence(String txn, int strength, int validity, List<ContraIndicators> ci) {
+    public Evidence(String txn, int strengthScore, int validityScore, List<ContraIndicators> ci) {
         this.txn = txn;
-        this.strength = strength;
-        this.validity = validity;
+        this.strengthScore = strengthScore;
+        this.validityScore = validityScore;
         this.ci = ci;
     }
 
@@ -44,20 +44,20 @@ public class Evidence {
         this.txn = txn;
     }
 
-    public int getStrength() {
-        return strength;
+    public int getStrengthScore() {
+        return strengthScore;
     }
 
-    public void setStrength(int strength) {
-        this.strength = strength;
+    public void setStrengthScore(int strengthScore) {
+        this.strengthScore = strengthScore;
     }
 
-    public int getValidity() {
-        return validity;
+    public int getValidityScore() {
+        return validityScore;
     }
 
-    public void setValidity(int validity) {
-        this.validity = validity;
+    public void setValidityScore(int validityScore) {
+        this.validityScore = validityScore;
     }
 
     public List<ContraIndicators> getCi() {
@@ -76,9 +76,9 @@ public class Evidence {
                 + ", txn="
                 + txn
                 + ", strength="
-                + strength
+                + strengthScore
                 + ", validity="
-                + validity
+                + validityScore
                 + ", ci="
                 + ci
                 + '}';

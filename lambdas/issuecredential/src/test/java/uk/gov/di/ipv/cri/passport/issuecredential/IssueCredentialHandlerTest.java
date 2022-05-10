@@ -226,11 +226,11 @@ class IssueCredentialHandlerTest {
                 verifiableCredential.getEvidence().get(0).getType());
 
         assertEquals(
-                passportCheckDao.getEvidence().getStrength(),
-                verifiableCredential.getEvidence().get(0).getStrength());
+                passportCheckDao.getEvidence().getStrengthScore(),
+                verifiableCredential.getEvidence().get(0).getStrengthScore());
         assertEquals(
-                passportCheckDao.getEvidence().getValidity(),
-                verifiableCredential.getEvidence().get(0).getValidity());
+                passportCheckDao.getEvidence().getValidityScore(),
+                verifiableCredential.getEvidence().get(0).getValidityScore());
 
         assertNull(verifiableCredential.getEvidence().get(0).getCi());
 

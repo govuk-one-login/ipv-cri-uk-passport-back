@@ -354,11 +354,11 @@ class AuthorizationCodeHandlerTest {
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
-                VALID_PASSPORT_EVIDENCE.getStrength(),
-                persistedPassportCheckDao.getValue().getEvidence().getStrength());
+                VALID_PASSPORT_EVIDENCE.getStrengthScore(),
+                persistedPassportCheckDao.getValue().getEvidence().getStrengthScore());
         assertEquals(
-                VALID_PASSPORT_EVIDENCE.getValidity(),
-                persistedPassportCheckDao.getValue().getEvidence().getValidity());
+                VALID_PASSPORT_EVIDENCE.getValidityScore(),
+                persistedPassportCheckDao.getValue().getEvidence().getValidityScore());
         assertNull(persistedPassportCheckDao.getValue().getEvidence().getCi());
     }
 
@@ -398,11 +398,11 @@ class AuthorizationCodeHandlerTest {
                 validPassportFormData.get("passportNumber"),
                 persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
         assertEquals(
-                INVALID_PASSPORT_EVIDENCE.getStrength(),
-                persistedPassportCheckDao.getValue().getEvidence().getStrength());
+                INVALID_PASSPORT_EVIDENCE.getStrengthScore(),
+                persistedPassportCheckDao.getValue().getEvidence().getStrengthScore());
         assertEquals(
-                INVALID_PASSPORT_EVIDENCE.getValidity(),
-                persistedPassportCheckDao.getValue().getEvidence().getValidity());
+                INVALID_PASSPORT_EVIDENCE.getValidityScore(),
+                persistedPassportCheckDao.getValue().getEvidence().getValidityScore());
         assertEquals(
                 INVALID_PASSPORT_EVIDENCE.getCi(),
                 persistedPassportCheckDao.getValue().getEvidence().getCi());

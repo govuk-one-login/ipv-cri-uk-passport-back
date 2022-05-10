@@ -76,8 +76,8 @@ class VerifiableCredentialTest {
                 () ->
                         UUID.fromString(
                                 verifiableCredential.getEvidence().get(0).getTxn().toString()));
-        assertEquals(4, verifiableCredential.getEvidence().get(0).getStrength());
-        assertEquals(2, verifiableCredential.getEvidence().get(0).getValidity());
+        assertEquals(4, verifiableCredential.getEvidence().get(0).getStrengthScore());
+        assertEquals(2, verifiableCredential.getEvidence().get(0).getValidityScore());
     }
 
     @Test
@@ -105,8 +105,8 @@ class VerifiableCredentialTest {
                         + "  \"evidence\" : [ {\n"
                         + "    \"type\" : \"IdentityCheck\",\n"
                         + "    \"txn\" : \"b46cbad4-2680-433f-b12c-b09fc27f281f\",\n"
-                        + "    \"strength\" : 4,\n"
-                        + "    \"validity\" : 2\n"
+                        + "    \"strengthScore\" : 4,\n"
+                        + "    \"validityScore\" : 2\n"
                         + "  } ],\n"
                         + "  \"type\" : [ \"VerifiableCredential\", \"IdentityCheckCredential\" ]\n"
                         + "}";
@@ -153,8 +153,8 @@ class VerifiableCredentialTest {
                         + "  \"evidence\" : [ {\n"
                         + "    \"type\" : \"IdentityCheck\",\n"
                         + "    \"txn\" : \"b46cbad4-2680-433f-b12c-b09fc27f281f\",\n"
-                        + "    \"strength\" : 4,\n"
-                        + "    \"validity\" : 2,\n"
+                        + "    \"strengthScore\" : 4,\n"
+                        + "    \"validityScore\" : 2,\n"
                         + "    \"ci\" : [ \"D02\" ]\n"
                         + "  } ],\n"
                         + "  \"type\" : [ \"VerifiableCredential\", \"IdentityCheckCredential\" ]\n"
