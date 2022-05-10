@@ -145,7 +145,7 @@ public class IssueCredentialHandler
                         .claim(
                                 EXPIRATION_TIME,
                                 now.plusSeconds(configurationService.maxJwtTtl()).getEpochSecond())
-                        .claim(VC_CLAIM, objectMapper.writeValueAsString(verifiableCredential))
+                        .claim(VC_CLAIM, verifiableCredential)
                         .build();
 
         return JwtHelper.createSignedJwtFromClaimSet(claimsSet, kmsSigner);

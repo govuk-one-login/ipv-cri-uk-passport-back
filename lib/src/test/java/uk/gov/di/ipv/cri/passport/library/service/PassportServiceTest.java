@@ -118,7 +118,7 @@ class PassportServiceTest {
                         List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
-        Evidence evidence = new Evidence(UUID.randomUUID(), 4, 4, null);
+        Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 4, null);
         PassportCheckDao dcsResponse =
                 new PassportCheckDao("UUID", dcsPayload, evidence, "test-user-id");
         underTest.persistDcsResponse(dcsResponse);

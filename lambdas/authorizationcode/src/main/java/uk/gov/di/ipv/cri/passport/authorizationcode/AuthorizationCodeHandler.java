@@ -175,7 +175,7 @@ public class AuthorizationCodeHandler
 
     private Evidence generateGpg45Score(DcsResponse dcsResponse) {
         return new Evidence(
-                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
                 MAX_PASSPORT_GPG45_STRENGTH_VALUE,
                 calculateValidity(dcsResponse),
                 calculateContraIndicators(dcsResponse));

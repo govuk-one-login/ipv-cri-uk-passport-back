@@ -100,7 +100,7 @@ class IssueCredentialHandlerTest {
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
 
-    private final Evidence evidence = new Evidence(UUID.randomUUID(), 4, 2, null);
+    private final Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
 
     private final String userId = "test-user-id";
 
@@ -167,7 +167,7 @@ class IssueCredentialHandlerTest {
 
         JsonNode vcNode = claimsSet.get("vc");
         VerifiableCredential verifiableCredential =
-                objectMapper.readValue(vcNode.asText(), VerifiableCredential.class);
+                objectMapper.convertValue(vcNode, VerifiableCredential.class);
         List<NameParts> nameParts =
                 verifiableCredential.getCredentialSubject().getName().getNameParts();
 

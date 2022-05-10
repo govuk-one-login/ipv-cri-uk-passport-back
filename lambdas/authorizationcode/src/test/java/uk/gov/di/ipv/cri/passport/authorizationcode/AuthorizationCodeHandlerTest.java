@@ -64,9 +64,9 @@ class AuthorizationCodeHandlerTest {
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
     public static final Evidence VALID_PASSPORT_EVIDENCE =
-            new Evidence(UUID.randomUUID(), 4, 2, null);
+            new Evidence(UUID.randomUUID().toString(), 4, 2, null);
     public static final Evidence INVALID_PASSPORT_EVIDENCE =
-            new Evidence(UUID.randomUUID(), 4, 0, List.of(ContraIndicators.D02));
+            new Evidence(UUID.randomUUID().toString(), 4, 0, List.of(ContraIndicators.D02));
     private static final Map<String, String> VALID_QUERY_PARAMS =
             Map.of(
                     OAuth2RequestParams.REDIRECT_URI, "http://example.com",

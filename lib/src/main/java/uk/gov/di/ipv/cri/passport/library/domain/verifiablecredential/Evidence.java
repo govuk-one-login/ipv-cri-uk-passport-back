@@ -5,7 +5,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.util.List;
-import java.util.UUID;
 
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.EVIDENCE_TYPE_IDENTITY_CHECK;
 
@@ -15,14 +14,14 @@ import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Ver
 public class Evidence {
 
     private String type = EVIDENCE_TYPE_IDENTITY_CHECK;
-    private UUID txn;
+    private String txn;
     private int strength;
     private int validity;
     private List<ContraIndicators> ci;
 
     public Evidence() {}
 
-    public Evidence(UUID txn, int strength, int validity, List<ContraIndicators> ci) {
+    public Evidence(String txn, int strength, int validity, List<ContraIndicators> ci) {
         this.txn = txn;
         this.strength = strength;
         this.validity = validity;
@@ -37,11 +36,11 @@ public class Evidence {
         this.type = type;
     }
 
-    public UUID getTxn() {
+    public String getTxn() {
         return txn;
     }
 
-    public void setTxn(UUID txn) {
+    public void setTxn(String txn) {
         this.txn = txn;
     }
 
