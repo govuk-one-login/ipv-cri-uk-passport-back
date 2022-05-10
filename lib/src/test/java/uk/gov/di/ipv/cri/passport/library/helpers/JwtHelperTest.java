@@ -12,13 +12,13 @@ import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.BirthDate;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.CredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Name;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Passport;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 
 import java.security.KeyFactory;
@@ -42,9 +42,7 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.E
 @ExtendWith(MockitoExtension.class)
 class JwtHelperTest {
     public static final String BIRTH_DATE = "2020-02-03";
-    public static final String PASSPORT_NUMBER = "passportNumber";
-    public static final String VALID_FROM = "2020-03-03";
-    public static final String VALID_UNTIL = "2021-04-04";
+    public static final String PASSPORT_NUMBER = "123456789";
     public static final String GIVEN_NAME = "Paul";
     public static final String EXPIRY_DATE = "2020-01-01";
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -58,20 +56,19 @@ class JwtHelperTest {
         VerifiableCredential verifiableCredential =
                 new VerifiableCredential(
                         new CredentialSubject(
-                                new Name(
-                                        List.of(
-                                                new NameParts(
-                                                        GIVEN_NAME,
-                                                        NamePartType.GIVEN_NAME.getName(),
-                                                        VALID_FROM,
-                                                        VALID_UNTIL))),
-                                PASSPORT_NUMBER,
-                                new BirthDate(BIRTH_DATE),
-                                LocalDate.parse(EXPIRY_DATE).toString(),
-                                UUID.randomUUID().toString(),
-                                UUID.randomUUID().toString(),
-                                new DcsResponse()),
-                        Collections.singletonList(new Evidence()));
+                                List.of(
+                                        new Name(
+                                                List.of(
+                                                        new NameParts(
+                                                                NamePartType.GIVEN_NAME.getName(),
+                                                                GIVEN_NAME)))),
+                                List.of(new BirthDate(BIRTH_DATE)),
+                                List.of(
+                                        new Passport(
+                                                PASSPORT_NUMBER,
+                                                LocalDate.parse(EXPIRY_DATE).toString()))),
+                        Collections.singletonList(
+                                new Evidence(UUID.randomUUID().toString(), 4, 2, null)));
 
         JWTClaimsSet testClaimsSet =
                 new JWTClaimsSet.Builder()
@@ -92,15 +89,16 @@ class JwtHelperTest {
         JsonNode vcNode = claimsSet.get("vc");
         JsonNode credentialSubjectNode = vcNode.get("credentialSubject");
         JsonNode nameNode = credentialSubjectNode.get("name");
+        JsonNode birthDateNode = credentialSubjectNode.get("birthDate");
+        JsonNode passportNode = credentialSubjectNode.get("passport");
 
-        assertEquals(GIVEN_NAME, nameNode.get("nameParts").get(0).get("value").asText());
+        assertEquals(GIVEN_NAME, nameNode.get(0).get("nameParts").get(0).get("value").asText());
         assertEquals(
                 NamePartType.GIVEN_NAME.getName(),
-                nameNode.get("nameParts").get(0).get("type").asText());
-        assertEquals(VALID_FROM, nameNode.get("nameParts").get(0).get("validFrom").asText());
-        assertEquals(VALID_UNTIL, nameNode.get("nameParts").get(0).get("validUntil").asText());
-        assertEquals(BIRTH_DATE, credentialSubjectNode.get("birthDate").get("value").asText());
-        assertEquals(EXPIRY_DATE, credentialSubjectNode.get("expiryDate").asText());
+                nameNode.get(0).get("nameParts").get(0).get("type").asText());
+        assertEquals(BIRTH_DATE, birthDateNode.get(0).get("value").asText());
+        assertEquals(PASSPORT_NUMBER, passportNode.get(0).get("documentNumber").asText());
+        assertEquals(EXPIRY_DATE, passportNode.get(0).get("expiryDate").asText());
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {

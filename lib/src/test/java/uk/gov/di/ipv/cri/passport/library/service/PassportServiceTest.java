@@ -16,8 +16,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
@@ -26,6 +26,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -110,16 +111,16 @@ class PassportServiceTest {
 
     @Test
     void shouldCreateDcsResponseInDataStore() {
-        PassportAttributes passportAttributes =
-                new PassportAttributes(
+        DcsPayload dcsPayload =
+                new DcsPayload(
                         "PASSPORT_NUMBER",
                         "SURNAME",
                         List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
-        Evidence evidence = new Evidence(4, 4);
+        Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 4, null);
         PassportCheckDao dcsResponse =
-                new PassportCheckDao("UUID", passportAttributes, evidence, "test-user-id");
+                new PassportCheckDao("UUID", dcsPayload, evidence, "test-user-id");
         underTest.persistDcsResponse(dcsResponse);
         verify(dataStore).create(dcsResponse);
     }

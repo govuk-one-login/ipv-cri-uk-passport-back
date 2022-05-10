@@ -7,14 +7,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.IDENTITY_CHECK_CREDENTIAL_TYPE;
+import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VERIFIABLE_CREDENTIAL_TYPE;
+
 public class VerifiableCredential {
 
-    @JsonProperty private CredentialSubject credentialSubject;
-    @JsonProperty private List<Evidence> evidence;
+    private final List<String> type =
+            List.of(VERIFIABLE_CREDENTIAL_TYPE, IDENTITY_CHECK_CREDENTIAL_TYPE);
+    private final CredentialSubject credentialSubject;
+    private final List<Evidence> evidence;
 
-    public VerifiableCredential() {}
-
-    public VerifiableCredential(CredentialSubject credentialSubject, List<Evidence> evidence) {
+    public VerifiableCredential(
+            @JsonProperty("credentialSubject") CredentialSubject credentialSubject,
+            @JsonProperty("evidence") List<Evidence> evidence) {
         this.credentialSubject = credentialSubject;
         this.evidence = evidence;
     }
@@ -24,7 +29,7 @@ public class VerifiableCredential {
 
         // Add Forenames to NameParts
         passportCheck
-                .getAttributes()
+                .getDcsPayload()
                 .getForenames()
                 .forEach(
                         givenName ->
@@ -36,24 +41,25 @@ public class VerifiableCredential {
         nameParts.add(
                 new NameParts(
                         NamePartType.FAMILY_NAME.getName(),
-                        passportCheck.getAttributes().getSurname()));
+                        passportCheck.getDcsPayload().getSurname()));
 
         CredentialSubject credentialSubject =
-                new CredentialSubject.Builder()
-                        .setName(new Name(nameParts))
-                        .setPassportNumber(passportCheck.getAttributes().getPassportNumber())
-                        .setBirthDate(
+                new CredentialSubject(
+                        List.of(new Name(nameParts)),
+                        List.of(
                                 new BirthDate(
-                                        passportCheck.getAttributes().getDateOfBirth().toString()))
-                        .setExpiryDate(passportCheck.getAttributes().getExpiryDate().toString())
-                        .setRequestId(passportCheck.getAttributes().getRequestId().toString())
-                        .setCorrelationId(
-                                passportCheck.getAttributes().getCorrelationId().toString())
-                        .setDcsResponse(passportCheck.getAttributes().getDcsResponse())
-                        .build();
+                                        passportCheck.getDcsPayload().getDateOfBirth().toString())),
+                        List.of(
+                                new Passport(
+                                        passportCheck.getDcsPayload().getPassportNumber(),
+                                        passportCheck.getDcsPayload().getExpiryDate().toString())));
 
         return new VerifiableCredential(
-                credentialSubject, Collections.singletonList(passportCheck.getGpg45Score()));
+                credentialSubject, Collections.singletonList(passportCheck.getEvidence()));
+    }
+
+    public List<String> getType() {
+        return type;
     }
 
     public CredentialSubject getCredentialSubject() {

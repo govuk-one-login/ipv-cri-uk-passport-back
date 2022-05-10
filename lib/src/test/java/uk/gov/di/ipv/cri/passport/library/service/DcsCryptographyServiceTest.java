@@ -23,9 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
 import uk.gov.di.ipv.cri.passport.library.exceptions.IpvCryptoException;
 import uk.gov.di.ipv.cri.passport.library.utils.TestUtils;
@@ -89,14 +89,14 @@ class DcsCryptographyServiceTest {
                 .thenReturn(new Thumbprints(SHA_1_THUMBPRINT, SHA_256_THUMBPRINT));
         when(configurationService.getDcsEncryptionCert()).thenReturn(getEncryptionCertificate());
 
-        PassportAttributes passportAttributes =
-                new PassportAttributes(
+        DcsPayload dcsPayload =
+                new DcsPayload(
                         "PASSPORT_NUMBER",
                         "SURNAME",
                         List.of("FORENAMES"),
                         LocalDate.now(),
                         LocalDate.now());
-        JWSObject preparedPayload = underTest.preparePayload(passportAttributes);
+        JWSObject preparedPayload = underTest.preparePayload(dcsPayload);
 
         JWSVerifier verifier =
                 new RSASSAVerifier((RSAPublicKey) getSigningPublicKey(getSigningPrivateKey()));
@@ -110,7 +110,7 @@ class DcsCryptographyServiceTest {
                 JWSObject.parse(encryptedContents.getPayload().toString());
 
         assertTrue(decryptedPassportDetails.verify(verifier));
-        String expected = objectMapper.writeValueAsString(passportAttributes);
+        String expected = objectMapper.writeValueAsString(dcsPayload);
         assertEquals(expected, decryptedPassportDetails.getPayload().toString());
     }
 

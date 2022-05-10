@@ -14,8 +14,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -34,8 +34,8 @@ public class DateStorePassportCheckIT {
             new ObjectMapper().registerModule(new JavaTimeModule());
 
     private static final String RESOURCE_ID_PARAM = "resourceId";
-    private static final String ATTRIBUTES_PARAM = "attributes";
-    private static final String GPG45_SCORE_PARAM = "gpg45Score";
+    private static final String DCS_PAYLOAD_PARAM = "dcsPayload";
+    private static final String EVIDENCE_PARAM = "evidence";
     private static final String USER_ID_PARAM = "userId";
     private static final List<String> createdItemIds = new ArrayList<>();
 
@@ -85,16 +85,14 @@ public class DateStorePassportCheckIT {
         assertEquals(passportCheckDao.getResourceId(), savedPassportCheck.get(RESOURCE_ID_PARAM));
 
         String attributesJson =
-                OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(ATTRIBUTES_PARAM));
-        PassportAttributes savedPassportAttributes =
-                OBJECT_MAPPER.readValue(attributesJson, PassportAttributes.class);
-        assertEquals(
-                passportCheckDao.getAttributes().toString(), savedPassportAttributes.toString());
+                OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(DCS_PAYLOAD_PARAM));
+        DcsPayload savedDcsPayload = OBJECT_MAPPER.readValue(attributesJson, DcsPayload.class);
+        assertEquals(passportCheckDao.getDcsPayload().toString(), savedDcsPayload.toString());
 
         String gpg45ScoreJson =
-                OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(GPG45_SCORE_PARAM));
+                OBJECT_MAPPER.writeValueAsString(savedPassportCheck.get(EVIDENCE_PARAM));
         Evidence savedEvidence = OBJECT_MAPPER.readValue(gpg45ScoreJson, Evidence.class);
-        assertEquals(passportCheckDao.getGpg45Score().toString(), savedEvidence.toString());
+        assertEquals(passportCheckDao.getEvidence().toString(), savedEvidence.toString());
 
         String userId = savedPassportCheck.getString(USER_ID_PARAM);
         assertEquals(passportCheckDao.getUserId(), userId);
@@ -110,9 +108,8 @@ public class DateStorePassportCheckIT {
 
         assertEquals(passportCheckDao.getResourceId(), result.getResourceId());
         assertEquals(
-                passportCheckDao.getAttributes().toString(), result.getAttributes().toString());
-        assertEquals(
-                passportCheckDao.getGpg45Score().toString(), result.getGpg45Score().toString());
+                passportCheckDao.getDcsPayload().toString(), result.getDcsPayload().toString());
+        assertEquals(passportCheckDao.getEvidence().toString(), result.getEvidence().toString());
         assertEquals(passportCheckDao.getUserId(), result.getUserId());
     }
 
@@ -125,17 +122,16 @@ public class DateStorePassportCheckIT {
                         false,
                         true,
                         null);
-        PassportAttributes passportAttributes =
-                new PassportAttributes(
+        DcsPayload dcsPayload =
+                new DcsPayload(
                         "passport-number",
                         "surname",
                         List.of("family-name"),
                         LocalDate.of(1900, 1, 1),
                         LocalDate.of(2025, 2, 2));
-        passportAttributes.setDcsResponse(dcsResponse);
-        Evidence evidence = new Evidence(5, 5);
+        Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
         createdItemIds.add(resourceId);
 
-        return new PassportCheckDao(resourceId, passportAttributes, evidence, "test-user-id");
+        return new PassportCheckDao(resourceId, dcsPayload, evidence, "test-user-id");
     }
 }

@@ -19,9 +19,9 @@ import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
-import uk.gov.di.ipv.cri.passport.library.domain.PassportAttributes;
 import uk.gov.di.ipv.cri.passport.library.domain.ProtectedHeader;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
 import uk.gov.di.ipv.cri.passport.library.exceptions.IpvCryptoException;
@@ -44,7 +44,7 @@ public class DcsCryptographyService {
         this.configurationService = configurationService;
     }
 
-    public JWSObject preparePayload(PassportAttributes passportDetails)
+    public JWSObject preparePayload(DcsPayload passportDetails)
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     JOSEException, JsonProcessingException {
         JWSObject signedPassportDetails =
