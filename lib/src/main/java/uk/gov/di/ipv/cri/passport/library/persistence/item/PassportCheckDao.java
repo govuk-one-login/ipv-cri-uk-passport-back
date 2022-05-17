@@ -13,15 +13,21 @@ public class PassportCheckDao {
     private DcsPayload dcsPayload;
     private Evidence evidence;
     private String userId;
+    private String clientId;
 
     public PassportCheckDao() {}
 
     public PassportCheckDao(
-            String resourceId, DcsPayload dcsPayload, Evidence evidence, String userId) {
+            String resourceId,
+            DcsPayload dcsPayload,
+            Evidence evidence,
+            String userId,
+            String clientId) {
         this.resourceId = resourceId;
         this.dcsPayload = dcsPayload;
         this.evidence = evidence;
         this.userId = userId;
+        this.clientId = clientId;
     }
 
     @DynamoDbPartitionKey
@@ -55,5 +61,13 @@ public class PassportCheckDao {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 }

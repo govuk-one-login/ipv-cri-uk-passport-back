@@ -103,10 +103,12 @@ class IssueCredentialHandlerTest {
     private final Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
 
     private final String userId = "test-user-id";
+    private final String clientId = "test-client-id";
 
     @BeforeEach
     void setUp() throws Exception {
-        passportCheckDao = new PassportCheckDao(TEST_RESOURCE_ID, dcsPayload, evidence, userId);
+        passportCheckDao =
+                new PassportCheckDao(TEST_RESOURCE_ID, dcsPayload, evidence, userId, clientId);
         responseBody = new HashMap<>();
         ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
         issueCredentialHandler =
@@ -155,6 +157,8 @@ class IssueCredentialHandlerTest {
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
+        when(mockConfigurationService.getClientIssuer(clientId))
+                .thenReturn("https://example.com/issuer");
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -163,7 +167,8 @@ class IssueCredentialHandlerTest {
         JsonNode claimsSet = objectMapper.readTree(signedJWT.getJWTClaimsSet().toString());
 
         assertEquals(200, response.getStatusCode());
-        assertEquals(5, claimsSet.size());
+        assertEquals(6, claimsSet.size());
+        assertEquals("https://example.com/issuer", claimsSet.get("aud").asText());
 
         JsonNode vcNode = claimsSet.get("vc");
         VerifiableCredential verifiableCredential =

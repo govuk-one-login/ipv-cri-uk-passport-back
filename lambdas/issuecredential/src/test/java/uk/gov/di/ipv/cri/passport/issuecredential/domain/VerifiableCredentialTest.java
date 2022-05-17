@@ -34,7 +34,8 @@ class VerifiableCredentialTest {
 
         Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao(RESOURCE_ID, dcsPayload, evidence, "test-user-id");
+                new PassportCheckDao(
+                        RESOURCE_ID, dcsPayload, evidence, "test-user-id", "test-client-id");
 
         VerifiableCredential verifiableCredential =
                 VerifiableCredential.fromPassportCheckDao(passportCheckDao);
@@ -116,7 +117,8 @@ class VerifiableCredentialTest {
                         PASSPORT_NUMBER, FAMILY_NAME, GIVEN_NAMES, DATE_OF_BIRTH, EXPIRY_DATE);
         Evidence evidence = new Evidence("b46cbad4-2680-433f-b12c-b09fc27f281f", 4, 2, null);
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao(RESOURCE_ID, dcsPayload, evidence, "test-user-id");
+                new PassportCheckDao(
+                        RESOURCE_ID, dcsPayload, evidence, "test-user-id", "test-client-id");
 
         VerifiableCredential verifiableCredential =
                 VerifiableCredential.fromPassportCheckDao(passportCheckDao);
@@ -170,7 +172,8 @@ class VerifiableCredentialTest {
                         2,
                         List.of(ContraIndicators.D02));
         PassportCheckDao passportCheckDao =
-                new PassportCheckDao(RESOURCE_ID, dcsPayload, evidence, "test-user-id");
+                new PassportCheckDao(
+                        RESOURCE_ID, dcsPayload, evidence, "test-user-id", "test-client-id");
 
         VerifiableCredential verifiableCredential =
                 VerifiableCredential.fromPassportCheckDao(passportCheckDao);

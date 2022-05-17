@@ -31,11 +31,8 @@ import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
 import java.time.Instant;
+import java.util.Date;
 
-import static com.nimbusds.jwt.JWTClaimNames.EXPIRATION_TIME;
-import static com.nimbusds.jwt.JWTClaimNames.ISSUER;
-import static com.nimbusds.jwt.JWTClaimNames.NOT_BEFORE;
-import static com.nimbusds.jwt.JWTClaimNames.SUBJECT;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VC_CLAIM;
 
 public class IssueCredentialHandler
@@ -104,8 +101,7 @@ public class IssueCredentialHandler
                     VerifiableCredential.fromPassportCheckDao(passportCheck);
 
             SignedJWT signedJWT =
-                    generateAndSignVerifiableCredentialJwt(
-                            verifiableCredential, passportCheck.getUserId());
+                    generateAndSignVerifiableCredentialJwt(verifiableCredential, passportCheck);
 
             auditService.sendAuditEvent(AuditEventTypes.PASSPORT_CREDENTIAL_ISSUED);
 
@@ -131,16 +127,19 @@ public class IssueCredentialHandler
     }
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(
-            VerifiableCredential verifiableCredential, String subject) throws JOSEException {
+            VerifiableCredential verifiableCredential, PassportCheckDao passportCheck)
+            throws JOSEException {
         Instant now = Instant.now();
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()
-                        .claim(SUBJECT, subject)
-                        .claim(ISSUER, configurationService.getVerifiableCredentialIssuer())
-                        .claim(NOT_BEFORE, now.getEpochSecond())
-                        .claim(
-                                EXPIRATION_TIME,
-                                now.plusSeconds(configurationService.maxJwtTtl()).getEpochSecond())
+                        .subject(passportCheck.getUserId())
+                        .issuer(configurationService.getVerifiableCredentialIssuer())
+                        .audience(configurationService.getClientIssuer(passportCheck.getClientId()))
+                        .notBeforeTime(new Date(now.toEpochMilli()))
+                        .expirationTime(
+                                new Date(
+                                        now.plusSeconds(configurationService.maxJwtTtl())
+                                                .toEpochMilli()))
                         .claim(VC_CLAIM, verifiableCredential)
                         .build();
 
