@@ -168,7 +168,7 @@ class AuthorizationCodeHandlerTest {
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
         params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
+        params.put(OAuth2RequestParams.CLIENT_ID, "test-client-id");
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
@@ -185,6 +185,7 @@ class AuthorizationCodeHandlerTest {
         ArgumentCaptor<PassportCheckDao> persistedDcsResponseItem =
                 ArgumentCaptor.forClass(PassportCheckDao.class);
         verify(passportService).persistDcsResponse(persistedDcsResponseItem.capture());
+        assertEquals("test-client-id", persistedDcsResponseItem.getValue().getClientId());
 
         verify(authorizationCodeService)
                 .persistAuthorizationCode(

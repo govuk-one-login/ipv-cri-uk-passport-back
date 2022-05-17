@@ -125,7 +125,8 @@ public class AuthorizationCodeHandler
                             UUID.randomUUID().toString(),
                             dcsPayload,
                             generateGpg45Score(unwrappedDcsResponse),
-                            userId);
+                            userId,
+                            authenticationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();

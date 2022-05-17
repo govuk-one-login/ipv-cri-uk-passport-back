@@ -111,6 +111,7 @@ public class DateStorePassportCheckIT {
                 passportCheckDao.getDcsPayload().toString(), result.getDcsPayload().toString());
         assertEquals(passportCheckDao.getEvidence().toString(), result.getEvidence().toString());
         assertEquals(passportCheckDao.getUserId(), result.getUserId());
+        assertEquals(passportCheckDao.getClientId(), result.getClientId());
     }
 
     private PassportCheckDao createPassportCheckDao() {
@@ -132,6 +133,7 @@ public class DateStorePassportCheckIT {
         Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
         createdItemIds.add(resourceId);
 
-        return new PassportCheckDao(resourceId, dcsPayload, evidence, "test-user-id");
+        return new PassportCheckDao(
+                resourceId, dcsPayload, evidence, "test-user-id", "test-client-id");
     }
 }
