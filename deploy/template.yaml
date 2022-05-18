@@ -59,6 +59,40 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportAPILogGroup
 
+  IPVCriUKInternalPassportAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: IPV CRI UK Internal Passport API Gateway
+      StageName: !Sub ${Environment}
+      AccessLogSetting:
+        DestinationArn: !GetAtt IPVCriUKInternalPassportAPILogGroup.Arn
+        Format: >-
+          {
+          "requestId":"$context.requestId",
+          "ip":"$context.identity.sourceIp",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "path":"$context.path",
+          "routeKey":"$context.routeKey",
+          "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLatency":"$context.responseLatency",
+          "responseLength":"$context.responseLength"
+          }
+
+  IPVCriUKInternalPassportAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
+      RetentionInDays: 14
+
+  IPVCriUKInternalPassportAPILogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportAPILogGroup
+
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -245,10 +279,10 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
-        IPVCriUKPassportAPI:
+        IPVCriUKInternalPassportAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref IPVCriUKPassportAPI
+            RestApiId: !Ref IPVCriUKInternalPassportAPI
             Path: /authorization
             Method: POST
       AutoPublishAlias: live
@@ -312,10 +346,10 @@ Resources:
               Resource:
                 - !ImportValue PassportCriEncryptionKeyArn
       Events:
-        IPVCriUKPassportAPI:
+        IPVCriUKInternalPassportAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref IPVCriUKPassportAPI
+            RestApiId: !Ref IPVCriUKInternalPassportAPI
             Path: /jwt-authorization-request
             Method: POST
       AutoPublishAlias: live
@@ -380,3 +414,8 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
     Value: !Ref IPVCriUKPassportAPI
+  IPVCriUkInternalPassportAPIGatewayID:
+    Description: CRI UK Passport Internal API Gateway ID
+    Export:
+      Name: !Sub "${AWS::StackName}-IPVCriUkInternalPassportAPIGatewayID"
+    Value: !Ref IPVCriUKInternalPassportAPI
