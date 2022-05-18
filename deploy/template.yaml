@@ -83,7 +83,7 @@ Resources:
   IPVCriUKInternalPassportAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-Internal-API-GW-AccessLogs
       RetentionInDays: 14
 
   IPVCriUKInternalPassportAPILogGroupSubscriptionFilter:
@@ -91,7 +91,7 @@ Resources:
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportAPILogGroup
+      LogGroupName: !Ref IPVCriUKInternalPassportAPILogGroup
 
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
