@@ -279,6 +279,12 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /authorization
+            Method: POST
         IPVCriUKInternalPassportAPI:
           Type: Api
           Properties:
@@ -346,6 +352,12 @@ Resources:
               Resource:
                 - !ImportValue PassportCriEncryptionKeyArn
       Events:
+        IPVCriUKPassportAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /jwt-authorization-request
+            Method: POST
         IPVCriUKInternalPassportAPI:
           Type: Api
           Properties:
