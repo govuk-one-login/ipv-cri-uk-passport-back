@@ -59,13 +59,13 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportAPILogGroup
 
-  IPVCriUKInternalPassportAPI:
+  IPVCriUKPassportInternalAPI:
     Type: AWS::Serverless::Api
     Properties:
       Name: IPV CRI UK Internal Passport API Gateway
       StageName: !Sub ${Environment}
       AccessLogSetting:
-        DestinationArn: !GetAtt IPVCriUKInternalPassportAPILogGroup.Arn
+        DestinationArn: !GetAtt IPVCriUKPassportInternalAPILogGroup.Arn
         Format: >-
           {
           "requestId":"$context.requestId",
@@ -80,18 +80,18 @@ Resources:
           "responseLength":"$context.responseLength"
           }
 
-  IPVCriUKInternalPassportAPILogGroup:
+  IPVCriUKPassportInternalAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-Internal-API-GW-AccessLogs
       RetentionInDays: 14
 
-  IPVCriUKInternalPassportAPILogGroupSubscriptionFilter:
+  IPVCriUKPassportInternalAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKInternalPassportAPILogGroup
+      LogGroupName: !Ref IPVCriUKPassportInternalAPILogGroup
 
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
@@ -285,10 +285,10 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportAPI
             Path: /authorization
             Method: POST
-        IPVCriUKInternalPassportAPI:
+        IPVCriUKPassportInternalAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref IPVCriUKInternalPassportAPI
+            RestApiId: !Ref IPVCriUKPassportInternalAPI
             Path: /authorization
             Method: POST
       AutoPublishAlias: live
@@ -358,10 +358,10 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportAPI
             Path: /jwt-authorization-request
             Method: POST
-        IPVCriUKInternalPassportAPI:
+        IPVCriUKPassportInternalAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref IPVCriUKInternalPassportAPI
+            RestApiId: !Ref IPVCriUKPassportInternalAPI
             Path: /jwt-authorization-request
             Method: POST
       AutoPublishAlias: live
@@ -426,6 +426,6 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
     Value: !Ref IPVCriUKPassportAPI
-  IPVCriUkInternalPassportAPIGatewayID:
+  IPVCriUkPassportInternalAPIGatewayID:
     Description: CRI UK Passport Internal API Gateway ID
-    Value: !Ref IPVCriUKInternalPassportAPI
+    Value: !Ref IPVCriUKPassportInternalAPI
