@@ -9,15 +9,19 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.shaded.json.JSONObject;
+import com.nimbusds.jose.util.Base64URL;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -47,5 +51,26 @@ class KmsSignerTest {
         assertEquals(JWSObject.State.SIGNED, jwsObject.getState());
         assertEquals(jwsHeader, jwsObject.getHeader());
         assertEquals(jsonPayload.toJSONString(), jwsObject.getPayload().toString());
+    }
+
+    @Test
+    void base64UrlSignatureShouldNotIncludePadding() throws Exception {
+        KmsSigner kmsSigner = new KmsSigner(KEY_ID, kmsClient);
+        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
+
+        byte[] bytesThanWillNormallyHaveB64Padding = new byte[10];
+
+        when(kmsClient.sign(any(SignRequest.class))).thenReturn(signResult);
+        when(signResult.getSignature())
+                .thenReturn(ByteBuffer.wrap(bytesThanWillNormallyHaveB64Padding));
+
+        Base64URL signature = kmsSigner.sign(jwsHeader, new byte[0]);
+        String signatureString = signature.toString();
+
+        assertTrue(
+                Base64.getUrlEncoder()
+                        .encodeToString(bytesThanWillNormallyHaveB64Padding)
+                        .endsWith("=="));
+        assertFalse(signatureString.endsWith("="));
     }
 }
