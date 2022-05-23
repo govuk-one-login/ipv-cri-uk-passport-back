@@ -13,19 +13,19 @@ repositories {
 }
 
 dependencies {
-	implementation "com.amazonaws:aws-lambda-java-core:1.2.1",
-			"com.amazonaws:aws-lambda-java-events:3.11.0",
-			"com.nimbusds:oauth2-oidc-sdk:9.3.1",
-			"com.nimbusds:nimbus-jose-jwt:9.15.2",
-			"org.slf4j:slf4j-simple:1.7.32",
+	implementation "com.amazonaws:aws-lambda-java-core:$rootProject.ext.dependencyVersions.awsLambdaJavaCore",
+			"com.amazonaws:aws-lambda-java-events:$rootProject.ext.dependencyVersions.awsLambdaJavaEvents",
+			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
+			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
+			"org.slf4j:slf4j-simple:$rootProject.ext.dependencyVersions.slf4j",
 			project(":lib")
 
-	testImplementation "org.junit.jupiter:junit-jupiter:5.8.2",
-			"org.mockito:mockito-junit-jupiter:4.1.0",
-			"com.fasterxml.jackson.core:jackson-core:2.13.0",
-			"com.fasterxml.jackson.core:jackson-databind:2.13.0",
+	testImplementation "com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
+			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",
+			"org.junit.jupiter:junit-jupiter:5.8.2",
 			"org.mockito:mockito-core:4.1.0",
 			"org.mockito:mockito-inline:2.13.0",
+			"org.mockito:mockito-junit-jupiter:4.1.0",
 			project(":lib").sourceSets.test.output
 }
 
