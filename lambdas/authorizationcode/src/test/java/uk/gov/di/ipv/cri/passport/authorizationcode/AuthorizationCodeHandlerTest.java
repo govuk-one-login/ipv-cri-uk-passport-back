@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -196,7 +197,7 @@ class AuthorizationCodeHandlerTest {
     }
 
     @Test
-    void shouldReturn400IfRequestFailsValidation() throws Exception {
+    void shouldReturn400OAuthErrorIfRequestFailsValidation() throws Exception {
         when(authRequestValidator.validateRequest(anyMap(), any()))
                 .thenReturn(Optional.of(ErrorResponse.MISSING_QUERY_PARAMETERS));
 
@@ -211,16 +212,17 @@ class AuthorizationCodeHandlerTest {
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
-        assertEquals(ErrorResponse.MISSING_QUERY_PARAMETERS.getCode(), responseBody.get("code"));
+        assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
         assertEquals(
-                ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(), responseBody.get("message"));
+                ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(),
+                responseBody.get("error_description"));
 
         verify(authorizationCodeService, never())
                 .persistAuthorizationCode(anyString(), anyString(), anyString());
     }
 
     @Test
-    void shouldReturn400IfDataIsMissing() throws JsonProcessingException {
+    void shouldReturn400OAuthErrorIfDataIsMissing() throws JsonProcessingException {
         when(authRequestValidator.validateRequest(anyMap(), anyString()))
                 .thenReturn(Optional.empty());
         var formFields = validPassportFormData.keySet();
@@ -241,17 +243,15 @@ class AuthorizationCodeHandlerTest {
             var responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
             assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-            assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA.getCode(),
-                    responseBody.get("code"));
+            assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
             assertEquals(
                     ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA.getMessage(),
-                    responseBody.get("message"));
+                    responseBody.get("error_description"));
         }
     }
 
     @Test
-    void shouldReturn400IfDateStringsAreWrongFormat() throws JsonProcessingException {
+    void shouldReturn400OAuthErrorIfDateStringsAreWrongFormat() throws JsonProcessingException {
         when(authRequestValidator.validateRequest(anyMap(), anyString()))
                 .thenReturn(Optional.empty());
 
@@ -272,16 +272,14 @@ class AuthorizationCodeHandlerTest {
         var responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(
-                ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA.getCode(),
-                responseBody.get("code"));
+        assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
         assertEquals(
                 ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA.getMessage(),
-                responseBody.get("message"));
+                responseBody.get("error_description"));
     }
 
     @Test
-    void shouldReturn500OnDcsErrorResponse() throws Exception {
+    void shouldReturn500OAuthErrorOnDcsErrorResponse() throws Exception {
         DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
                 new DcsSignedEncryptedResponse("TEST_PAYLOAD");
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
@@ -315,8 +313,10 @@ class AuthorizationCodeHandlerTest {
         var responseBody = objectMapper.readValue(response.getBody(), Map.class);
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals(ErrorResponse.DCS_RETURNED_AN_ERROR.getCode(), responseBody.get("code"));
-        assertEquals(ErrorResponse.DCS_RETURNED_AN_ERROR.getMessage(), responseBody.get("message"));
+        assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
+        assertEquals(
+                ErrorResponse.DCS_RETURNED_AN_ERROR.getMessage(),
+                responseBody.get("error_description"));
     }
 
     @Test
@@ -459,7 +459,7 @@ class AuthorizationCodeHandlerTest {
     }
 
     @Test
-    void shouldReturn400IfCanNotParseAuthRequestFromQueryStringParams()
+    void shouldReturn400OAuthErrorIfCanNotParseAuthRequestFromQueryStringParams()
             throws JsonProcessingException {
         when(authRequestValidator.validateRequest(anyMap(), anyString()))
                 .thenReturn(Optional.empty());
@@ -483,12 +483,10 @@ class AuthorizationCodeHandlerTest {
             Map<String, Object> responseBody =
                     objectMapper.readValue(response.getBody(), new TypeReference<>() {});
             assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-            assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getCode(),
-                    responseBody.get("code"));
+            assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
             assertEquals(
                     ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                    responseBody.get("message"));
+                    responseBody.get("error_description"));
             verify(authorizationCodeService, never())
                     .persistAuthorizationCode(anyString(), anyString(), anyString());
         }

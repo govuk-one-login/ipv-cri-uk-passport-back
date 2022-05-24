@@ -10,6 +10,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import com.nimbusds.oauth2.sdk.ErrorObject;
+import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
@@ -104,7 +106,11 @@ public class AuthorizationCodeHandler
                     authRequestValidator.validateRequest(queryStringParameters, userId);
             if (validationResult.isPresent()) {
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
-                        HttpStatus.SC_BAD_REQUEST, validationResult.get());
+                        HttpStatus.SC_BAD_REQUEST,
+                        new ErrorObject(
+                                        OAuth2Error.SERVER_ERROR_CODE,
+                                        validationResult.get().getMessage())
+                                .toJSONObject());
             }
 
             AuthenticationRequest authenticationRequest =
@@ -139,17 +145,27 @@ public class AuthorizationCodeHandler
                     HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));
         } catch (HttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    e.getStatusCode(), e.getErrorBody());
+                    e.getStatusCode(),
+                    new ErrorObject(OAuth2Error.SERVER_ERROR_CODE, e.getErrorReason())
+                            .toJSONObject());
         } catch (ParseException e) {
             LOGGER.error("Authentication request could not be parsed", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS);
+                    new ErrorObject(
+                                    OAuth2Error.SERVER_ERROR_CODE,
+                                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS
+                                            .getMessage())
+                            .toJSONObject());
         } catch (SqsException e) {
             LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
-                    ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
+                    new ErrorObject(
+                                    OAuth2Error.SERVER_ERROR_CODE,
+                                    ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE
+                                            .getMessage())
+                            .toJSONObject());
         }
     }
 
