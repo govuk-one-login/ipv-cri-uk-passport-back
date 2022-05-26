@@ -30,6 +30,8 @@ Resources:
     Properties:
       Name: IPV CRI UK Passport API Gateway
       StageName: !Sub ${Environment}
+      Auth:
+        ApiKeyRequired: true
       AccessLogSetting:
         DestinationArn: !GetAtt IPVCriUKPassportAPILogGroup.Arn
         Format: >-
