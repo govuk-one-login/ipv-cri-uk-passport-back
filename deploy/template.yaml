@@ -396,6 +396,26 @@ Resources:
         - AttributeName: "authCode"
           KeyType: "HASH"
 
+  IpvCoreBackApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Description: Api key for core back to authenticate against passport external Api
+      Enabled: true
+
+  IpvCriUkPassportBackApiUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId: !Ref IPVCriUKPassportAPI
+          Stage: !Ref Environment
+
+  IpvCriUkPassportBackLinkUsagePlanCoreApiKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref IpvCoreBackApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref IpvCriUkPassportBackApiUsagePlan
+              
   CRIPassportAccessTokensTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -417,3 +437,7 @@ Outputs:
   IPVCriUkPassportInternalAPIGatewayID:
     Description: CRI UK Passport Internal API Gateway ID
     Value: !Ref IPVCriUKPassportInternalAPI
+  IpvCoreBackApiKeyId:
+    Description: >
+      The key id of the api key used by IPV Core to access passport back external api gateway
+    Value: !Ref IpvCoreBackApiKey
