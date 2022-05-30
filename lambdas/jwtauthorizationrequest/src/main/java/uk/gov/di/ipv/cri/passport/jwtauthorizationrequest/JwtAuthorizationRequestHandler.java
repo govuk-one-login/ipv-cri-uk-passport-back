@@ -14,7 +14,9 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.library.error.RedirectErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -80,6 +82,13 @@ public class JwtAuthorizationRequestHandler
             JarResponse response = generateJarResponse(claimsSet);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, response);
+        } catch (RecoverableJarValidationException e) {
+            LOGGER.error("JAR validation failed: {}", e.getErrorObject().getDescription());
+            RedirectErrorResponse errorResponse =
+                    new RedirectErrorResponse(
+                            e.getRedirectUri(), e.getErrorObject().toJSONObject());
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    e.getErrorObject().getHTTPStatusCode(), errorResponse.toJSON());
         } catch (JarValidationException e) {
             LOGGER.error("JAR validation failed: {}", e.getErrorObject().getDescription());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
