@@ -54,13 +54,13 @@ public class JarValidator {
 
     public JWTClaimsSet validateRequestJwt(SignedJWT signedJWT, String clientId)
             throws JarValidationException, ParseException {
-        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-        URI redirectUri = validateRedirectUri(claimsSet, clientId);
+        validateClientId(clientId);
         validateJWTHeader(signedJWT);
         validateSignature(signedJWT, clientId);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+        URI redirectUri = validateRedirectUri(claimsSet, clientId);
 
         try {
-            validateClientId(clientId);
             JWTClaimsSet validatedClaimSet = getValidatedClaimSet(signedJWT, clientId);
             return validatedClaimSet;
         } catch (JarValidationException e) {

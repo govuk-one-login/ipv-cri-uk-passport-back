@@ -127,13 +127,9 @@ class JarValidatorTest {
     }
 
     @Test
-    void shouldFailValidationChecksOnInvalidClientIdWithRecoverableError()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
-                    JarValidationException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
-                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getClientRedirectUrls(anyString()))
-                .thenReturn(Collections.singletonList(redirectUriClaim));
+    void shouldFailValidationChecksOnInvalidClientId()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
+                    ParseException {
         when(configurationService.getClientAuthenticationMethod(anyString()))
                 .thenThrow(ParameterNotFoundException.builder().build());
 
@@ -143,13 +139,14 @@ class JarValidatorTest {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
         } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
+        } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_CLIENT.getHTTPStatusCode(),
                     errorObject.getHTTPStatusCode());
             assertEquals(OAuth2Error.INVALID_CLIENT.getCode(), errorObject.getCode());
             assertEquals("Unknown client id was provided", errorObject.getDescription());
-            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
@@ -157,9 +154,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnValidJWTalgHeader()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
-                .thenReturn(Collections.singletonList(redirectUriClaim));
-
         RSASSASigner signer = new RSASSASigner(getRsaPrivateKey());
 
         SignedJWT signedJWT =
@@ -189,8 +183,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidJWTSignature()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
-                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_2));
 
@@ -215,8 +207,6 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidPublicJwk()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
-                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenThrow(new ParseException("test-error", 0));
 
@@ -584,6 +574,8 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidRedirectUriClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
+        when(configurationService.getClientSigningPublicJwk(anyString()))
+                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList("test-redirect-uri"));
 
@@ -609,6 +601,9 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnParseFailureOfRedirectUri()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
+        when(configurationService.getClientSigningPublicJwk(anyString()))
+                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+
         Map<String, Object> claims =
                 Map.of(
                         JWTClaimNames.EXPIRATION_TIME,
