@@ -246,7 +246,7 @@ class JwtAuthorizationRequestHandlerTest {
 
         assertEquals(302, response.getStatusCode());
         assertEquals(
-                "\"{\\\"redirect_uri\\\":\\\"http://redirect-url.com\\\",\\\"oauth_error\\\":{\\\"error_description\\\":\\\"Invalid request JWT\\\",\\\"error\\\":\\\"invalid_request_object\\\"}}\"",
+                "{\"redirect_uri\":\"http://redirect-url.com\",\"oauth_error\":{\"error_description\":\"Invalid request JWT\",\"error\":\"invalid_request_object\"}}",
                 response.getBody());
     }
 

@@ -1,8 +1,6 @@
 package uk.gov.di.ipv.cri.passport.library.error;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONObject;
 
 public class RedirectErrorResponse {
@@ -22,13 +20,5 @@ public class RedirectErrorResponse {
     @JsonProperty("oauth_error")
     public JSONObject getErrorObject() {
         return errorObject;
-    }
-
-    public String toJSON() {
-        try {
-            return new ObjectMapper().writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
