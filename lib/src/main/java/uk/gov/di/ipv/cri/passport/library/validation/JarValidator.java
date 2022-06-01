@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
@@ -52,14 +53,19 @@ public class JarValidator {
     }
 
     public JWTClaimsSet validateRequestJwt(SignedJWT signedJWT, String clientId)
-            throws JarValidationException {
+            throws JarValidationException, ParseException {
         validateClientId(clientId);
         validateJWTHeader(signedJWT);
         validateSignature(signedJWT, clientId);
-        JWTClaimsSet claimsSet = getValidatedClaimSet(signedJWT, clientId);
-        validateRedirectUri(claimsSet, clientId);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+        URI redirectUri = validateRedirectUri(claimsSet, clientId);
 
-        return claimsSet;
+        try {
+            JWTClaimsSet validatedClaimSet = getValidatedClaimSet(signedJWT, clientId);
+            return validatedClaimSet;
+        } catch (JarValidationException e) {
+            throw new RecoverableJarValidationException(e.getErrorObject(), redirectUri.toString());
+        }
     }
 
     private void validateClientId(String clientId) throws JarValidationException {
@@ -159,7 +165,7 @@ public class JarValidator {
         }
     }
 
-    private void validateRedirectUri(JWTClaimsSet claimsSet, String clientId)
+    private URI validateRedirectUri(JWTClaimsSet claimsSet, String clientId)
             throws JarValidationException {
         try {
             URI redirectUri = claimsSet.getURIClaim(REDIRECT_URI_CLAIM);
@@ -174,6 +180,8 @@ public class JarValidator {
                         OAuth2Error.INVALID_GRANT.setDescription(
                                 "Invalid redirct_uri claim provided for configured client"));
             }
+
+            return redirectUri;
         } catch (ParseException e) {
             LOGGER.error(
                     "Failed to parse JWT claim set in order to access to the redirect_uri claim");

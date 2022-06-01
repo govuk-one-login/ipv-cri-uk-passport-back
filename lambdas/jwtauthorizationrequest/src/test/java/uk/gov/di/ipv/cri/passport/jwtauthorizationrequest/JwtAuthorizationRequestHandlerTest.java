@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
@@ -226,6 +227,27 @@ class JwtAuthorizationRequestHandlerTest {
         assertEquals(
                 OAuth2Error.INVALID_REQUEST_OBJECT.getDescription(),
                 errorResponse.getDescription());
+    }
+
+    @Test
+    void shouldReturn302WithRedirectUriWhenValidationFailsButIsRecoverable() throws Exception {
+        when(jarValidator.validateRequestJwt(any(), anyString()))
+                .thenThrow(
+                        new RecoverableJarValidationException(
+                                OAuth2Error.INVALID_REQUEST_OBJECT, "http://redirect-url.com"));
+
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> map = new HashMap<>();
+        map.put("client_id", "TEST");
+        event.setHeaders(map);
+        event.setBody(signedJWT.serialize());
+
+        var response = underTest.handleRequest(event, context);
+
+        assertEquals(302, response.getStatusCode());
+        assertEquals(
+                "{\"redirect_uri\":\"http://redirect-url.com\",\"oauth_error\":{\"error_description\":\"Invalid request JWT\",\"error\":\"invalid_request_object\"}}",
+                response.getBody());
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {

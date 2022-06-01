@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 
@@ -91,7 +92,7 @@ class JarValidatorTest {
     }
 
     @Test
-    void shouldThrowExceptionIfDecrptionFails() throws ParseException {
+    void shouldThrowExceptionIfDecryptionFails() throws ParseException {
         String jweObjectString =
                 "eyJ0eXAiOiJKV0UiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.ZpVOfw61XyBBgsR4CRNRMn2oj_S65pMJO-iaEHpR6QrPcIuD4ysZexolo28vsZyZNR-kfVdw_5CjQanwMS-yw3U3nSUvXUrTs3uco-FSXulIeDYTRbBtQuDyvBMVoos6DyIfC6eBj30GMe5g6DF5KJ1Q0eXQdF0kyM9olg76uYAUqZ5rW52rC_SOHb5_tMj7UbO2IViIStdzLgVfgnJr7Ms4bvG0C8-mk4Otd7m2Km2-DNyGaNuFQSKclAGu7Zgg-qDyhH4V1Z6WUHt79TuG4TxseUr-6oaFFVD23JYSBy7Aypt0321ycq13qcN-PBiOWtumeW5-_CQuHLaPuOc4-w.RO9IB2KcS2hD3dWlKXSreQ.93Ntu3e0vNSYv4hoMwZ3Aw.YRvWo4bwsP_l7dL_29imGg";
         try {
@@ -137,6 +138,8 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
+        } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
         } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
@@ -149,8 +152,8 @@ class JarValidatorTest {
 
     @Test
     void shouldFailValidationChecksOnValidJWTalgHeader()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
-
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
+                    ParseException {
         RSASSASigner signer = new RSASSASigner(getRsaPrivateKey());
 
         SignedJWT signedJWT =
@@ -162,6 +165,8 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
+        } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
         } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
@@ -186,6 +191,8 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
+        } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
         } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
@@ -208,6 +215,8 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
+        } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
         } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
@@ -221,9 +230,11 @@ class JarValidatorTest {
     }
 
     @Test
-    void shouldFailValidationChecksOnMissingRequiredClaim()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnMissingRequiredClaimWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -232,7 +243,10 @@ class JarValidatorTest {
         ECDSASigner signer = new ECDSASigner(getPrivateKey());
 
         JWTClaimsSet claimsSet =
-                new JWTClaimsSet.Builder().claim(JWTClaimNames.AUDIENCE, audienceClaim).build();
+                new JWTClaimsSet.Builder()
+                        .claim(JWTClaimNames.AUDIENCE, audienceClaim)
+                        .claim("redirect_uri", redirectUriClaim)
+                        .build();
 
         SignedJWT signedJWT =
                 new SignedJWT(
@@ -243,7 +257,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -251,13 +265,16 @@ class JarValidatorTest {
             assertEquals(
                     "JWT missing required claims: [exp, iat, iss, nbf, response_type, sub]",
                     errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
     @Test
-    void shouldFailValidationChecksOnInvalidAudienceClaim()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnInvalidAudienceClaimWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -291,19 +308,22 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
             assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorObject.getCode());
             assertEquals("JWT audience rejected: [invalid-audience]", errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
     @Test
-    void shouldFailValidationChecksOnInvalidIssuerClaim()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnInvalidIssuerClaimWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -337,7 +357,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -345,13 +365,16 @@ class JarValidatorTest {
             assertEquals(
                     "JWT iss claim has value invalid-issuer, must be test-issuer",
                     errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
     @Test
-    void shouldFailValidationChecksOnInvalidResponseTypeClaim()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnInvalidResponseTypeClaimWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -385,7 +408,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -393,13 +416,16 @@ class JarValidatorTest {
             assertEquals(
                     "JWT response_type claim has value invalid-response-type, must be code",
                     errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
     @Test
-    void shouldFailValidationChecksOnExpiredJWT()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnExpiredJWTWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -433,19 +459,22 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
             assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorObject.getCode());
             assertEquals("Expired JWT", errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
     @Test
-    void shouldFailValidationChecksOnFutureNbfClaim()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnFutureNbfClaimWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -479,19 +508,22 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
             assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorObject.getCode());
             assertEquals("JWT before use time", errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
     @Test
-    void shouldFailValidationChecksOnExpiryClaimToFarInFuture()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
-                    ParseException {
+    void shouldFailValidationChecksOnExpiryClaimToFarInFutureWithRecoverableError()
+            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException, ParseException,
+                    JarValidationException {
+        when(configurationService.getClientRedirectUrls(anyString()))
+                .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
         when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
@@ -526,7 +558,7 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
-        } catch (JarValidationException e) {
+        } catch (RecoverableJarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
                     OAuth2Error.INVALID_GRANT.getHTTPStatusCode(), errorObject.getHTTPStatusCode());
@@ -534,6 +566,7 @@ class JarValidatorTest {
             assertEquals(
                     "The client JWT expiry date has surpassed the maximum allowed ttl value",
                     errorObject.getDescription());
+            assertEquals(redirectUriClaim, e.getRedirectUri());
         }
     }
 
@@ -543,9 +576,6 @@ class JarValidatorTest {
                     ParseException {
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
-        when(configurationService.getMaxClientAuthTokenTtl()).thenReturn("1500");
         when(configurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList("test-redirect-uri"));
 
@@ -554,6 +584,8 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
+        } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
         } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
@@ -571,9 +603,6 @@ class JarValidatorTest {
                     ParseException {
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getAudienceForClients()).thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
-        when(configurationService.getMaxClientAuthTokenTtl()).thenReturn("1500");
 
         Map<String, Object> claims =
                 Map.of(
@@ -603,6 +632,8 @@ class JarValidatorTest {
         try {
             jarValidator.validateRequestJwt(signedJWT, clientIdClaim);
             fail();
+        } catch (RecoverableJarValidationException e) {
+            fail("Error should not be recoverable");
         } catch (JarValidationException e) {
             ErrorObject errorObject = e.getErrorObject();
             assertEquals(
