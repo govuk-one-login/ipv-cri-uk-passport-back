@@ -106,8 +106,8 @@ Resources:
       PackageType: Zip
       CodeUri: ../lambdas/issuecredential
       Architectures:
-        - x86_64
-      MemorySize: 512
+        - arm64
+      MemorySize: 2048
       Environment:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
@@ -183,8 +183,8 @@ Resources:
       PackageType: Zip
       CodeUri: ../lambdas/accesstoken
       Architectures:
-        - x86_64
-      MemorySize: 512
+        - arm64
+      MemorySize: 2048
       Environment:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
@@ -242,8 +242,8 @@ Resources:
       PackageType: Zip
       CodeUri: ../lambdas/authorizationcode
       Architectures:
-        - x86_64
-      MemorySize: 512
+        - arm64
+      MemorySize: 2048
       Environment:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
@@ -318,8 +318,8 @@ Resources:
       PackageType: Zip
       CodeUri: ../lambdas/jwtauthorizationrequest
       Architectures:
-        - x86_64
-      MemorySize: 512
+        - arm64
+      MemorySize: 2048
       Environment:
         Variables:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
