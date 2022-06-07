@@ -118,9 +118,12 @@ public class AuthorizationCodeHandler
 
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
+
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
+
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
-            auditService.sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED);
 
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
 

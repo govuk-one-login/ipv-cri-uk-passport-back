@@ -100,10 +100,12 @@ public class IssueCredentialHandler
             VerifiableCredential verifiableCredential =
                     VerifiableCredential.fromPassportCheckDao(passportCheck);
 
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED);
+
             SignedJWT signedJWT =
                     generateAndSignVerifiableCredentialJwt(verifiableCredential, passportCheck);
 
-            auditService.sendAuditEvent(AuditEventTypes.PASSPORT_CREDENTIAL_ISSUED);
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());

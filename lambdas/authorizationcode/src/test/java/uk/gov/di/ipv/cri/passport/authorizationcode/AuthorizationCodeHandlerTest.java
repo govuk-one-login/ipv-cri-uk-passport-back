@@ -146,7 +146,8 @@ class AuthorizationCodeHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        verify(auditService).sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
+        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
+        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
