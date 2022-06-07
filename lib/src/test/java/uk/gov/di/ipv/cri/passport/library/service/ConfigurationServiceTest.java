@@ -110,4 +110,13 @@ class ConfigurationServiceTest {
         assertEquals(
                 "7JNbR3kjTHvbDkYt9F_RKwjmYgFaG3dORZqRmnMB-wY", underTest.getSha256Thumbprint());
     }
+
+    @Test
+    void shouldReturnBackendSessionTtl() {
+        environmentVariables.set("ENVIRONMENT", "test");
+        long ttl = 7200;
+        when(ssmProvider.get("/test/credentialIssuers/ukPassport/self/backendSessionTtl"))
+                .thenReturn(String.valueOf(ttl));
+        assertEquals(ttl, configurationService.getBackendSessionTtl());
+    }
 }

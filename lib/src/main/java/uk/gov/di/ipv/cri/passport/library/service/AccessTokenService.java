@@ -28,7 +28,8 @@ public class AccessTokenService {
                         this.configurationService.getAccessTokensTableName(),
                         AccessTokenItem.class,
                         DataStore.getClient(
-                                this.configurationService.getDynamoDbEndpointOverride()));
+                                this.configurationService.getDynamoDbEndpointOverride()),
+                        this.configurationService);
     }
 
     public AccessTokenService(

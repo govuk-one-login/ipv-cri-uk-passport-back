@@ -248,4 +248,12 @@ public class ConfigurationService {
     public long maxJwtTtl() {
         return Long.parseLong(ssmProvider.get(System.getenv("MAX_JWT_TTL")));
     }
+
+    public long getBackendSessionTtl() {
+        return Long.parseLong(
+                ssmProvider.get(
+                        String.format(
+                                "/%s/credentialIssuers/ukPassport/self/backendSessionTtl",
+                                System.getenv("ENVIRONMENT"))));
+    }
 }

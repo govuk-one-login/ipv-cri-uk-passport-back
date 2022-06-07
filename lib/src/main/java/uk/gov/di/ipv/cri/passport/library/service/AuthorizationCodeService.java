@@ -14,7 +14,8 @@ public class AuthorizationCodeService {
                 new DataStore<>(
                         configurationService.getAuthCodesTableName(),
                         AuthorizationCodeItem.class,
-                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
+                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()),
+                        configurationService);
     }
 
     public AuthorizationCodeService(DataStore<AuthorizationCodeItem> dataStore) {
