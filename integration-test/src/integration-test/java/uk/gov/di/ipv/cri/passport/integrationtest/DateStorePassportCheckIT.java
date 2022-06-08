@@ -19,6 +19,7 @@ import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,9 +51,14 @@ public class DateStorePassportCheckIT {
                     "The environment variable 'DCS_RESPONSE_TABLE_NAME' must be provided to run this test");
         }
 
+        ConfigurationService configurationService = new ConfigurationService();
+
         dcsResponseDataStore =
                 new DataStore<>(
-                        dcsResponseTableName, PassportCheckDao.class, DataStore.getClient(null));
+                        dcsResponseTableName,
+                        PassportCheckDao.class,
+                        DataStore.getClient(null),
+                        configurationService);
 
         AmazonDynamoDB independentClient =
                 AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();

@@ -48,7 +48,8 @@ public class PassportService {
                         this.configurationService.getDcsResponseTableName(),
                         PassportCheckDao.class,
                         DataStore.getClient(
-                                this.configurationService.getDynamoDbEndpointOverride()));
+                                this.configurationService.getDynamoDbEndpointOverride()),
+                        configurationService);
         this.httpClient = HttpClientSetUp.generateHttpClient(this.configurationService);
     }
 

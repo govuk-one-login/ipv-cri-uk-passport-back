@@ -9,24 +9,30 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.DynamodbItem;
+import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DataStore<T> {
+public class DataStore<T extends DynamodbItem> {
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final String tableName;
     private final Class<T> typeParameterClass;
+    private final ConfigurationService configurationService;
 
     public DataStore(
             String tableName,
             Class<T> typeParameterClass,
-            DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+            DynamoDbEnhancedClient dynamoDbEnhancedClient,
+            ConfigurationService configurationService) {
         this.tableName = tableName;
         this.typeParameterClass = typeParameterClass;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
+        this.configurationService = configurationService;
     }
 
     public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
@@ -40,6 +46,10 @@ public class DataStore<T> {
     }
 
     public void create(T item) {
+        item.setTtl(
+                Instant.now()
+                        .plusSeconds(configurationService.getBackendSessionTtl())
+                        .getEpochSecond());
         getTable().putItem(item);
     }
 

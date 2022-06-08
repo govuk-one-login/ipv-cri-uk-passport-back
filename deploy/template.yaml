@@ -130,6 +130,8 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
         - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+        - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
@@ -203,6 +205,8 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
         - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+        - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
@@ -272,6 +276,8 @@ Resources:
             TableName: !Ref CRIPassportAuthCodesTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/*
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -397,6 +403,9 @@ Resources:
       KeySchema:
         - AttributeName: "resourceId"
           KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: "TRUE"
 
   CRIPassportAuthCodesTable:
     Type: AWS::DynamoDB::Table
@@ -409,6 +418,9 @@ Resources:
       KeySchema:
         - AttributeName: "authCode"
           KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: "TRUE"
 
   CRIPassportAccessTokensTable:
     Type: AWS::DynamoDB::Table
@@ -421,6 +433,9 @@ Resources:
       KeySchema:
         - AttributeName: "accessToken"
           KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: "TRUE"
 
 Outputs:
   IPVCriUkPassportAPIGatewayID:

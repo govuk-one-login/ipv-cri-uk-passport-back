@@ -8,12 +8,13 @@ import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 
 @DynamoDbBean
 @ExcludeFromGeneratedCoverageReport
-public class PassportCheckDao {
+public class PassportCheckDao implements DynamodbItem {
     private String resourceId;
     private DcsPayload dcsPayload;
     private Evidence evidence;
     private String userId;
     private String clientId;
+    private long ttl;
 
     public PassportCheckDao() {}
 
@@ -69,5 +70,13 @@ public class PassportCheckDao {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
+    }
+
+    public long getTtl() {
+        return ttl;
+    }
+
+    public void setTtl(long ttl) {
+        this.ttl = ttl;
     }
 }

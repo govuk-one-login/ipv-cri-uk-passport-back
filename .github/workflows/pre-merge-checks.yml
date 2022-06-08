@@ -55,6 +55,7 @@ jobs:
           DCS_RESPONSE_TABLE_NAME: dcs-response-build
           JAR_ENCRYPTION_KEY_ID_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
           JAR_KMS_PUBLIC_KEY_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+          ENVIRONMENT: build
         run: ./gradlew intTest
 
       - name: Perform Static Analysis

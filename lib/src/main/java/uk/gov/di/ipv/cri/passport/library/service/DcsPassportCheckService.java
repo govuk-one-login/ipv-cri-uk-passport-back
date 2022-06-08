@@ -13,7 +13,8 @@ public class DcsPassportCheckService {
                 new DataStore<>(
                         configurationService.getDcsResponseTableName(),
                         PassportCheckDao.class,
-                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()));
+                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()),
+                        configurationService);
     }
 
     public DcsPassportCheckService(DataStore<PassportCheckDao> dataStore) {
