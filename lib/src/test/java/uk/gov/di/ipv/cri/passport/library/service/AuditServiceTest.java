@@ -37,7 +37,7 @@ class AuditServiceTest {
 
     @Test
     void shouldSendMessageToSqsQueue() throws JsonProcessingException, SqsException {
-        auditService.sendAuditEvent(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS);
+        auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
 
         ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
                 ArgumentCaptor.forClass(SendMessageRequest.class);
@@ -49,6 +49,6 @@ class AuditServiceTest {
         AuditEvent messageBody =
                 objectMapper.readValue(
                         sqsSendMessageRequestCaptor.getValue().getMessageBody(), AuditEvent.class);
-        assertEquals(AuditEventTypes.PASSPORT_REQUEST_SENT_TO_DCS, messageBody.getEvent());
+        assertEquals(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT, messageBody.getEvent());
     }
 }

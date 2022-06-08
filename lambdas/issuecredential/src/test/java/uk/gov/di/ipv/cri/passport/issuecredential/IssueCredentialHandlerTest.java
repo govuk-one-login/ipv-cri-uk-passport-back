@@ -138,7 +138,7 @@ class IssueCredentialHandlerTest {
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
 
-        verify(mockAuditService).sendAuditEvent(AuditEventTypes.PASSPORT_CREDENTIAL_ISSUED);
+        verify(mockAuditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED);
 
         assertEquals(200, response.getStatusCode());
     }

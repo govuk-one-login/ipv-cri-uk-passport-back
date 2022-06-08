@@ -20,10 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
+import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
@@ -47,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 
@@ -61,7 +64,7 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Mock private JarValidator jarValidator;
 
-    @Mock private JWTClaimsSet mockJwtClaimSet;
+    @Mock private AuditService auditService;
 
     private JwtAuthorizationRequestHandler underTest;
 
@@ -97,7 +100,7 @@ class JwtAuthorizationRequestHandlerTest {
 
         underTest =
                 new JwtAuthorizationRequestHandler(
-                        configurationService, kmsRsaDecrypter, jarValidator);
+                        configurationService, kmsRsaDecrypter, jarValidator, auditService);
     }
 
     @Test
@@ -113,6 +116,7 @@ class JwtAuthorizationRequestHandlerTest {
 
         var response = underTest.handleRequest(event, context);
         assertEquals(200, response.getStatusCode());
+        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START);
     }
 
     @Test
