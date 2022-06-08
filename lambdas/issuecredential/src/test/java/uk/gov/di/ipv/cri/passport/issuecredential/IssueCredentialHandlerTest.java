@@ -139,7 +139,6 @@ class IssueCredentialHandlerTest {
                 issueCredentialHandler.handleRequest(event, mockContext);
 
         verify(mockAuditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED);
-        verify(mockAuditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
         assertEquals(200, response.getStatusCode());
     }

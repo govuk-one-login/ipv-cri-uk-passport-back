@@ -148,6 +148,7 @@ class AuthorizationCodeHandlerTest {
 
         verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
         verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED);
+        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }

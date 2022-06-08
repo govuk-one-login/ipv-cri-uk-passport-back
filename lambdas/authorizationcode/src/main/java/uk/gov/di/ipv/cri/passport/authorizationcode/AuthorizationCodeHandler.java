@@ -144,6 +144,8 @@ public class AuthorizationCodeHandler
                     passportCheckDao.getResourceId(),
                     authenticationRequest.getRedirectionURI().toString());
 
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));
         } catch (HttpResponseExceptionWithErrorBody e) {
