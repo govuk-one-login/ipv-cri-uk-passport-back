@@ -352,6 +352,13 @@ Resources:
                 - 'kms:GenerateDataKey'
               Resource:
                 - !ImportValue PassportCriEncryptionKeyArn
+            - Sid: auditEventQueueKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
         IPVCriUKPassportInternalAPI:
           Type: Api
