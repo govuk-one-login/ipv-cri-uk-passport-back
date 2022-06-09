@@ -24,8 +24,14 @@ Conditions:
       - !Ref ProvisionedConcurrentExecutions
       -  0
 
-Resources:
+  IsDevelopmentEnvironment: !Not
+    - !Or
+      - !Equals [ !Ref Environment, "build"]
+      - !Equals [ !Ref Environment, "staging"]
+      - !Equals [ !Ref Environment, "integration"]
+      - !Equals [ !Ref Environment, "production"]
 
+Resources:
   IPVCriUKPassportPrivateAPI:
     Type: AWS::Serverless::Api
     Properties:
@@ -495,6 +501,8 @@ Outputs:
     Value: !Ref IPVCriUKPassportInternalAPI
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
+    Export:
+      Name: !Sub "${AWS::StackName}-IPVCriUkPassportPrivateAPIGatewayID"
     Value: !Ref IPVCriUKPassportPrivateAPI
   IpvCoreBackApiKeyId:
     Description: >
