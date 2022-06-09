@@ -502,7 +502,7 @@ Outputs:
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
     Export:
-      Name: !Sub "${AWS::StackName}-IPVCriUkPassportPrivateAPIGatewayID"
+      Name: !Sub "IPVCriUkPassportPrivateAPIGatewayID-${Environment}"
     Value: !Ref IPVCriUKPassportPrivateAPI
   IpvCoreBackApiKeyId:
     Description: >
