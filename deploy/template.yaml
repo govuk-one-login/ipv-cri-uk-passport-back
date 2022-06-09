@@ -25,6 +25,63 @@ Conditions:
       -  0
 
 Resources:
+
+  IPVCriUKPassportPrivateAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub IPV Passport Back Private API Gateway ${Environment}
+      EndpointConfiguration:
+        Type: PRIVATE
+      Auth:
+        ResourcePolicy:
+          CustomStatements:
+            - Action: 'execute-api:Invoke'
+              Effect: Allow
+              Principal: '*'
+              Resource:
+                - 'execute-api:/*'
+            - Action: 'execute-api:Invoke'
+              Effect: Deny
+              Principal: '*'
+              Resource:
+                - 'execute-api:/*'
+              Condition:
+                StringNotEquals:
+                  'aws:SourceVpce': !If
+                    - IsDevelopmentEnvironment
+                    - !ImportValue "network-shared-development-ApiGatewayVpcEndpointId"
+                    - Fn::ImportValue:
+                        !Sub "networking-${Environment}-ApiGatewayVpcEndpointId"
+      StageName: !Sub ${Environment}
+      AccessLogSetting:
+        DestinationArn: !GetAtt IPVCriUKPassportPrivateAPILogGroup.Arn
+        Format: >-
+          {
+          "requestId":"$context.requestId",
+          "ip":"$context.identity.sourceIp",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "path":"$context.path",
+          "routeKey":"$context.routeKey",
+          "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLatency":"$context.responseLatency",
+          "responseLength":"$context.responseLength"
+          }
+
+  IPVCriUKPassportPrivateAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-PassportBackPrivate-API-GW-AccessLogs
+      RetentionInDays: 14
+
+  IPVCriUKPassportPrivateAPILogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportPrivateAPILogGroup
+
   IPVCriUKPassportAPI:
     Type: AWS::Serverless::Api
     Properties:
