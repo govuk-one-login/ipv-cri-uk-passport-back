@@ -346,6 +346,12 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportInternalAPI
             Path: /authorization
             Method: POST
+        IPVCriUKPassportPrivateAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportPrivateAPI
+            Path: /authorization
+            Method: POST
       AutoPublishAlias: live
       ProvisionedConcurrencyConfig:
         !If
@@ -416,6 +422,12 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportInternalAPI
             Path: /jwt-authorization-request
             Method: POST
+        IPVCriUKPassportPrivateAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportPrivateAPI
+            Path: /jwt-authorization-request
+            Method: POST
       AutoPublishAlias: live
       ProvisionedConcurrencyConfig:
         !If
@@ -481,6 +493,9 @@ Outputs:
   IPVCriUkPassportInternalAPIGatewayID:
     Description: CRI UK Passport Internal API Gateway ID
     Value: !Ref IPVCriUKPassportInternalAPI
+  IPVCriUkPassportPrivateAPIGatewayID:
+    Description: CRI UK Passport Private API Gateway ID
+    Value: !Ref IPVCriUKPassportPrivateAPI
   IpvCoreBackApiKeyId:
     Description: >
       The key id of the api key used by IPV Core to access passport back external api gateway
