@@ -126,40 +126,6 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportAPILogGroup
 
-  IPVCriUKPassportInternalAPI:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: IPV CRI UK Internal Passport API Gateway
-      StageName: !Sub ${Environment}
-      AccessLogSetting:
-        DestinationArn: !GetAtt IPVCriUKPassportInternalAPILogGroup.Arn
-        Format: >-
-          {
-          "requestId":"$context.requestId",
-          "ip":"$context.identity.sourceIp",
-          "requestTime":"$context.requestTime",
-          "httpMethod":"$context.httpMethod",
-          "path":"$context.path",
-          "routeKey":"$context.routeKey",
-          "status":"$context.status",
-          "protocol":"$context.protocol",
-          "responseLatency":"$context.responseLatency",
-          "responseLength":"$context.responseLength"
-          }
-
-  IPVCriUKPassportInternalAPILogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-Internal-API-GW-AccessLogs
-      RetentionInDays: 14
-
-  IPVCriUKPassportInternalAPILogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportInternalAPILogGroup
-
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -506,9 +472,6 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
     Value: !Ref IPVCriUKPassportAPI
-  IPVCriUkPassportInternalAPIGatewayID:
-    Description: CRI UK Passport Internal API Gateway ID
-    Value: !Ref IPVCriUKPassportInternalAPI
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
     Export:
