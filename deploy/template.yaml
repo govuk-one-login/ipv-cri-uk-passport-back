@@ -352,12 +352,6 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
-        IPVCriUKPassportInternalAPI:
-          Type: Api
-          Properties:
-            RestApiId: !Ref IPVCriUKPassportInternalAPI
-            Path: /authorization
-            Method: POST
         IPVCriUKPassportPrivateAPI:
           Type: Api
           Properties:
@@ -435,12 +429,6 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
-        IPVCriUKPassportInternalAPI:
-          Type: Api
-          Properties:
-            RestApiId: !Ref IPVCriUKPassportInternalAPI
-            Path: /jwt-authorization-request
-            Method: POST
         IPVCriUKPassportPrivateAPI:
           Type: Api
           Properties:
