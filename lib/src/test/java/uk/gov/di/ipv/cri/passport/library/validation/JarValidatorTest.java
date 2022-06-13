@@ -130,7 +130,7 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidClientId()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientAuthenticationMethod(anyString()))
+        when(configurationService.getClientIssuer(anyString()))
                 .thenThrow(ParameterNotFoundException.builder().build());
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());

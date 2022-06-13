@@ -195,15 +195,12 @@ class AccessTokenHandlerTest {
     }
 
     @Test
-    void shouldReturn400WhenClientAuthFails() throws Exception {
+    void shouldReturn401WhenClientAuthFails() throws Exception {
         String tokenRequestBody =
                 "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setBody(tokenRequestBody);
-
-        when(mockAccessTokenService.validateTokenRequest(any()))
-                .thenReturn(ValidationResult.createValidResult());
 
         doThrow(new ClientAuthenticationException("error"))
                 .when(mockTokenRequestValidator)
@@ -211,9 +208,10 @@ class AccessTokenHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
-        assertEquals(HTTPResponse.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
-        assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
+
+        assertEquals(HTTPResponse.SC_UNAUTHORIZED, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_CLIENT.getCode(), errorResponse.getCode());
+        assertEquals(OAuth2Error.INVALID_CLIENT.getDescription(), errorResponse.getDescription());
     }
 
     private ErrorObject createErrorObjectFromResponse(String responseBody) throws ParseException {
