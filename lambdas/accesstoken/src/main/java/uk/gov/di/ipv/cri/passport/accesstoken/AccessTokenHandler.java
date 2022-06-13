@@ -62,7 +62,10 @@ public class AccessTokenHandler
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
         try {
-            TokenRequest tokenRequest = createTokenRequest(input.getBody());
+            String requestBody = input.getBody();
+            tokenRequestValidator.authenticateClient(requestBody);
+
+            TokenRequest tokenRequest = createTokenRequest(requestBody);
 
             ValidationResult<ErrorObject> validationResult =
                     accessTokenService.validateTokenRequest(tokenRequest);
@@ -74,8 +77,6 @@ public class AccessTokenHandler
                         getHttpStatusCodeForErrorResponse(validationResult.getError()),
                         validationResult.getError().toJSONObject());
             }
-
-            tokenRequestValidator.authenticateClient(input.getBody());
 
             AuthorizationCodeGrant authorizationCodeGrant =
                     (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
@@ -120,8 +121,8 @@ public class AccessTokenHandler
         } catch (ClientAuthenticationException e) {
             LOGGER.error("Client authentication failed: ", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
-                    OAuth2Error.INVALID_GRANT.toJSONObject());
+                    OAuth2Error.INVALID_CLIENT.getHTTPStatusCode(),
+                    OAuth2Error.INVALID_CLIENT.toJSONObject());
         }
     }
 

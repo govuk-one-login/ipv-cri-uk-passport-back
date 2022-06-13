@@ -70,7 +70,7 @@ public class JarValidator {
 
     private void validateClientId(String clientId) throws JarValidationException {
         try {
-            configurationService.getClientAuthenticationMethod(clientId);
+            configurationService.getClientIssuer(clientId);
         } catch (ParameterNotFoundException e) {
             LOGGER.error("Unknown client id provided {}", clientId);
             throw new JarValidationException(

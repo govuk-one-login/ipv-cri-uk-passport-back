@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
@@ -60,7 +59,6 @@ class TokenRequestValidatorTest {
     void shouldNotThrowForValidJwt() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
         when(mockConfigurationService.getMaxClientAuthTokenTtl()).thenReturn("2400");
 
         var validQueryParams =
@@ -72,7 +70,6 @@ class TokenRequestValidatorTest {
     void shouldNotThrowForValidJwtWithDerSignature() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
         when(mockConfigurationService.getMaxClientAuthTokenTtl()).thenReturn("2400");
 
         SignedJWT signedJWT = SignedJWT.parse(generateClientAssertion(getValidClaimsSetValues()));
@@ -90,7 +87,6 @@ class TokenRequestValidatorTest {
     void shouldThrowIfInvalidSignature() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
 
         var invalidSignatureQueryParams =
                 new HashMap<>(
@@ -136,7 +132,6 @@ class TokenRequestValidatorTest {
     @Test
     void shouldThrowIfWrongAudience()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
-        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
         var wrongAudienceClaimsSetValues = new HashMap<>(getValidClaimsSetValues());
         wrongAudienceClaimsSetValues.put(
                 JWTClaimNames.AUDIENCE, "NOT_THE_AUDIENCE_YOU_ARE_LOOKING_FOR");
@@ -160,7 +155,6 @@ class TokenRequestValidatorTest {
     @Test
     void shouldThrowIfClaimsSetHasExpired()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
-        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
         var expiredClaimsSetValues = new HashMap<>(getValidClaimsSetValues());
         expiredClaimsSetValues.put(
                 JWTClaimNames.EXPIRATION_TIME,
@@ -180,7 +174,6 @@ class TokenRequestValidatorTest {
     void shouldFailWhenCLientJWTContainsExpiryClaimTooFarInFuture() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getClientAuthenticationMethod(anyString())).thenReturn("jwt");
         when(mockConfigurationService.getMaxClientAuthTokenTtl()).thenReturn("2400");
         var expiredClaimsSetValues = new HashMap<>(getValidClaimsSetValues());
         expiredClaimsSetValues.put(
@@ -201,28 +194,9 @@ class TokenRequestValidatorTest {
     }
 
     @Test
-    void shouldNotThrowIfMissingClientAssertionParamWhenNoneRequired() {
-        when(mockConfigurationService.getClientAuthenticationMethod(clientId)).thenReturn("none");
-        var params = getValidQueryParamsWithoutClientAuth(clientId);
-
-        assertDoesNotThrow(() -> validator.authenticateClient(queryMapToString(params)));
-    }
-
-    @Test
-    void shouldNotThrowIfContainsClientAssertionParamWhenNoneRequired()
-            throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
-        when(mockConfigurationService.getClientAuthenticationMethod(clientId)).thenReturn("none");
-        var validQueryParams =
-                getValidQueryParams(generateClientAssertion(getValidClaimsSetValues()));
-
-        assertDoesNotThrow(() -> validator.authenticateClient(queryMapToString(validQueryParams)));
-    }
-
-    @Test
-    void shouldThrowIfMissingClientAssertionParamWhenRequired() {
+    void shouldThrowIfMissingClientAssertionParam() {
         String invalidClientId = "invalid-client";
-        when(mockConfigurationService.getClientAuthenticationMethod(invalidClientId))
-                .thenReturn("jwt");
+
         var missingClientAssertionParams = getValidQueryParamsWithoutClientAuth(invalidClientId);
 
         ClientAuthenticationException exception =
@@ -232,9 +206,7 @@ class TokenRequestValidatorTest {
                                 validator.authenticateClient(
                                         queryMapToString(missingClientAssertionParams)));
 
-        assertEquals(
-                "Missing client_assertion jwt for configured client 'invalid-client'",
-                exception.getMessage());
+        assertEquals("Missing client_assertion_type parameter", exception.getCause().getMessage());
     }
 
     @Test
@@ -248,9 +220,7 @@ class TokenRequestValidatorTest {
                                 validator.authenticateClient(
                                         queryMapToString(missingClientIdParams)));
 
-        assertEquals(
-                "Unknown client, no client_id value or client_assertion jwt found in request",
-                exception.getMessage());
+        assertEquals("Missing client_assertion_type parameter", exception.getCause().getMessage());
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {

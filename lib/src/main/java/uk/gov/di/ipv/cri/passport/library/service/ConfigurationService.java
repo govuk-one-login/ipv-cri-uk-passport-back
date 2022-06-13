@@ -4,7 +4,6 @@ import com.nimbusds.jose.jwk.ECKey;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
@@ -218,13 +217,6 @@ public class ConfigurationService {
         return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUDIENCE");
     }
 
-    public String getClientAuthenticationMethod(String clientId) throws ParameterNotFoundException {
-        return ssmProvider.get(
-                String.format(
-                        "%s/%s/jwtAuthentication/authenticationMethod",
-                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
-    }
-
     public String getVerifiableCredentialIssuer() {
         return getParameterFromStoreUsingEnv("VERIFIABLE_CREDENTIAL_ISSUER_PARAM");
     }
@@ -241,7 +233,7 @@ public class ConfigurationService {
         return ssmProvider.get(System.getenv("JAR_ENCRYPTION_KEY_ID_PARAM"));
     }
 
-    public String getJarKmsPublickKey() {
+    public String getJarKmsPublicKey() {
         return ssmProvider.get(System.getenv("JAR_KMS_PUBLIC_KEY_PARAM"));
     }
 
