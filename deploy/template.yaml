@@ -58,7 +58,7 @@ Resources:
                 StringNotEquals:
                   'aws:SourceVpce': !If
                     - IsDevelopmentEnvironment
-                    - !ImportValue "network-shared-development-ApiGatewayVpcEndpointId"
+                    - !ImportValue "networking-shared-development-ApiGatewayVpcEndpointId"
                     - Fn::ImportValue:
                         !Sub "networking-${Environment}-ApiGatewayVpcEndpointId"
       StageName: !Sub ${Environment}
