@@ -31,7 +31,8 @@ Conditions:
       - !Equals [ !Ref Environment, "integration"]
       - !Equals [ !Ref Environment, "production"]
 
-  IsNotDevelopmentEnvironment: !Not [IsDevelopmentEnvironment]
+  IsNotDevelopmentEnvironment: !Not
+    - Condition: IsDevelopmentEnvironment
 
 Resources:
   IPVCriUKPassportPrivateAPI:
