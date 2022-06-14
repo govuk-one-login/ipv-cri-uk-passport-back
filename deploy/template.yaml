@@ -31,6 +31,8 @@ Conditions:
       - !Equals [ !Ref Environment, "integration"]
       - !Equals [ !Ref Environment, "production"]
 
+  IsNotDevelopmentEnvironment: !Not [IsDevelopmentEnvironment]
+
 Resources:
   IPVCriUKPassportPrivateAPI:
     Type: AWS::Serverless::Api
@@ -83,6 +85,7 @@ Resources:
 
   IPVCriUKPassportPrivateAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -121,6 +124,7 @@ Resources:
 
   IPVCriUKPassportAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -200,6 +204,7 @@ Resources:
 
   IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -261,6 +266,7 @@ Resources:
 
   IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -339,6 +345,7 @@ Resources:
 
   IPVCriUKPassportAuthorizationCodeFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -416,6 +423,7 @@ Resources:
 
   IPVCriUKPassportJwTAuthorizationRequestFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
