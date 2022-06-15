@@ -35,6 +35,7 @@ Resources:
   IPVCriUKPassportPrivateAPI:
     Type: AWS::Serverless::Api
     Properties:
+      # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
       Name: !Sub IPV Passport Back Private API Gateway ${Environment}
       EndpointConfiguration:
         Type: PRIVATE
@@ -59,6 +60,7 @@ Resources:
                     - Fn::ImportValue:
                         !Sub "networking-${Environment}-ApiGatewayVpcEndpointId"
       StageName: !Sub ${Environment}
+      TracingEnabled: true
       AccessLogSetting:
         DestinationArn: !GetAtt IPVCriUKPassportPrivateAPILogGroup.Arn
         Format: >-
@@ -80,6 +82,7 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-PassportBackPrivate-API-GW-AccessLogs
       RetentionInDays: 14
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportPrivateAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
@@ -91,8 +94,10 @@ Resources:
   IPVCriUKPassportAPI:
     Type: AWS::Serverless::Api
     Properties:
+      # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
       Name: IPV CRI UK Passport API Gateway
       StageName: !Sub ${Environment}
+      TracingEnabled: true
       Auth:
         ApiKeyRequired: true
         UsagePlan:
@@ -118,6 +123,7 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
       RetentionInDays: 14
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
@@ -129,6 +135,7 @@ Resources:
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       FunctionName: !Sub "ipv-passport-issue-credential-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.issuecredential.IssueCredentialHandler::handleRequest
       Runtime: java11
@@ -138,6 +145,7 @@ Resources:
         - arm64
       MemorySize: 2048
       Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
@@ -208,6 +216,7 @@ Resources:
   IPVCriUKPassportAccessTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       FunctionName: !Sub "ipv-passport-token-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.accesstoken.AccessTokenHandler::handleRequest
       Runtime: java11
@@ -217,6 +226,7 @@ Resources:
         - arm64
       MemorySize: 2048
       Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
@@ -258,6 +268,7 @@ Resources:
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportAccessTokenFunction}"
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
@@ -269,6 +280,7 @@ Resources:
   IPVCriUKPassportAuthorizationCodeFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       FunctionName: !Sub "ipv-passport-authorization-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.authorizationcode.AuthorizationCodeHandler::handleRequest
       Runtime: java11
@@ -278,6 +290,7 @@ Resources:
         - arm64
       MemorySize: 2048
       Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
@@ -347,6 +360,7 @@ Resources:
   IPVCriUKPassportJwTAuthorizationRequestFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       FunctionName: !Sub "ipv-passport-jwt-authorization-request-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.jwtauthorizationrequest.JwtAuthorizationRequestHandler::handleRequest
       Runtime: java11
@@ -356,6 +370,7 @@ Resources:
         - arm64
       MemorySize: 2048
       Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
@@ -434,7 +449,11 @@ Resources:
           KeyType: "HASH"
       TimeToLiveSpecification:
         AttributeName: "ttl"
-        Enabled: "TRUE"
+        Enabled: true
+      SSESpecification:
+        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
+        SSEEnabled: true
+        SSEType: KMS
 
   CRIPassportAuthCodesTable:
     Type: AWS::DynamoDB::Table
@@ -449,7 +468,11 @@ Resources:
           KeyType: "HASH"
       TimeToLiveSpecification:
         AttributeName: "ttl"
-        Enabled: "TRUE"
+        Enabled: true
+      SSESpecification:
+        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
+        SSEEnabled: true
+        SSEType: KMS
 
   CRIPassportAccessTokensTable:
     Type: AWS::DynamoDB::Table
@@ -464,7 +487,38 @@ Resources:
           KeyType: "HASH"
       TimeToLiveSpecification:
         AttributeName: "ttl"
-        Enabled: "TRUE"
+        Enabled: true
+      SSESpecification:
+        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
+        SSEEnabled: true
+        SSEType: KMS
+
+  LoggingKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: !Sub "logs.${AWS::Region}.amazonaws.com"
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "*"
+            Condition:
+              ArnLike:
+                "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
 
 Outputs:
   IPVCriUkPassportAPIGatewayID:
