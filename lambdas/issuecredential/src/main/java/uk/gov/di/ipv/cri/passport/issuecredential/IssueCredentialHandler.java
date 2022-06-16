@@ -11,6 +11,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
+import com.nimbusds.oauth2.sdk.token.AccessTokenType;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -79,7 +80,7 @@ public class IssueCredentialHandler
                     RequestHelper.getHeaderByKey(input.getHeaders(), AUTHORIZATION_HEADER_KEY);
 
             // Performs validation on header value and throws a ParseException if invalid
-            AccessToken.parse(accessTokenString);
+            AccessToken.parse(accessTokenString, AccessTokenType.BEARER);
 
             String resourceId = accessTokenService.getResourceIdByAccessToken(accessTokenString);
 
