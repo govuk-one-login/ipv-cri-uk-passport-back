@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
@@ -18,6 +19,7 @@ import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -52,6 +54,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
+import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.JWE_OBJECT_STRING;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthorizationRequestHandlerTest {
@@ -66,7 +69,7 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Mock private AuditService auditService;
 
-    private JwtAuthorizationRequestHandler underTest;
+    @InjectMocks private JwtAuthorizationRequestHandler underTest;
 
     private SignedJWT signedJWT;
 
@@ -97,14 +100,11 @@ class JwtAuthorizationRequestHandlerTest {
 
         signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSet);
         signedJWT.sign(new ECDSASigner(getPrivateKey()));
-
-        underTest =
-                new JwtAuthorizationRequestHandler(
-                        configurationService, kmsRsaDecrypter, jarValidator, auditService);
     }
 
     @Test
     void shouldReturn200WhenGivenValidJWT() throws Exception {
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
 
@@ -112,7 +112,7 @@ class JwtAuthorizationRequestHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody(signedJWT.serialize());
+        event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
         assertEquals(200, response.getStatusCode());
@@ -121,6 +121,7 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Test
     void shouldReturnClaimsAsJsonFromJWT() throws Exception {
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
 
@@ -128,7 +129,7 @@ class JwtAuthorizationRequestHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody(signedJWT.serialize());
+        event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
 
@@ -174,7 +175,7 @@ class JwtAuthorizationRequestHandlerTest {
     @Test
     void shouldReturn400IfFailedToParseJWTClaimSet()
             throws JsonProcessingException, JarValidationException, ParseException {
-
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         JWTClaimsSet myMock = mock(JWTClaimsSet.class);
         when(myMock.getJSONObjectClaim(anyString()))
                 .thenThrow(new ParseException("Failed to parse jwt claim set", 0));
@@ -184,7 +185,7 @@ class JwtAuthorizationRequestHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody(signedJWT.serialize());
+        event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
 
@@ -211,6 +212,7 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Test
     void shouldReturn302WhenValidationFails() throws Exception {
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenThrow(new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT));
 
@@ -218,9 +220,7 @@ class JwtAuthorizationRequestHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        String badSignatureSignedJwt = signedJWT.serialize();
-        event.setBody(
-                badSignatureSignedJwt.substring(0, badSignatureSignedJwt.length() - 4) + "nope");
+        event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
 
@@ -235,6 +235,7 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Test
     void shouldReturn302WithRedirectUriWhenValidationFailsButIsRecoverable() throws Exception {
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenThrow(
                         new RecoverableJarValidationException(
@@ -244,7 +245,7 @@ class JwtAuthorizationRequestHandlerTest {
         Map<String, String> map = new HashMap<>();
         map.put("client_id", "TEST");
         event.setHeaders(map);
-        event.setBody(signedJWT.serialize());
+        event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
 
