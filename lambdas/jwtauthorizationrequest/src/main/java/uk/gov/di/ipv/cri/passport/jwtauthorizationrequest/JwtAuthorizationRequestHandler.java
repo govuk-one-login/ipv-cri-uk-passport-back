@@ -85,7 +85,7 @@ public class JwtAuthorizationRequestHandler
         try {
             this.auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START);
 
-            SignedJWT signedJWT = decryptRequest(input.getBody());
+            SignedJWT signedJWT = jarValidator.decryptJWE(JWEObject.parse(input.getBody()));
 
             JWTClaimsSet claimsSet = jarValidator.validateRequestJwt(signedJWT, clientId);
 
@@ -112,17 +112,6 @@ public class JwtAuthorizationRequestHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
-        }
-    }
-
-    private SignedJWT decryptRequest(String jarString)
-            throws ParseException, JarValidationException {
-        try {
-            JWEObject jweObject = JWEObject.parse(jarString);
-            return jarValidator.decryptJWE(jweObject);
-        } catch (ParseException e) {
-            LOGGER.info("The JAR is not currently encrypted. Skipping the decryption step.");
-            return SignedJWT.parse(jarString);
         }
     }
 
