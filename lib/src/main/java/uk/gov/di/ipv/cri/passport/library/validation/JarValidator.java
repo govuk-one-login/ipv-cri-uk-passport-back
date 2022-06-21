@@ -12,7 +12,7 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
+import software.amazon.awssdk.services.ssm.model.SsmException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
@@ -74,7 +74,7 @@ public class JarValidator {
             throws JarValidationException {
         try {
             configurationService.getClientIssuer(clientId);
-        } catch (ParameterNotFoundException e) {
+        } catch (SsmException e) {
             LOGGER.error("Unknown client id provided {}", clientId);
             throw new JarValidationException(
                     OAuth2Error.INVALID_CLIENT.setDescription("Unknown client id was provided"));
