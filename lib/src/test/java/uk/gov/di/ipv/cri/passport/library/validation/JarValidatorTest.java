@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
+import software.amazon.awssdk.services.ssm.model.SsmException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -129,7 +129,7 @@ class JarValidatorTest {
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
         when(configurationService.getClientIssuer(anyString()))
-                .thenThrow(ParameterNotFoundException.builder().build());
+                .thenThrow(SsmException.builder().build());
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
 
