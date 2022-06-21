@@ -174,6 +174,14 @@ public class ConfigurationService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
     }
 
+    public long getAuthCodeExpirySeconds() {
+        return Long.parseLong(
+                ssmProvider.get(
+                        String.format(
+                                "/%s/credentialIssuers/ukPassport/self/authCodeExpirySeconds",
+                                System.getenv("ENVIRONMENT"))));
+    }
+
     public long getBearerAccessTokenTtl() {
         return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
                 .map(Long::valueOf)

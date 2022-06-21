@@ -1,18 +1,22 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,13 +24,8 @@ import static org.mockito.Mockito.when;
 class AuthorizationCodeServiceTest {
 
     @Mock private DataStore<AuthorizationCodeItem> mockDataStore;
-
-    private AuthorizationCodeService authorizationCodeService;
-
-    @BeforeEach
-    void setUp() {
-        authorizationCodeService = new AuthorizationCodeService(mockDataStore);
-    }
+    @Mock private ConfigurationService configurationService;
+    @InjectMocks AuthorizationCodeService authorizationCodeService;
 
     @Test
     void shouldReturnAnAuthorisationCode() {
@@ -93,5 +92,31 @@ class AuthorizationCodeServiceTest {
         authorizationCodeService.revokeAuthorizationCode(testCode.getValue());
 
         verify(mockDataStore).delete(testCode.getValue());
+    }
+
+    @Test
+    void isExpiredReturnsTrueIfAuthCodeItemHasExpired() {
+        when(configurationService.getAuthCodeExpirySeconds()).thenReturn(600L);
+        AuthorizationCodeItem expiredAuthCodeItem =
+                new AuthorizationCodeItem(
+                        "auth-code",
+                        "resource-id",
+                        "redirect-url",
+                        Instant.now().minusSeconds(601).toString());
+
+        assertTrue(authorizationCodeService.isExpired(expiredAuthCodeItem));
+    }
+
+    @Test
+    void isExpiredReturnsFalseIfAuthCodeItemHasNotExpired() {
+        when(configurationService.getAuthCodeExpirySeconds()).thenReturn(600L);
+        AuthorizationCodeItem expiredAuthCodeItem =
+                new AuthorizationCodeItem(
+                        "auth-code",
+                        "resource-id",
+                        "redirect-url",
+                        Instant.now().minusSeconds(599).toString());
+
+        assertFalse(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }
 }

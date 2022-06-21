@@ -5,11 +5,15 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
+import java.time.Instant;
+
 public class AuthorizationCodeService {
     private final DataStore<AuthorizationCodeItem> dataStore;
+    private final ConfigurationService configurationService;
 
     @ExcludeFromGeneratedCoverageReport
     public AuthorizationCodeService(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
         this.dataStore =
                 new DataStore<>(
                         configurationService.getAuthCodesTableName(),
@@ -18,7 +22,9 @@ public class AuthorizationCodeService {
                         configurationService);
     }
 
-    public AuthorizationCodeService(DataStore<AuthorizationCodeItem> dataStore) {
+    public AuthorizationCodeService(
+            DataStore<AuthorizationCodeItem> dataStore, ConfigurationService configurationService) {
+        this.configurationService = configurationService;
         this.dataStore = dataStore;
     }
 
@@ -32,15 +38,19 @@ public class AuthorizationCodeService {
 
     public void persistAuthorizationCode(
             String authorizationCode, String resourceId, String redirectUrl) {
-        AuthorizationCodeItem authorizationCodeItem = new AuthorizationCodeItem();
-        authorizationCodeItem.setAuthCode(authorizationCode);
-        authorizationCodeItem.setResourceId(resourceId);
-        authorizationCodeItem.setRedirectUrl(redirectUrl);
-
-        dataStore.create(authorizationCodeItem);
+        dataStore.create(
+                new AuthorizationCodeItem(
+                        authorizationCode, resourceId, redirectUrl, Instant.now().toString()));
     }
 
     public void revokeAuthorizationCode(String authorizationCode) {
         dataStore.delete(authorizationCode);
+    }
+
+    public boolean isExpired(AuthorizationCodeItem authCodeItem) {
+        return Instant.parse(authCodeItem.getCreationDateTime())
+                .isBefore(
+                        Instant.now()
+                                .minusSeconds(configurationService.getAuthCodeExpirySeconds()));
     }
 }
