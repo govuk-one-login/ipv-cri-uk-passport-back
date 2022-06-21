@@ -29,6 +29,7 @@ import java.util.Set;
 public class JarValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarValidator.class);
     private static final String REDIRECT_URI_CLAIM = "redirect_uri";
+    public static final String CLIENT_ID = "client_id";
 
     private final KmsRsaDecrypter kmsRsaDecrypter;
     private final ConfigurationService configurationService;
@@ -54,10 +55,11 @@ public class JarValidator {
 
     public JWTClaimsSet validateRequestJwt(SignedJWT signedJWT, String clientId)
             throws JarValidationException, ParseException {
-        validateClientId(clientId);
+        validateQueryParamClientIdIsRecognised(clientId);
         validateJWTHeader(signedJWT);
         validateSignature(signedJWT, clientId);
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+        validateQueryParamClientIdMatchesRequestObjectClientId(clientId, claimsSet);
         URI redirectUri = validateRedirectUri(claimsSet, clientId);
 
         try {
@@ -68,13 +70,33 @@ public class JarValidator {
         }
     }
 
-    private void validateClientId(String clientId) throws JarValidationException {
+    private void validateQueryParamClientIdIsRecognised(String clientId)
+            throws JarValidationException {
         try {
             configurationService.getClientIssuer(clientId);
         } catch (ParameterNotFoundException e) {
             LOGGER.error("Unknown client id provided {}", clientId);
             throw new JarValidationException(
                     OAuth2Error.INVALID_CLIENT.setDescription("Unknown client id was provided"));
+        }
+    }
+
+    private void validateQueryParamClientIdMatchesRequestObjectClientId(
+            String queryParamClientId, JWTClaimsSet claimsSet) throws JarValidationException {
+        String requestObjectClientId;
+        try {
+            requestObjectClientId = claimsSet.getStringClaim(CLIENT_ID);
+        } catch (ParseException e) {
+            LOGGER.error("client_id not found in claims set: '{}'", e.getMessage());
+            throw new JarValidationException(
+                    OAuth2Error.INVALID_CLIENT.setDescription(
+                            "Client ID could not be parsed from claims set"));
+        }
+        if (!queryParamClientId.equals(requestObjectClientId)) {
+            LOGGER.error("Query param client ID does not match JAR request object client ID");
+            throw new JarValidationException(
+                    OAuth2Error.INVALID_CLIENT.setDescription(
+                            "Query param client ID does not match JAR request object client ID"));
         }
     }
 
