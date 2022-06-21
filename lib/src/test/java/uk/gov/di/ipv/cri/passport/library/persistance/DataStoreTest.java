@@ -8,12 +8,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -35,6 +39,8 @@ class DataStoreTest {
     @Mock private DynamoDbEnhancedClient mockDynamoDbEnhancedClient;
     @Mock private DynamoDbTable<AuthorizationCodeItem> mockDynamoDbTable;
     @Mock private PageIterable<AuthorizationCodeItem> mockPageIterable;
+    @Mock private DynamoDbIndex<AuthorizationCodeItem> mockIndex;
+    @Mock private SdkIterable<Page<AuthorizationCodeItem>> mockIterable;
     @Mock private ConfigurationService mockConfigurationService;
 
     private AuthorizationCodeItem authorizationCodeItem;
@@ -106,6 +112,17 @@ class DataStoreTest {
         verify(mockDynamoDbTable).getItem(keyCaptor.capture());
         assertEquals("partition-key-12345", keyCaptor.getValue().partitionKeyValue().s());
         assertTrue(keyCaptor.getValue().sortKeyValue().isEmpty());
+    }
+
+    @Test
+    void shouldGetItemFromDynamoDbTableViaIndex() {
+        when(mockIndex.query((QueryEnhancedRequest) any())).thenReturn(mockIterable);
+        when(mockDynamoDbTable.index(anyString())).thenReturn(mockIndex);
+
+        String indexName = "test-index";
+        dataStore.getItemByIndex(indexName, "partition-key-12345");
+
+        verify(mockIndex).query(any(QueryEnhancedRequest.class));
     }
 
     @Test

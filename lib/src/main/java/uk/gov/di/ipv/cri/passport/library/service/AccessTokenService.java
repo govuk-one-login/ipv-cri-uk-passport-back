@@ -13,6 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
+import uk.gov.di.ipv.cri.passport.library.util.ListUtil;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.util.Objects;
@@ -58,11 +59,23 @@ public class AccessTokenService {
         return Objects.isNull(accessTokenItem) ? null : accessTokenItem.getResourceId();
     }
 
-    public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
+    public void persistAccessToken(
+            AccessTokenResponse tokenResponse, String resourceId, String authCode) {
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setAccessToken(
                 DigestUtils.sha256Hex(tokenResponse.getTokens().getBearerAccessToken().getValue()));
         accessTokenItem.setResourceId(resourceId);
+        accessTokenItem.setAuthCode(authCode);
+
         dataStore.create(accessTokenItem);
+    }
+
+    public void revokeAccessTokenViaAuthCode(String authCode) throws IllegalArgumentException {
+        AccessTokenItem accessTokenItem =
+                ListUtil.getOneItemOrThrowError(
+                        dataStore.getItemByIndex(
+                                "authorizationCode-index", DigestUtils.sha256Hex(authCode)));
+
+        dataStore.delete(DigestUtils.sha256Hex(accessTokenItem.getAccessToken()));
     }
 }

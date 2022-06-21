@@ -26,6 +26,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -117,7 +118,8 @@ class AccessTokenServiceTest {
         ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
                 ArgumentCaptor.forClass(AccessTokenItem.class);
 
-        accessTokenService.persistAccessToken(accessTokenResponse, testResourceId);
+        accessTokenService.persistAccessToken(
+                accessTokenResponse, testResourceId, new AuthorizationCode().getValue());
 
         verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
         AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
@@ -156,5 +158,23 @@ class AccessTokenServiceTest {
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
         assertNull(resultIpvSessionId);
+    }
+
+    @Test
+    void shouldDeleteAccessTokenViaAuthCode() {
+        String authCode = "test-auth-code";
+        String accessToken = "test-access-token";
+
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAuthCode(authCode);
+        accessTokenItem.setAccessToken(accessToken);
+
+        when(mockDataStore.getItemByIndex(
+                        "authorizationCode-index", DigestUtils.sha256Hex(authCode)))
+                .thenReturn(Collections.singletonList(accessTokenItem));
+
+        accessTokenService.revokeAccessTokenViaAuthCode(authCode);
+
+        verify(mockDataStore).delete(DigestUtils.sha256Hex(accessToken));
     }
 }

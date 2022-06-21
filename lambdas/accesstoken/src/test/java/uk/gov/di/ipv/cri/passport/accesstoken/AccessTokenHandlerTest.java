@@ -37,7 +37,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +50,8 @@ class AccessTokenHandlerTest {
                     new AuthorizationCode().toString(),
                     UUID.randomUUID().toString(),
                     "http://example.com",
-                    Instant.now().toString());
+                    Instant.now().toString(),
+                    null);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
@@ -225,6 +228,41 @@ class AccessTokenHandlerTest {
         assertEquals(HTTPResponse.SC_UNAUTHORIZED, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_CLIENT.getCode(), errorResponse.getCode());
         assertEquals(OAuth2Error.INVALID_CLIENT.getDescription(), errorResponse.getDescription());
+    }
+
+    @Test
+    void shouldReturn400WhenAuthCodeIsUsedMoreThanOnce() throws Exception {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        String tokenRequestBody =
+                "code=12345&redirect_uri=http://example.com&grant_type=authorization_code&client_id=test_client_id";
+        event.setBody(tokenRequestBody);
+
+        AuthorizationCodeItem authorizationCodeItem =
+                new AuthorizationCodeItem(
+                        new AuthorizationCode().toString(),
+                        UUID.randomUUID().toString(),
+                        "http://example.com",
+                        Instant.now().toString(),
+                        Instant.now().toString());
+
+        when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
+                .thenReturn(authorizationCodeItem);
+
+        when(mockAccessTokenService.validateTokenRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockAccessTokenService)
+                .revokeAccessTokenViaAuthCode(authorizationCodeItem.getAuthCode());
+        verify(mockAuthorizationCodeService)
+                .revokeAuthorizationCode(authorizationCodeItem.getAuthCode());
+
+        ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
+
+        assertEquals(400, response.getStatusCode());
+        assertEquals(HTTPResponse.SC_BAD_REQUEST, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
+        assertEquals("Authorization code used too many times", errorResponse.getDescription());
     }
 
     private ErrorObject createErrorObjectFromResponse(String responseBody) throws ParseException {

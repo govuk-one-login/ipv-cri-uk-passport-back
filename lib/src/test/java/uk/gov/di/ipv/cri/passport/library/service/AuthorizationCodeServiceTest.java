@@ -88,12 +88,24 @@ class AuthorizationCodeServiceTest {
     }
 
     @Test
-    void shouldCallDeleteWithAuthCode() {
+    void shouldCallUpdateWithExchangeDateTimeValue() {
         AuthorizationCode testCode = new AuthorizationCode();
+        AuthorizationCodeItem authorizationCodeItem =
+                new AuthorizationCodeItem(
+                        testCode.getValue(),
+                        "test-resource",
+                        "http://example.com",
+                        Instant.now().toString(),
+                        null);
 
-        authorizationCodeService.revokeAuthorizationCode(testCode.getValue());
+        when(mockDataStore.getItem(testCode.getValue())).thenReturn(authorizationCodeItem);
+        authorizationCodeService.setExchangeDateTime(testCode.getValue());
 
-        verify(mockDataStore).delete(DigestUtils.sha256Hex(testCode.getValue()));
+        ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
+                ArgumentCaptor.forClass(AuthorizationCodeItem.class);
+        verify(mockDataStore).update(authorizationCodeItemArgumentCaptor.capture());
+
+        assertNotNull(authorizationCodeItemArgumentCaptor.getValue().getExchangeDateTime());
     }
 
     @Test
@@ -104,7 +116,8 @@ class AuthorizationCodeServiceTest {
                         "auth-code",
                         "resource-id",
                         "redirect-url",
-                        Instant.now().minusSeconds(601).toString());
+                        Instant.now().minusSeconds(601).toString(),
+                        null);
 
         assertTrue(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }
@@ -117,7 +130,8 @@ class AuthorizationCodeServiceTest {
                         "auth-code",
                         "resource-id",
                         "redirect-url",
-                        Instant.now().minusSeconds(599).toString());
+                        Instant.now().minusSeconds(599).toString(),
+                        null);
 
         assertFalse(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }

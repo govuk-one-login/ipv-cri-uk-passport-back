@@ -93,6 +93,16 @@ public class AccessTokenHandler
                         OAuth2Error.INVALID_GRANT.toJSONObject());
             }
 
+            if (authorizationCodeItem.getExchangeDateTime() != null) {
+                LOGGER.error(
+                        "Auth code has been used multiple times. Auth code was exchanged for an access token at: {}",
+                        authorizationCodeItem.getExchangeDateTime());
+
+                ErrorObject error = revokeAccessTokenAndAuthCode(authorizationCodeItem);
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        error.getHTTPStatusCode(), error.toJSONObject());
+            }
+
             if (authorizationCodeService.isExpired(authorizationCodeItem)) {
                 LOGGER.error(
                         "Access Token could not be issued. The supplied authorization code has expired. Created at: {}",
@@ -116,9 +126,11 @@ public class AccessTokenHandler
             AccessTokenResponse accessTokenResponse = tokenResponse.toSuccessResponse();
 
             accessTokenService.persistAccessToken(
-                    accessTokenResponse, authorizationCodeItem.getResourceId());
+                    accessTokenResponse,
+                    authorizationCodeItem.getResourceId(),
+                    authorizationCodeItem.getAuthCode());
 
-            authorizationCodeService.revokeAuthorizationCode(authorizationCodeItem.getAuthCode());
+            authorizationCodeService.setExchangeDateTime(authorizationCodeItem.getAuthCode());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, accessTokenResponse.toJSONObject());
@@ -171,5 +183,18 @@ public class AccessTokenHandler
                 .getRedirectionURI()
                 .toString()
                 .equals(authorizationCodeItem.getRedirectUrl());
+    }
+
+    private ErrorObject revokeAccessTokenAndAuthCode(AuthorizationCodeItem authorizationCodeItem) {
+        try {
+            accessTokenService.revokeAccessTokenViaAuthCode(authorizationCodeItem.getAuthCode());
+            authorizationCodeService.revokeAuthorizationCode(authorizationCodeItem.getAuthCode());
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed to revoke access token because: {}", e.getMessage());
+
+            return OAuth2Error.SERVER_ERROR.setDescription("Failed to revoke access token");
+        }
+
+        return OAuth2Error.INVALID_GRANT.setDescription("Authorization code used too many times");
     }
 }

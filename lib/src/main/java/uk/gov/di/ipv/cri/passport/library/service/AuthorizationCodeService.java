@@ -44,11 +44,19 @@ public class AuthorizationCodeService {
                         DigestUtils.sha256Hex(authorizationCode),
                         resourceId,
                         redirectUrl,
-                        Instant.now().toString()));
+                        Instant.now().toString(),
+                        null));
     }
 
     public void revokeAuthorizationCode(String authorizationCode) {
         dataStore.delete(DigestUtils.sha256Hex(authorizationCode));
+    }
+
+    public void setExchangeDateTime(String authorizationCode) {
+        AuthorizationCodeItem authorizationCodeItem = dataStore.getItem(authorizationCode);
+        authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
+
+        dataStore.update(authorizationCodeItem);
     }
 
     public boolean isExpired(AuthorizationCodeItem authCodeItem) {
