@@ -18,9 +18,9 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
@@ -31,6 +31,7 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,7 +47,8 @@ class AccessTokenHandlerTest {
             new AuthorizationCodeItem(
                     new AuthorizationCode().toString(),
                     UUID.randomUUID().toString(),
-                    "http://example.com");
+                    "http://example.com",
+                    Instant.now().toString());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
@@ -54,18 +56,7 @@ class AccessTokenHandlerTest {
     @Mock private AuthorizationCodeService mockAuthorizationCodeService;
     @Mock private ConfigurationService mockConfigurationService;
     @Mock private TokenRequestValidator mockTokenRequestValidator;
-
-    private AccessTokenHandler handler;
-
-    @BeforeEach
-    void setUp() {
-        handler =
-                new AccessTokenHandler(
-                        mockAccessTokenService,
-                        mockAuthorizationCodeService,
-                        mockConfigurationService,
-                        mockTokenRequestValidator);
-    }
+    @InjectMocks private AccessTokenHandler handler;
 
     @Test
     void shouldReturnAccessTokenOnSuccessfulExchange() throws Exception {
@@ -154,7 +145,7 @@ class AccessTokenHandlerTest {
     }
 
     @Test
-    void shouldReturn400OWhenInvalidAuthorisationCodeProvided() throws Exception {
+    void shouldReturn400OWhenUnknownAuthorisationCodeProvided() throws Exception {
         String tokenRequestBody =
                 "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
@@ -172,6 +163,28 @@ class AccessTokenHandlerTest {
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
+    }
+
+    @Test
+    void shouldReturn400OWhenAuthorisationCodeHasExpired() throws Exception {
+        String tokenRequestBody =
+                "code=12345&redirect_uri=http://test.com&grant_type=authorization_code&client_id=test_client_id";
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        event.setBody(tokenRequestBody);
+
+        when(mockAccessTokenService.validateTokenRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
+
+        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
+        when(mockAuthorizationCodeService.isExpired(TEST_AUTH_CODE_ITEM)).thenReturn(true);
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
+
+        assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
+        assertEquals("Authorization code expired", errorResponse.getDescription());
     }
 
     @Test

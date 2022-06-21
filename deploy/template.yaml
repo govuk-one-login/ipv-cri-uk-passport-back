@@ -253,6 +253,8 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/authCodeExpirySeconds
+        - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
