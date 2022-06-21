@@ -239,7 +239,9 @@ class JwtAuthorizationRequestHandlerTest {
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenThrow(
                         new RecoverableJarValidationException(
-                                OAuth2Error.INVALID_REQUEST_OBJECT, "http://redirect-url.com"));
+                                OAuth2Error.INVALID_REQUEST_OBJECT,
+                                "http://redirect-url.com",
+                                null));
 
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> map = new HashMap<>();
@@ -252,6 +254,31 @@ class JwtAuthorizationRequestHandlerTest {
         assertEquals(302, response.getStatusCode());
         assertEquals(
                 "{\"redirect_uri\":\"http://redirect-url.com\",\"oauth_error\":{\"error_description\":\"Invalid request JWT\",\"error\":\"invalid_request_object\"}}",
+                response.getBody());
+    }
+
+    @Test
+    void shouldReturn302WithRedirectUriAndStateIfPresentWhenValidationFailsButIsRecoverable()
+            throws Exception {
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
+        when(jarValidator.validateRequestJwt(any(), anyString()))
+                .thenThrow(
+                        new RecoverableJarValidationException(
+                                OAuth2Error.INVALID_REQUEST_OBJECT,
+                                "http://redirect-url.com",
+                                "xyz"));
+
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> map = new HashMap<>();
+        map.put("client_id", "TEST");
+        event.setHeaders(map);
+        event.setBody(JWE_OBJECT_STRING);
+
+        var response = underTest.handleRequest(event, context);
+
+        assertEquals(302, response.getStatusCode());
+        assertEquals(
+                "{\"redirect_uri\":\"http://redirect-url.com\",\"state\":\"xyz\",\"oauth_error\":{\"error_description\":\"Invalid request JWT\",\"error\":\"invalid_request_object\"}}",
                 response.getBody());
     }
 

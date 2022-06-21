@@ -66,7 +66,9 @@ public class JarValidator {
             JWTClaimsSet validatedClaimSet = getValidatedClaimSet(signedJWT, clientId);
             return validatedClaimSet;
         } catch (JarValidationException e) {
-            throw new RecoverableJarValidationException(e.getErrorObject(), redirectUri.toString());
+            String state = claimsSet.getStringClaim("state");
+            throw new RecoverableJarValidationException(
+                    e.getErrorObject(), redirectUri.toString(), state);
         }
     }
 

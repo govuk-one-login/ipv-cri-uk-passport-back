@@ -96,7 +96,7 @@ public class JwtAuthorizationRequestHandler
             LOGGER.error("JAR validation failed: {}", e.getErrorObject().getDescription());
             RedirectErrorResponse errorResponse =
                     new RedirectErrorResponse(
-                            e.getRedirectUri(), e.getErrorObject().toJSONObject());
+                            e.getRedirectUri(), e.getState(), e.getErrorObject().toJSONObject());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), errorResponse);
         } catch (JarValidationException e) {
