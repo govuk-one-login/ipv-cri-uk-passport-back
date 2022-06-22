@@ -61,8 +61,7 @@ public class AccessTokenService {
     public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setAccessToken(
-                DigestUtils.sha256Hex(
-                        tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader()));
+                DigestUtils.sha256Hex(tokenResponse.getTokens().getBearerAccessToken().getValue()));
         accessTokenItem.setResourceId(resourceId);
         dataStore.create(accessTokenItem);
     }

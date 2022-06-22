@@ -125,10 +125,7 @@ class AccessTokenServiceTest {
         assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
         assertEquals(
                 DigestUtils.sha256Hex(
-                        accessTokenResponse
-                                .getTokens()
-                                .getBearerAccessToken()
-                                .toAuthorizationHeader()),
+                        accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
                 capturedAccessTokenItem.getAccessToken());
     }
 

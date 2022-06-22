@@ -76,13 +76,14 @@ public class IssueCredentialHandler
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
         try {
-            String accessTokenString =
-                    RequestHelper.getHeaderByKey(input.getHeaders(), AUTHORIZATION_HEADER_KEY);
+            AccessToken accessToken =
+                    AccessToken.parse(
+                            RequestHelper.getHeaderByKey(
+                                    input.getHeaders(), AUTHORIZATION_HEADER_KEY),
+                            AccessTokenType.BEARER);
 
-            // Performs validation on header value and throws a ParseException if invalid
-            AccessToken.parse(accessTokenString, AccessTokenType.BEARER);
-
-            String resourceId = accessTokenService.getResourceIdByAccessToken(accessTokenString);
+            String resourceId =
+                    accessTokenService.getResourceIdByAccessToken(accessToken.getValue());
 
             if (StringUtils.isBlank(resourceId)) {
                 LOGGER.error(
