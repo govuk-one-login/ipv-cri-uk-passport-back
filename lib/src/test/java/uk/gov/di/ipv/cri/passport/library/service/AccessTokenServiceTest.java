@@ -14,6 +14,7 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -123,7 +124,11 @@ class AccessTokenServiceTest {
         assertNotNull(capturedAccessTokenItem);
         assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
         assertEquals(
-                accessTokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader(),
+                DigestUtils.sha256Hex(
+                        accessTokenResponse
+                                .getTokens()
+                                .getBearerAccessToken()
+                                .toAuthorizationHeader()),
                 capturedAccessTokenItem.getAccessToken());
     }
 
@@ -134,11 +139,11 @@ class AccessTokenServiceTest {
 
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setResourceId(testResourceId);
-        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(accessTokenItem);
 
         String resultIpvSessionId = accessTokenService.getResourceIdByAccessToken(accessToken);
 
-        verify(mockDataStore).getItem(accessToken);
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
 
         assertNotNull(resultIpvSessionId);
         assertEquals(testResourceId, resultIpvSessionId);
@@ -148,11 +153,11 @@ class AccessTokenServiceTest {
     void shouldReturnNullWhenInvalidAccessTokenProvided() {
         String accessToken = new BearerAccessToken().toAuthorizationHeader();
 
-        when(mockDataStore.getItem(accessToken)).thenReturn(null);
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(null);
 
         String resultIpvSessionId = accessTokenService.getResourceIdByAccessToken(accessToken);
 
-        verify(mockDataStore).getItem(accessToken);
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
         assertNull(resultIpvSessionId);
     }
 }

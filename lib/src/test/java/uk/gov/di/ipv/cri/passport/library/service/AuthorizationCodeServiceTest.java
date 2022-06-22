@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -47,7 +48,8 @@ class AuthorizationCodeServiceTest {
         verify(mockDataStore).create(authorizationCodeItemArgumentCaptor.capture());
         assertEquals(resourceId, authorizationCodeItemArgumentCaptor.getValue().getResourceId());
         assertEquals(
-                testCode.getValue(), authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
+                DigestUtils.sha256Hex(testCode.getValue()),
+                authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
         assertEquals(redirectUrl, authorizationCodeItemArgumentCaptor.getValue().getRedirectUrl());
     }
 
@@ -60,13 +62,13 @@ class AuthorizationCodeServiceTest {
         testItem.setResourceId(resourceId);
         testItem.setAuthCode(new AuthorizationCode().getValue());
         testItem.setRedirectUrl("http://example.com");
-
-        when(mockDataStore.getItem(testCode.getValue())).thenReturn(testItem);
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(testCode.getValue())))
+                .thenReturn(testItem);
 
         AuthorizationCodeItem resultAuthCodeItem =
                 authorizationCodeService.getAuthCodeItem(testCode.getValue());
 
-        verify(mockDataStore).getItem(testCode.getValue());
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(testCode.getValue()));
         assertEquals(resourceId, resultAuthCodeItem.getResourceId());
         assertEquals(testItem.getAuthCode(), resultAuthCodeItem.getAuthCode());
         assertEquals(testItem.getRedirectUrl(), resultAuthCodeItem.getRedirectUrl());
@@ -76,12 +78,12 @@ class AuthorizationCodeServiceTest {
     void shouldReturnNullWhenInvalidAuthCodeProvided() {
         AuthorizationCode testCode = new AuthorizationCode();
 
-        when(mockDataStore.getItem(testCode.getValue())).thenReturn(null);
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(testCode.getValue()))).thenReturn(null);
 
         AuthorizationCodeItem resultAuthCodeItem =
                 authorizationCodeService.getAuthCodeItem(testCode.getValue());
 
-        verify(mockDataStore).getItem(testCode.getValue());
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(testCode.getValue()));
         assertNull(resultAuthCodeItem);
     }
 
@@ -91,7 +93,7 @@ class AuthorizationCodeServiceTest {
 
         authorizationCodeService.revokeAuthorizationCode(testCode.getValue());
 
-        verify(mockDataStore).delete(testCode.getValue());
+        verify(mockDataStore).delete(DigestUtils.sha256Hex(testCode.getValue()));
     }
 
     @Test

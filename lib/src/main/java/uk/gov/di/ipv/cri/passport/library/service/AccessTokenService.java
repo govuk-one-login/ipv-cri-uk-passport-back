@@ -9,6 +9,7 @@ import com.nimbusds.oauth2.sdk.TokenResponse;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
@@ -53,14 +54,15 @@ public class AccessTokenService {
     }
 
     public String getResourceIdByAccessToken(String accessToken) {
-        AccessTokenItem accessTokenItem = dataStore.getItem(accessToken);
+        AccessTokenItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
         return Objects.isNull(accessTokenItem) ? null : accessTokenItem.getResourceId();
     }
 
     public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setAccessToken(
-                tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader());
+                DigestUtils.sha256Hex(
+                        tokenResponse.getTokens().getBearerAccessToken().toAuthorizationHeader()));
         accessTokenItem.setResourceId(resourceId);
         dataStore.create(accessTokenItem);
     }
