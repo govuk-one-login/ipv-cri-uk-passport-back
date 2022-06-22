@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
@@ -33,18 +34,21 @@ public class AuthorizationCodeService {
     }
 
     public AuthorizationCodeItem getAuthCodeItem(String authorizationCode) {
-        return dataStore.getItem(authorizationCode);
+        return dataStore.getItem(DigestUtils.sha256Hex(authorizationCode));
     }
 
     public void persistAuthorizationCode(
             String authorizationCode, String resourceId, String redirectUrl) {
         dataStore.create(
                 new AuthorizationCodeItem(
-                        authorizationCode, resourceId, redirectUrl, Instant.now().toString()));
+                        DigestUtils.sha256Hex(authorizationCode),
+                        resourceId,
+                        redirectUrl,
+                        Instant.now().toString()));
     }
 
     public void revokeAuthorizationCode(String authorizationCode) {
-        dataStore.delete(authorizationCode);
+        dataStore.delete(DigestUtils.sha256Hex(authorizationCode));
     }
 
     public boolean isExpired(AuthorizationCodeItem authCodeItem) {
