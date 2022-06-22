@@ -22,8 +22,10 @@ dependencies {
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$rootProject.ext.dependencyVersions.jackson",
 			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
-			"org.slf4j:slf4j-simple:$rootProject.ext.dependencyVersions.slf4j",
+			configurations.loggingImplementation,
 			project(":lib")
+
+	runtimeOnly configurations.loggingRunTimeOnly
 
 	testImplementation "com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
 			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",

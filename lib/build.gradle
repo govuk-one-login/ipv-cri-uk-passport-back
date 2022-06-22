@@ -24,7 +24,6 @@ dependencies {
 			"com.google.code.gson:gson:$rootProject.ext.dependencyVersions.gson",
 			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
-			"org.slf4j:slf4j-simple:$rootProject.ext.dependencyVersions.slf4j",
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters"
 
