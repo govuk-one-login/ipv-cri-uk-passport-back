@@ -30,6 +30,7 @@ public class JarValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarValidator.class);
     private static final String REDIRECT_URI_CLAIM = "redirect_uri";
     public static final String CLIENT_ID = "client_id";
+    private static final String STATE = "state";
 
     private final KmsRsaDecrypter kmsRsaDecrypter;
     private final ConfigurationService configurationService;
@@ -66,7 +67,9 @@ public class JarValidator {
             JWTClaimsSet validatedClaimSet = getValidatedClaimSet(signedJWT, clientId);
             return validatedClaimSet;
         } catch (JarValidationException e) {
-            throw new RecoverableJarValidationException(e.getErrorObject(), redirectUri.toString());
+            String state = claimsSet.getStringClaim(STATE);
+            throw new RecoverableJarValidationException(
+                    e.getErrorObject(), redirectUri.toString(), state);
         }
     }
 

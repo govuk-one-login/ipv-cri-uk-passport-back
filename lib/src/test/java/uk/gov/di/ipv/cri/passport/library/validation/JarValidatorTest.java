@@ -40,6 +40,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -237,6 +238,7 @@ class JarValidatorTest {
                 "JWT missing required claims: [exp, iat, iss, nbf, response_type, sub]",
                 errorObject.getDescription());
         assertEquals(redirectUriClaim, thrown.getRedirectUri());
+        assertNull(thrown.getState());
     }
 
     @Test
@@ -286,6 +288,7 @@ class JarValidatorTest {
         assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorObject.getCode());
         assertEquals("JWT audience rejected: [invalid-audience]", errorObject.getDescription());
         assertEquals(redirectUriClaim, thrown.getRedirectUri());
+        assertEquals(stateClaim, thrown.getState());
     }
 
     @Test
