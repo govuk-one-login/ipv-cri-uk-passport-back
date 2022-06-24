@@ -11,17 +11,31 @@ Globals:
 
 Parameters:
   Environment:
+    AllowedValues:
+      - development
+      - build
+      - staging
+      - integration
+      - production
     Type: String
-  ProvisionedConcurrentExecutions:
-    Type: Number
-    Description: >-
-      The number of lambda execution environments to keep permanently ready to reduce cold starts.
-    Default: 0
+
+Mappings:
+  EnvironmentConfiguration:
+    development:
+      provisionedConcurrency: 0
+    build:
+      provisionedConcurrency: 0
+    staging:
+      provisionedConcurrency: 1
+    integration:
+      provisionedConcurrency: 1
+    production:
+      provisionedConcurrency: 1
 
 Conditions:
   AddProvisionedConcurrency: !Not
     - !Equals
-      - !Ref ProvisionedConcurrentExecutions
+      - !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
       -  0
 
   IsDevelopmentEnvironment: !Not
@@ -202,7 +216,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !Ref ProvisionedConcurrentExecutions
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
           - !Ref AWS::NoValue
 
   IPVCriUKPassportIssueCredentialFunctionLogGroup:
@@ -269,7 +283,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !Ref ProvisionedConcurrentExecutions
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
           - !Ref AWS::NoValue
 
   IPVCriUKPassportAccessTokenFunctionLogGroup:
@@ -351,7 +365,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !Ref ProvisionedConcurrentExecutions
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
           - !Ref AWS::NoValue
 
   IPVCriUKPassportAuthorizationCodeFunctionLogGroup:
@@ -432,7 +446,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !Ref ProvisionedConcurrentExecutions
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
           - !Ref AWS::NoValue
 
   IPVCriUKPassportJwTAuthorizationRequestFunctionLogGroup:
