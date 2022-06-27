@@ -34,7 +34,6 @@ import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.Objects;
 
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VC_CLAIM;
 
@@ -85,9 +84,9 @@ public class IssueCredentialHandler
                             AccessTokenType.BEARER);
 
             AccessTokenItem accessTokenItem =
-                    accessTokenService.getAccessToken(accessToken.getValue());
+                    accessTokenService.getAccessTokenItem(accessToken.getValue());
 
-            if (Objects.isNull(accessTokenItem)) {
+            if (accessTokenItem == null) {
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token was not found in the database.");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -95,6 +94,18 @@ public class IssueCredentialHandler
                         OAuth2Error.ACCESS_DENIED
                                 .appendDescription(
                                         " - The supplied access token was not found in the database")
+                                .toJSONObject());
+            }
+
+            String accessTokenExpiryDateTime = accessTokenItem.getAccessTokenExpiryDateTime();
+            if (Instant.now().isAfter(Instant.parse(accessTokenExpiryDateTime))) {
+                LOGGER.error(
+                        "User credential could not be retrieved. The supplied access token expired at: {}",
+                        accessTokenExpiryDateTime);
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
+                        OAuth2Error.ACCESS_DENIED
+                                .appendDescription(" - The supplied access token has expired")
                                 .toJSONObject());
             }
 

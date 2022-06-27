@@ -44,7 +44,8 @@ public class AccessTokenService {
     public TokenResponse generateAccessToken(TokenRequest tokenRequest) {
         AccessToken accessToken =
                 new BearerAccessToken(
-                        configurationService.getBearerAccessTokenTtl(), tokenRequest.getScope());
+                        configurationService.getAccessTokenExpirySeconds(),
+                        tokenRequest.getScope());
         return new AccessTokenResponse(new Tokens(accessToken, null));
     }
 
@@ -55,14 +56,15 @@ public class AccessTokenService {
         return ValidationResult.createValidResult();
     }
 
-    public AccessTokenItem getAccessToken(String accessToken) {
+    public AccessTokenItem getAccessTokenItem(String accessToken) {
         return dataStore.getItem(DigestUtils.sha256Hex(accessToken));
     }
 
     public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
+        AccessToken accessToken = tokenResponse.getTokens().getBearerAccessToken();
         AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(
-                DigestUtils.sha256Hex(tokenResponse.getTokens().getBearerAccessToken().getValue()));
+        accessTokenItem.setAccessToken(DigestUtils.sha256Hex(accessToken.getValue()));
+        accessTokenItem.setAccessTokenExpiryDateTime(toExpiryDateTime(accessToken.getLifetime()));
         accessTokenItem.setResourceId(resourceId);
 
         dataStore.create(accessTokenItem);
@@ -80,5 +82,9 @@ public class AccessTokenService {
             throw new IllegalArgumentException(
                     "Failed to revoke access token - access token could not be found in DynamoDB");
         }
+    }
+
+    private String toExpiryDateTime(long expirySeconds) {
+        return Instant.now().plusSeconds(expirySeconds).toString();
     }
 }

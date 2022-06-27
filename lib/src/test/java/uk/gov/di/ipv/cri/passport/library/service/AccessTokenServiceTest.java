@@ -65,7 +65,7 @@ class AccessTokenServiceTest {
                         new AuthorizationCodeGrant(
                                 new AuthorizationCode("123456"), new URI("http://test.com")),
                         testScope);
-        when(mockConfigurationService.getBearerAccessTokenTtl()).thenReturn(testTokenTtl);
+        when(mockConfigurationService.getAccessTokenExpirySeconds()).thenReturn(testTokenTtl);
 
         TokenResponse response = accessTokenService.generateAccessToken(tokenRequest);
 
@@ -115,7 +115,7 @@ class AccessTokenServiceTest {
     @Test
     void shouldPersistAccessToken() {
         String testResourceId = UUID.randomUUID().toString();
-        AccessToken accessToken = new BearerAccessToken();
+        AccessToken accessToken = new BearerAccessToken(3600L, null);
         AccessTokenResponse accessTokenResponse =
                 new AccessTokenResponse(new Tokens(accessToken, null));
         ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
@@ -131,6 +131,8 @@ class AccessTokenServiceTest {
                 DigestUtils.sha256Hex(
                         accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
                 capturedAccessTokenItem.getAccessToken());
+        assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
+        assertNotNull(capturedAccessTokenItem.getAccessTokenExpiryDateTime());
     }
 
     @Test
@@ -144,7 +146,7 @@ class AccessTokenServiceTest {
         when(mockDataStore.getItem(DigestUtils.sha256Hex(accessTokenValue)))
                 .thenReturn(accessTokenItem);
 
-        AccessTokenItem result = accessTokenService.getAccessToken(accessTokenValue);
+        AccessTokenItem result = accessTokenService.getAccessTokenItem(accessTokenValue);
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessTokenValue));
 
@@ -158,7 +160,7 @@ class AccessTokenServiceTest {
 
         when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(null);
 
-        AccessTokenItem accessTokenItem = accessTokenService.getAccessToken(accessToken);
+        AccessTokenItem accessTokenItem = accessTokenService.getAccessTokenItem(accessToken);
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
         assertNull(accessTokenItem);
@@ -198,7 +200,7 @@ class AccessTokenServiceTest {
     }
 
     @Test
-    void shouldThrowExceptipnIfAccessTokenCanNotBeFoundWhenRevoking() {
+    void shouldThrowExceptionIfAccessTokenCanNotBeFoundWhenRevoking() {
         String accessToken = "test-access-token";
 
         when(mockDataStore.getItem(accessToken)).thenReturn(null);
