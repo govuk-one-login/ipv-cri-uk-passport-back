@@ -88,18 +88,17 @@ class AuthorizationCodeServiceTest {
     }
 
     @Test
-    void shouldCallUpdateWithExchangeDateTimeValue() {
+    void shouldCallUpdateWithIssuedAccessTokenValue() {
         AuthorizationCode testCode = new AuthorizationCode();
         AuthorizationCodeItem authorizationCodeItem =
                 new AuthorizationCodeItem(
                         testCode.getValue(),
                         "test-resource",
                         "http://example.com",
-                        Instant.now().toString(),
-                        null);
+                        Instant.now().toString());
 
         when(mockDataStore.getItem(testCode.getValue())).thenReturn(authorizationCodeItem);
-        authorizationCodeService.setExchangeDateTime(testCode.getValue());
+        authorizationCodeService.setIssuedAccessToken(testCode.getValue(), "test-access-token");
 
         ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
                 ArgumentCaptor.forClass(AuthorizationCodeItem.class);
@@ -116,8 +115,7 @@ class AuthorizationCodeServiceTest {
                         "auth-code",
                         "resource-id",
                         "redirect-url",
-                        Instant.now().minusSeconds(601).toString(),
-                        null);
+                        Instant.now().minusSeconds(601).toString());
 
         assertTrue(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }
@@ -130,8 +128,7 @@ class AuthorizationCodeServiceTest {
                         "auth-code",
                         "resource-id",
                         "redirect-url",
-                        Instant.now().minusSeconds(599).toString(),
-                        null);
+                        Instant.now().minusSeconds(599).toString());
 
         assertFalse(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }

@@ -1,18 +1,14 @@
 package uk.gov.di.ipv.cri.passport.library.persistence;
 
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.DynamodbItem;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
@@ -64,19 +60,6 @@ public class DataStore<T extends DynamodbItem> {
 
     public T getItem(String partitionValue) {
         return getItemByKey(Key.builder().partitionValue(partitionValue).build());
-    }
-
-    public List<T> getItemByIndex(String indexName, String value) throws DynamoDbException {
-        DynamoDbIndex<T> index = getTable().index(indexName);
-        var attVal = AttributeValue.builder().s(value).build();
-        var queryConditional =
-                QueryConditional.keyEqualTo(Key.builder().partitionValue(attVal).build());
-        var queryEnhancedRequest =
-                QueryEnhancedRequest.builder().queryConditional(queryConditional).build();
-
-        return index.query(queryEnhancedRequest).stream()
-                .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
     }
 
     public List<T> getItems(String partitionValue) {

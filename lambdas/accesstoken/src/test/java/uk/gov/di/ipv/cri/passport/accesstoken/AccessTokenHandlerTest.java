@@ -50,8 +50,7 @@ class AccessTokenHandlerTest {
                     new AuthorizationCode().toString(),
                     UUID.randomUUID().toString(),
                     "http://example.com",
-                    Instant.now().toString(),
-                    null);
+                    Instant.now().toString());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
@@ -242,8 +241,10 @@ class AccessTokenHandlerTest {
                         new AuthorizationCode().toString(),
                         UUID.randomUUID().toString(),
                         "http://example.com",
-                        Instant.now().toString(),
                         Instant.now().toString());
+
+        authorizationCodeItem.setIssuedAccessToken("test-access-token");
+        authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
 
         when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
                 .thenReturn(authorizationCodeItem);
@@ -253,16 +254,53 @@ class AccessTokenHandlerTest {
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
         verify(mockAccessTokenService)
-                .revokeAccessTokenViaAuthCode(authorizationCodeItem.getAuthCode());
-        verify(mockAuthorizationCodeService)
-                .revokeAuthorizationCode(authorizationCodeItem.getAuthCode());
+                .revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
-        assertEquals(400, response.getStatusCode());
         assertEquals(HTTPResponse.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
         assertEquals("Authorization code used too many times", errorResponse.getDescription());
+    }
+
+    @Test
+    void shouldReturn400WhenRevokingAccessTokenFails() throws Exception {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        String tokenRequestBody =
+                "code=12345&redirect_uri=http://example.com&grant_type=authorization_code&client_id=test_client_id";
+        event.setBody(tokenRequestBody);
+
+        AuthorizationCodeItem authorizationCodeItem =
+                new AuthorizationCodeItem(
+                        new AuthorizationCode().toString(),
+                        UUID.randomUUID().toString(),
+                        "http://example.com",
+                        Instant.now().toString());
+
+        authorizationCodeItem.setIssuedAccessToken("test-access-token");
+        authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
+
+        when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
+                .thenReturn(authorizationCodeItem);
+
+        when(mockAccessTokenService.validateTokenRequest(any()))
+                .thenReturn(ValidationResult.createValidResult());
+
+        String errorMessage = "Failed to revoke access token";
+        doThrow(new IllegalArgumentException(errorMessage))
+                .when(mockAccessTokenService)
+                .revokeAccessToken(any());
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockAccessTokenService)
+                .revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
+
+        ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
+
+        assertEquals(HTTPResponse.SC_BAD_REQUEST, response.getStatusCode());
+        assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
+        assertEquals(errorMessage, errorResponse.getDescription());
     }
 
     private ErrorObject createErrorObjectFromResponse(String responseBody) throws ParseException {

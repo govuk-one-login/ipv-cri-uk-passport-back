@@ -17,7 +17,6 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -112,17 +111,6 @@ class DataStoreTest {
         verify(mockDynamoDbTable).getItem(keyCaptor.capture());
         assertEquals("partition-key-12345", keyCaptor.getValue().partitionKeyValue().s());
         assertTrue(keyCaptor.getValue().sortKeyValue().isEmpty());
-    }
-
-    @Test
-    void shouldGetItemFromDynamoDbTableViaIndex() {
-        when(mockIndex.query((QueryEnhancedRequest) any())).thenReturn(mockIterable);
-        when(mockDynamoDbTable.index(anyString())).thenReturn(mockIndex);
-
-        String indexName = "test-index";
-        dataStore.getItemByIndex(indexName, "partition-key-12345");
-
-        verify(mockIndex).query(any(QueryEnhancedRequest.class));
     }
 
     @Test

@@ -12,22 +12,18 @@ public class AuthorizationCodeItem implements DynamodbItem {
     private String resourceId;
     private String redirectUrl;
     private String creationDateTime;
+    private String issuedAccessToken;
     private String exchangeDateTime;
     private long ttl;
 
     public AuthorizationCodeItem() {}
 
     public AuthorizationCodeItem(
-            String authCode,
-            String resourceId,
-            String redirectUrl,
-            String creationDateTime,
-            String exchangeDateTime) {
+            String authCode, String resourceId, String redirectUrl, String creationDateTime) {
         this.authCode = authCode;
         this.resourceId = resourceId;
         this.redirectUrl = redirectUrl;
         this.creationDateTime = creationDateTime;
-        this.exchangeDateTime = exchangeDateTime;
     }
 
     @DynamoDbPartitionKey
@@ -69,6 +65,14 @@ public class AuthorizationCodeItem implements DynamodbItem {
 
     public void setCreationDateTime(String creationDateTime) {
         this.creationDateTime = creationDateTime;
+    }
+
+    public String getIssuedAccessToken() {
+        return issuedAccessToken;
+    }
+
+    public void setIssuedAccessToken(String issuedAccessToken) {
+        this.issuedAccessToken = issuedAccessToken;
     }
 
     public String getExchangeDateTime() {

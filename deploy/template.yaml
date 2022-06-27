@@ -499,18 +499,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "accessToken"
           AttributeType: "S"
-        - AttributeName: "authCode"
-          AttributeType: "S"
       KeySchema:
         - AttributeName: "accessToken"
           KeyType: "HASH"
-      GlobalSecondaryIndexes:
-        - IndexName: "authorizationCode-index"
-          KeySchema:
-            - AttributeName: "authCode"
-              KeyType: "HASH"
-          Projection:
-            ProjectionType: "ALL"
       TimeToLiveSpecification:
         AttributeName: "ttl"
         Enabled: true

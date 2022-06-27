@@ -2,7 +2,6 @@ package uk.gov.di.ipv.cri.passport.library.persistence.item;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 @DynamoDbBean
@@ -10,7 +9,7 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 public class AccessTokenItem implements DynamodbItem {
     private String accessToken;
     private String resourceId;
-    private String authCode;
+    private String revokedAtDateTime;
     private long ttl;
 
     @DynamoDbPartitionKey
@@ -30,13 +29,12 @@ public class AccessTokenItem implements DynamodbItem {
         this.resourceId = resourceId;
     }
 
-    @DynamoDbSecondaryPartitionKey(indexNames = "authorizationCode-index")
-    public String getAuthCode() {
-        return authCode;
+    public String getRevokedAtDateTime() {
+        return revokedAtDateTime;
     }
 
-    public void setAuthCode(String authCode) {
-        this.authCode = authCode;
+    public void setRevokedAtDateTime(String revokedAtDateTime) {
+        this.revokedAtDateTime = revokedAtDateTime;
     }
 
     public long getTtl() {
