@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.accesstoken.domain.ConfigurationServicePublicKeySelector;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
+import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
@@ -41,6 +42,7 @@ public class TokenRequestValidator {
             clientJwt = PrivateKeyJWT.parse(requestBody);
             verifier.verify(clientJwtWithConcatSignature(clientJwt, requestBody), null, null);
             validateMaxAllowedAuthClientTtl(clientJwt.getJWTAuthenticationClaimsSet());
+            LogHelper.attachClientIdToLogs(clientJwt.getClientID().getValue());
         } catch (ParseException
                 | InvalidClientException
                 | JOSEException

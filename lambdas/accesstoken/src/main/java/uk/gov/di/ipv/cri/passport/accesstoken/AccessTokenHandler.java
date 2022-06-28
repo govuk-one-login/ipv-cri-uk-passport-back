@@ -14,12 +14,13 @@ import com.nimbusds.oauth2.sdk.TokenRequest;
 import com.nimbusds.oauth2.sdk.TokenResponse;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import org.apache.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
@@ -32,7 +33,7 @@ import java.util.Objects;
 public class AccessTokenHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccessTokenHandler.class);
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private final AccessTokenService accessTokenService;
     private final AuthorizationCodeService authorizationCodeService;
@@ -61,6 +62,7 @@ public class AccessTokenHandler
     @Override
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
+        LogHelper.attachComponentIdToLogs();
         try {
             String requestBody = input.getBody();
             tokenRequestValidator.authenticateClient(requestBody);
@@ -92,6 +94,7 @@ public class AccessTokenHandler
                         OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
                         OAuth2Error.INVALID_GRANT.toJSONObject());
             }
+            LogHelper.attachSessionIdToLogs(authorizationCodeItem.getPassportSessionId());
 
             if (authorizationCodeItem.getIssuedAccessToken() != null) {
                 LOGGER.error(
@@ -126,7 +129,9 @@ public class AccessTokenHandler
             AccessTokenResponse accessTokenResponse = tokenResponse.toSuccessResponse();
 
             accessTokenService.persistAccessToken(
-                    accessTokenResponse, authorizationCodeItem.getResourceId());
+                    accessTokenResponse,
+                    authorizationCodeItem.getResourceId(),
+                    authorizationCodeItem.getPassportSessionId());
 
             authorizationCodeService.setIssuedAccessToken(
                     authorizationCodeItem.getAuthCode(),
@@ -136,7 +141,9 @@ public class AccessTokenHandler
                     HttpStatus.SC_OK, accessTokenResponse.toJSONObject());
         } catch (ParseException e) {
             LOGGER.error(
-                    "Token request could not be parsed: " + e.getErrorObject().getDescription(), e);
+                    "Token request could not be parsed: '{}'",
+                    e.getErrorObject().getDescription(),
+                    e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     getHttpStatusCodeForErrorResponse(e.getErrorObject()),
                     e.getErrorObject().toJSONObject());

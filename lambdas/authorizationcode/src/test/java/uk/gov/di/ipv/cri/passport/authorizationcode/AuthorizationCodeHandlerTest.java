@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -60,7 +61,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthorizationCodeHandlerTest {
     private static final Map<String, String> TEST_EVENT_HEADERS =
-            Map.of("ipv-session-id", "12345", "user_id", "test-user-id");
+            Map.of("passport_session_id", "test-session-id", "user_id", "test-user-id");
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
     public static final List<String> FORENAMES = List.of("Tubbs");
@@ -143,7 +144,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -185,7 +186,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -204,8 +205,31 @@ class AuthorizationCodeHandlerTest {
                 .persistAuthorizationCode(
                         authCode.get("value"),
                         persistedDcsResponseItem.getValue().getResourceId(),
-                        params.get(OAuth2RequestParams.REDIRECT_URI));
+                        params.get(OAuth2RequestParams.REDIRECT_URI),
+                        "test-session-id");
         assertEquals(authorizationCode.toString(), authCode.get("value"));
+    }
+
+    @Test
+    void shouldReturn400IfPassportSessionIdMissing() throws Exception {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        event.setQueryStringParameters(new HashMap<>());
+        Map<String, String> missingSessionHeaders = new HashMap<>(TEST_EVENT_HEADERS);
+        missingSessionHeaders.remove("passport_session_id");
+        event.setHeaders(missingSessionHeaders);
+
+        var response = underTest.handleRequest(event, context);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(
+                ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getCode(),
+                responseBody.get("code"));
+        assertEquals(
+                ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getMessage(),
+                responseBody.get("message"));
     }
 
     @Test
@@ -215,7 +239,7 @@ class AuthorizationCodeHandlerTest {
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setQueryStringParameters(new HashMap<>());
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -230,7 +254,7 @@ class AuthorizationCodeHandlerTest {
                 responseBody.get("error_description"));
 
         verify(authorizationCodeService, never())
-                .persistAuthorizationCode(anyString(), anyString(), anyString());
+                .persistAuthorizationCode(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -246,7 +270,7 @@ class AuthorizationCodeHandlerTest {
             params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
             params.put(OAuth2RequestParams.SCOPE, "openid");
             event.setQueryStringParameters(params);
-            event.setHeaders(Map.of("user_id", "test-user-id"));
+            event.setHeaders(TEST_EVENT_HEADERS);
             event.setBody(
                     objectMapper.writeValueAsString(
                             new HashMap<>(validPassportFormData).remove(keyToRemove)));
@@ -277,7 +301,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(mangledDateInput));
 
         var response = underTest.handleRequest(event, context);
@@ -317,7 +341,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
@@ -354,7 +378,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         underTest.handleRequest(event, context);
@@ -398,7 +422,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         underTest.handleRequest(event, context);
@@ -444,7 +468,7 @@ class AuthorizationCodeHandlerTest {
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
-        event.setHeaders(Map.of("user_id", "test-user-id"));
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
         underTest.handleRequest(event, context);
@@ -460,7 +484,8 @@ class AuthorizationCodeHandlerTest {
                 .persistAuthorizationCode(
                         authCodeArgumentCaptor.capture(),
                         resourceIdArgumentCaptor.capture(),
-                        redirectUrlArgumentCaptor.capture());
+                        redirectUrlArgumentCaptor.capture(),
+                        eq(TEST_EVENT_HEADERS.get("passport_session_id")));
 
         assertEquals(authorizationCode.toString(), authCodeArgumentCaptor.getValue());
         assertEquals(
@@ -500,7 +525,7 @@ class AuthorizationCodeHandlerTest {
                     ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
                     responseBody.get("error_description"));
             verify(authorizationCodeService, never())
-                    .persistAuthorizationCode(anyString(), anyString(), anyString());
+                    .persistAuthorizationCode(anyString(), anyString(), anyString(), anyString());
         }
     }
 }

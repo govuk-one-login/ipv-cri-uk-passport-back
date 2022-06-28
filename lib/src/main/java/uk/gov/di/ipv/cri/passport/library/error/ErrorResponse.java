@@ -16,15 +16,13 @@ public enum ErrorResponse {
     MISSING_SHARED_ATTRIBUTES_JWT(1007, "Missing shared attributes JWT from request body"),
     FAILED_TO_PARSE(1008, "Failed to parse"),
     MISSING_CLIENT_ID_QUERY_PARAMETER(1009, "Missing client_id query parameter"),
-    FAILED_TO_VERIFY_SIGNATURE(1010, "Failed to verify the signature of the JWT"),
-    JWT_SIGNATURE_IS_INVALID(1011, "Signature of the shared attribute JWT is invalid"),
     INVALID_REDIRECT_URL(1012, "Provided redirect URL is not in those configured for client"),
     UNKNOWN_CLIENT_ID(1013, "Unknown client id provided in request params"),
     INVALID_REQUEST_PARAM(1014, "Invalid request param"),
-    SHARED_CLAIM_IS_MISSING(1015, "shared_claim missing from shared attribute JWT"),
     FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE(
             1016, "Failed to send message to aws SQS audit event queue"),
-    MISSING_USER_ID_HEADER(1017, "Missing user_id header in authorisation request");
+    MISSING_USER_ID_HEADER(1017, "Missing user_id header in authorisation request"),
+    MISSING_PASSPORT_SESSION_ID_HEADER(1018, "Missing passport_session_id header");
 
     private final int code;
     private final String message;

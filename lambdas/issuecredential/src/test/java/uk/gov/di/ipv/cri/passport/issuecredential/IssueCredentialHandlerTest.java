@@ -125,14 +125,15 @@ class IssueCredentialHandlerTest {
     }
 
     @Test
-    void shouldReturn200OnSuccessfulDcsCredentialRequest()
-            throws SqsException, JsonProcessingException {
+    void shouldReturn200OnSuccessfulDcsCredentialRequest() throws SqsException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(accessToken.getValue());
-        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
-        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().plusSeconds(3600).toString());
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken.getValue(),
+                        TEST_RESOURCE_ID,
+                        Instant.now().plusSeconds(3600).toString(),
+                        UUID.randomUUID().toString());
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
@@ -162,10 +163,12 @@ class IssueCredentialHandlerTest {
             throws JsonProcessingException, ParseException, JOSEException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(accessToken.getValue());
-        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().plusSeconds(3600).toString());
-        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken.getValue(),
+                        TEST_RESOURCE_ID,
+                        Instant.now().plusSeconds(3600).toString(),
+                        UUID.randomUUID().toString());
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
@@ -349,9 +352,12 @@ class IssueCredentialHandlerTest {
         event.setHeaders(headers);
         setRequestBodyAsPlainJWT(event);
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
-        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().plusSeconds(60).toString());
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken.getValue(),
+                        TEST_RESOURCE_ID,
+                        Instant.now().plusSeconds(60).toString(),
+                        UUID.randomUUID().toString());
         accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
 
         when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
@@ -375,10 +381,12 @@ class IssueCredentialHandlerTest {
     void shouldReturnErrorResponseWhenExpiredAccessTokenProvided() throws JsonProcessingException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(accessToken.getValue());
-        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
-        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().minusSeconds(5).toString());
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken.getValue(),
+                        TEST_RESOURCE_ID,
+                        Instant.now().minusSeconds(5).toString(),
+                        UUID.randomUUID().toString());
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);

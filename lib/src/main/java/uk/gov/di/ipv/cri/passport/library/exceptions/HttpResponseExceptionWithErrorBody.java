@@ -2,8 +2,6 @@ package uk.gov.di.ipv.cri.passport.library.exceptions;
 
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 
-import java.util.Map;
-
 public class HttpResponseExceptionWithErrorBody extends Exception {
     private final int statusCode;
     private final ErrorResponse errorResponse;
@@ -21,7 +19,7 @@ public class HttpResponseExceptionWithErrorBody extends Exception {
         return this.statusCode;
     }
 
-    public Map<String, Object> getErrorBody() {
-        return Map.of("code", errorResponse.getCode(), "message", errorResponse.getMessage());
+    public ErrorResponse getErrorResponse() {
+        return this.errorResponse;
     }
 }

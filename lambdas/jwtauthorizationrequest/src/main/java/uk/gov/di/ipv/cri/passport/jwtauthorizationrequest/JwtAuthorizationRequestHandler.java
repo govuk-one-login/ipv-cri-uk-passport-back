@@ -9,18 +9,20 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.error.RedirectErrorResponse;
+import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
@@ -37,8 +39,7 @@ public class JwtAuthorizationRequestHandler
     private final JarValidator jarValidator;
     private final AuditService auditService;
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(JwtAuthorizationRequestHandler.class);
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final Integer OK = 200;
     private static final Integer BAD_REQUEST = 400;
     private static final String RESPONSE_TYPE = "response_type";
@@ -70,19 +71,22 @@ public class JwtAuthorizationRequestHandler
     @Override
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
-        String clientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
-
-        if (StringUtils.isBlank(clientId)) {
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    BAD_REQUEST, ErrorResponse.MISSING_CLIENT_ID_QUERY_PARAMETER);
-        }
-
-        if (input.getBody() == null) {
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
-        }
-
+        LogHelper.attachComponentIdToLogs();
         try {
+            RequestHelper.getPassportSessionId(input);
+            String clientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
+
+            if (StringUtils.isBlank(clientId)) {
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        BAD_REQUEST, ErrorResponse.MISSING_CLIENT_ID_QUERY_PARAMETER);
+            }
+            LogHelper.attachClientIdToLogs(clientId);
+
+            if (input.getBody() == null) {
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
+            }
+
             this.auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START);
 
             SignedJWT signedJWT = jarValidator.decryptJWE(JWEObject.parse(input.getBody()));
@@ -112,6 +116,9 @@ public class JwtAuthorizationRequestHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
+        } catch (HttpResponseExceptionWithErrorBody e) {
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    e.getStatusCode(), e.getErrorResponse());
         }
     }
 

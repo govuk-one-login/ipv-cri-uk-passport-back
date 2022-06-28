@@ -1,8 +1,14 @@
 package uk.gov.di.ipv.cri.passport.library.helpers;
 
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
+import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -11,6 +17,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class RequestHelper {
+
+    public static final String PASSPORT_SESSION_ID_HEADER = "passport_session_id";
+    private static final Logger LOGGER = LoggerFactory.getLogger(RequestHelper.class);
 
     private RequestHelper() {}
 
@@ -40,5 +49,18 @@ public class RequestHelper {
         }
 
         return queryPairs;
+    }
+
+    public static String getPassportSessionId(APIGatewayProxyRequestEvent event)
+            throws HttpResponseExceptionWithErrorBody {
+        String ipvSessionId =
+                RequestHelper.getHeaderByKey(event.getHeaders(), PASSPORT_SESSION_ID_HEADER);
+        if (ipvSessionId == null) {
+            LOGGER.error("{} not present in headers", PASSPORT_SESSION_ID_HEADER);
+            throw new HttpResponseExceptionWithErrorBody(
+                    HttpStatus.SC_BAD_REQUEST, ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER);
+        }
+        LogHelper.attachSessionIdToLogs(ipvSessionId);
+        return ipvSessionId;
     }
 }
