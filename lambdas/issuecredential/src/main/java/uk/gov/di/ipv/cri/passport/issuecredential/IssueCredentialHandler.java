@@ -25,6 +25,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.KmsSigner;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
@@ -33,6 +34,7 @@ import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Objects;
 
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VC_CLAIM;
 
@@ -82,10 +84,10 @@ public class IssueCredentialHandler
                                     input.getHeaders(), AUTHORIZATION_HEADER_KEY),
                             AccessTokenType.BEARER);
 
-            String resourceId =
-                    accessTokenService.getResourceIdByAccessToken(accessToken.getValue());
+            AccessTokenItem accessTokenItem =
+                    accessTokenService.getAccessToken(accessToken.getValue());
 
-            if (StringUtils.isBlank(resourceId)) {
+            if (Objects.isNull(accessTokenItem)) {
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token was not found in the database.");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -96,8 +98,19 @@ public class IssueCredentialHandler
                                 .toJSONObject());
             }
 
+            if (StringUtils.isNotBlank(accessTokenItem.getRevokedAtDateTime())) {
+                LOGGER.error(
+                        "User credential could not be retrieved. The supplied access token has been revoked at: {}",
+                        accessTokenItem.getRevokedAtDateTime());
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
+                        OAuth2Error.ACCESS_DENIED
+                                .appendDescription(" - The supplied access token has been revoked")
+                                .toJSONObject());
+            }
+
             PassportCheckDao passportCheck =
-                    dcsPassportCheckService.getDcsPassportCheck(resourceId);
+                    dcsPassportCheckService.getDcsPassportCheck(accessTokenItem.getResourceId());
 
             VerifiableCredential verifiableCredential =
                     VerifiableCredential.fromPassportCheckDao(passportCheck);

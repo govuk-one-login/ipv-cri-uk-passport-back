@@ -9,12 +9,14 @@ import com.nimbusds.oauth2.sdk.TokenResponse;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
+import java.time.Instant;
 import java.util.Objects;
 
 public class AccessTokenService {
@@ -53,9 +55,8 @@ public class AccessTokenService {
         return ValidationResult.createValidResult();
     }
 
-    public String getResourceIdByAccessToken(String accessToken) {
-        AccessTokenItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
-        return Objects.isNull(accessTokenItem) ? null : accessTokenItem.getResourceId();
+    public AccessTokenItem getAccessToken(String accessToken) {
+        return dataStore.getItem(DigestUtils.sha256Hex(accessToken));
     }
 
     public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
@@ -63,6 +64,21 @@ public class AccessTokenService {
         accessTokenItem.setAccessToken(
                 DigestUtils.sha256Hex(tokenResponse.getTokens().getBearerAccessToken().getValue()));
         accessTokenItem.setResourceId(resourceId);
+
         dataStore.create(accessTokenItem);
+    }
+
+    public void revokeAccessToken(String accessToken) throws IllegalArgumentException {
+        AccessTokenItem accessTokenItem = dataStore.getItem(accessToken);
+
+        if (Objects.nonNull(accessTokenItem)) {
+            if (StringUtils.isBlank(accessTokenItem.getRevokedAtDateTime())) {
+                accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+                dataStore.update(accessTokenItem);
+            }
+        } else {
+            throw new IllegalArgumentException(
+                    "Failed to revoke access token - access token could not be found in DynamoDB");
+        }
     }
 }

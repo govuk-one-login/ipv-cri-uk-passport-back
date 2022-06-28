@@ -12,6 +12,8 @@ public class AuthorizationCodeItem implements DynamodbItem {
     private String resourceId;
     private String redirectUrl;
     private String creationDateTime;
+    private String issuedAccessToken;
+    private String exchangeDateTime;
     private long ttl;
 
     public AuthorizationCodeItem() {}
@@ -63,5 +65,21 @@ public class AuthorizationCodeItem implements DynamodbItem {
 
     public void setCreationDateTime(String creationDateTime) {
         this.creationDateTime = creationDateTime;
+    }
+
+    public String getIssuedAccessToken() {
+        return issuedAccessToken;
+    }
+
+    public void setIssuedAccessToken(String issuedAccessToken) {
+        this.issuedAccessToken = issuedAccessToken;
+    }
+
+    public String getExchangeDateTime() {
+        return exchangeDateTime;
+    }
+
+    public void setExchangeDateTime(String exchangeDateTime) {
+        this.exchangeDateTime = exchangeDateTime;
     }
 }

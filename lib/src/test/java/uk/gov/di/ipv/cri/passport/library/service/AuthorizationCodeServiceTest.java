@@ -88,12 +88,23 @@ class AuthorizationCodeServiceTest {
     }
 
     @Test
-    void shouldCallDeleteWithAuthCode() {
+    void shouldCallUpdateWithIssuedAccessTokenValue() {
         AuthorizationCode testCode = new AuthorizationCode();
+        AuthorizationCodeItem authorizationCodeItem =
+                new AuthorizationCodeItem(
+                        testCode.getValue(),
+                        "test-resource",
+                        "http://example.com",
+                        Instant.now().toString());
 
-        authorizationCodeService.revokeAuthorizationCode(testCode.getValue());
+        when(mockDataStore.getItem(testCode.getValue())).thenReturn(authorizationCodeItem);
+        authorizationCodeService.setIssuedAccessToken(testCode.getValue(), "test-access-token");
 
-        verify(mockDataStore).delete(DigestUtils.sha256Hex(testCode.getValue()));
+        ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
+                ArgumentCaptor.forClass(AuthorizationCodeItem.class);
+        verify(mockDataStore).update(authorizationCodeItemArgumentCaptor.capture());
+
+        assertNotNull(authorizationCodeItemArgumentCaptor.getValue().getExchangeDateTime());
     }
 
     @Test

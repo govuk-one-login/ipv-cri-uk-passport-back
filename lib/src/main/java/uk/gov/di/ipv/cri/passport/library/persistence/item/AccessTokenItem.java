@@ -9,6 +9,7 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 public class AccessTokenItem implements DynamodbItem {
     private String accessToken;
     private String resourceId;
+    private String revokedAtDateTime;
     private long ttl;
 
     @DynamoDbPartitionKey
@@ -26,6 +27,14 @@ public class AccessTokenItem implements DynamodbItem {
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
+    }
+
+    public String getRevokedAtDateTime() {
+        return revokedAtDateTime;
+    }
+
+    public void setRevokedAtDateTime(String revokedAtDateTime) {
+        this.revokedAtDateTime = revokedAtDateTime;
     }
 
     public long getTtl() {

@@ -20,12 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -132,18 +136,20 @@ class AccessTokenServiceTest {
     @Test
     void shouldGetSessionIdByAccessTokenWhenValidAccessTokenProvided() {
         String testResourceId = UUID.randomUUID().toString();
-        String accessToken = new BearerAccessToken().toAuthorizationHeader();
+        AccessToken accessToken = new BearerAccessToken();
+        String accessTokenValue = accessToken.toAuthorizationHeader();
 
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setResourceId(testResourceId);
-        when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(accessTokenItem);
+        when(mockDataStore.getItem(DigestUtils.sha256Hex(accessTokenValue)))
+                .thenReturn(accessTokenItem);
 
-        String resultIpvSessionId = accessTokenService.getResourceIdByAccessToken(accessToken);
+        AccessTokenItem result = accessTokenService.getAccessToken(accessTokenValue);
 
-        verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
+        verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessTokenValue));
 
-        assertNotNull(resultIpvSessionId);
-        assertEquals(testResourceId, resultIpvSessionId);
+        assertNotNull(result.getResourceId());
+        assertEquals(testResourceId, result.getResourceId());
     }
 
     @Test
@@ -152,9 +158,58 @@ class AccessTokenServiceTest {
 
         when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(null);
 
-        String resultIpvSessionId = accessTokenService.getResourceIdByAccessToken(accessToken);
+        AccessTokenItem accessTokenItem = accessTokenService.getAccessToken(accessToken);
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
-        assertNull(resultIpvSessionId);
+        assertNull(accessTokenItem);
+    }
+
+    @Test
+    void shouldRevokeAccessToken() {
+        String accessToken = "test-access-token";
+
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAccessToken(accessToken);
+
+        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+
+        accessTokenService.revokeAccessToken(accessToken);
+
+        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
+                ArgumentCaptor.forClass(AccessTokenItem.class);
+
+        verify(mockDataStore).update(accessTokenItemArgCaptor.capture());
+        assertNotNull(accessTokenItemArgCaptor.getValue().getRevokedAtDateTime());
+    }
+
+    @Test
+    void shouldNotAttemptUpdateIfAccessTokenIsAlreadyRevoked() {
+        String accessToken = "test-access-token";
+
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAccessToken(accessToken);
+        accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+
+        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+
+        accessTokenService.revokeAccessToken(accessToken);
+
+        verify(mockDataStore, Mockito.times(0)).update(any());
+    }
+
+    @Test
+    void shouldThrowExceptipnIfAccessTokenCanNotBeFoundWhenRevoking() {
+        String accessToken = "test-access-token";
+
+        when(mockDataStore.getItem(accessToken)).thenReturn(null);
+
+        try {
+            accessTokenService.revokeAccessToken(accessToken);
+            fail("Should have thrown an exception");
+        } catch (IllegalArgumentException e) {
+            assertEquals(
+                    "Failed to revoke access token - access token could not be found in DynamoDB",
+                    e.getMessage());
+        }
     }
 }

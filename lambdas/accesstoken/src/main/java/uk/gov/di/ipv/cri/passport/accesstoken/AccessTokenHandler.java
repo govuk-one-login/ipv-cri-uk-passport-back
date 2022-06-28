@@ -93,6 +93,16 @@ public class AccessTokenHandler
                         OAuth2Error.INVALID_GRANT.toJSONObject());
             }
 
+            if (authorizationCodeItem.getIssuedAccessToken() != null) {
+                LOGGER.error(
+                        "Auth code has been used multiple times. Auth code was exchanged for an access token at: {}",
+                        authorizationCodeItem.getExchangeDateTime());
+
+                ErrorObject error = revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        error.getHTTPStatusCode(), error.toJSONObject());
+            }
+
             if (authorizationCodeService.isExpired(authorizationCodeItem)) {
                 LOGGER.error(
                         "Access Token could not be issued. The supplied authorization code has expired. Created at: {}",
@@ -118,7 +128,9 @@ public class AccessTokenHandler
             accessTokenService.persistAccessToken(
                     accessTokenResponse, authorizationCodeItem.getResourceId());
 
-            authorizationCodeService.revokeAuthorizationCode(authorizationCodeItem.getAuthCode());
+            authorizationCodeService.setIssuedAccessToken(
+                    authorizationCodeItem.getAuthCode(),
+                    accessTokenResponse.getTokens().getBearerAccessToken().getValue());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, accessTokenResponse.toJSONObject());
@@ -171,5 +183,16 @@ public class AccessTokenHandler
                 .getRedirectionURI()
                 .toString()
                 .equals(authorizationCodeItem.getRedirectUrl());
+    }
+
+    private ErrorObject revokeAccessToken(String accessToken) {
+        try {
+            accessTokenService.revokeAccessToken(accessToken);
+            return OAuth2Error.INVALID_GRANT.setDescription(
+                    "Authorization code used too many times");
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed to revoke access token because: {}", e.getMessage());
+            return OAuth2Error.INVALID_GRANT.setDescription("Failed to revoke access token");
+        }
     }
 }

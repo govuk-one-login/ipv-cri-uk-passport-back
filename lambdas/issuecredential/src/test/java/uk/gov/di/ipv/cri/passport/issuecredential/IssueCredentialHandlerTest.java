@@ -32,6 +32,7 @@ import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartTy
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
@@ -44,6 +45,7 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.Collections;
@@ -130,8 +132,11 @@ class IssueCredentialHandlerTest {
 
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
-                .thenReturn(TEST_RESOURCE_ID);
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
+        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
+
+        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
 
@@ -152,8 +157,11 @@ class IssueCredentialHandlerTest {
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
-        when(mockAccessTokenService.getResourceIdByAccessToken(anyString()))
-                .thenReturn(TEST_RESOURCE_ID);
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
+        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
+
+        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
@@ -305,7 +313,7 @@ class IssueCredentialHandlerTest {
         event.setHeaders(headers);
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getResourceIdByAccessToken(anyString())).thenReturn(null);
+        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(null);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -318,6 +326,35 @@ class IssueCredentialHandlerTest {
                 OAuth2Error.ACCESS_DENIED
                         .appendDescription(
                                 " - The supplied access token was not found in the database")
+                        .getDescription(),
+                responseBody.get("error_description"));
+    }
+
+    @Test
+    void shouldReturnErrorResponseWhenAccessTokenHasBeenRevoked() throws JsonProcessingException {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        AccessToken accessToken = new BearerAccessToken();
+        Map<String, String> headers =
+                Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
+        event.setHeaders(headers);
+        setRequestBodyAsPlainJWT(event);
+
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
+        accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+
+        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(accessTokenItem);
+
+        APIGatewayProxyResponseEvent response =
+                issueCredentialHandler.handleRequest(event, mockContext);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(403, response.getStatusCode());
+        assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
+        assertEquals(
+                OAuth2Error.ACCESS_DENIED
+                        .appendDescription(" - The supplied access token has been revoked")
                         .getDescription(),
                 responseBody.get("error_description"));
     }
