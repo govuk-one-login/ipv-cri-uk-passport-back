@@ -33,6 +33,7 @@ import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
+import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -61,6 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.IDENTITY_CHECK_CREDENTIAL_TYPE;
@@ -190,6 +192,8 @@ class IssueCredentialHandlerTest {
         assertEquals(200, response.getStatusCode());
         assertEquals(6, claimsSet.size());
         assertEquals("https://example.com/issuer", claimsSet.get("aud").asText());
+
+        verify(mockAccessTokenService).revokeAccessToken(accessTokenItem.getAccessToken());
 
         JsonNode vcNode = claimsSet.get("vc");
         VerifiableCredential verifiableCredential =
@@ -407,6 +411,41 @@ class IssueCredentialHandlerTest {
                         .appendDescription(" - The supplied access token has expired")
                         .getDescription(),
                 responseBody.get("error_description"));
+    }
+
+    void shouldReturnErrorResponseWhenAccessTokenCannotBeRevoked() throws JsonProcessingException {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        AccessToken accessToken = new BearerAccessToken();
+        Map<String, String> headers =
+                Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
+        event.setHeaders(headers);
+
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
+        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
+
+        when(mockAccessTokenService.getAccessTokenItem(anyString())).thenReturn(accessTokenItem);
+        when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
+                .thenReturn(passportCheckDao);
+        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
+        when(mockConfigurationService.getClientIssuer(clientId))
+                .thenReturn("https://example.com/issuer");
+
+        doThrow(new IllegalArgumentException("Test error"))
+                .when(mockAccessTokenService)
+                .revokeAccessToken(anyString());
+
+        APIGatewayProxyResponseEvent response =
+                issueCredentialHandler.handleRequest(event, mockContext);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(500, response.getStatusCode());
+        assertEquals(
+                ErrorResponse.FAILED_TO_REVOKE_ACCESS_TOKEN.getCode(), responseBody.get("code"));
+        assertEquals(
+                ErrorResponse.FAILED_TO_REVOKE_ACCESS_TOKEN.getMessage(),
+                responseBody.get("message"));
     }
 
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
