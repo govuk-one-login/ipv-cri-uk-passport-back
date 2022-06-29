@@ -126,17 +126,19 @@ class IssueCredentialHandlerTest {
     void shouldReturn200OnSuccessfulDcsCredentialRequest() throws SqsException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAccessToken(accessToken.getValue());
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
+        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().plusSeconds(3600).toString());
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
         setRequestBodyAsPlainJWT(event);
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
-        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+                .thenReturn(accessTokenItem);
 
-        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
 
@@ -153,15 +155,16 @@ class IssueCredentialHandlerTest {
             throws JsonProcessingException, ParseException, JOSEException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAccessToken(accessToken.getValue());
+        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().plusSeconds(3600).toString());
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
-        accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
-
-        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(accessTokenItem);
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+                .thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
         when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
@@ -313,7 +316,7 @@ class IssueCredentialHandlerTest {
         event.setHeaders(headers);
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(null);
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue())).thenReturn(null);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -341,9 +344,11 @@ class IssueCredentialHandlerTest {
 
         AccessTokenItem accessTokenItem = new AccessTokenItem();
         accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
+        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().plusSeconds(60).toString());
         accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
 
-        when(mockAccessTokenService.getAccessToken(anyString())).thenReturn(accessTokenItem);
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+                .thenReturn(accessTokenItem);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -355,6 +360,36 @@ class IssueCredentialHandlerTest {
         assertEquals(
                 OAuth2Error.ACCESS_DENIED
                         .appendDescription(" - The supplied access token has been revoked")
+                        .getDescription(),
+                responseBody.get("error_description"));
+    }
+
+    @Test
+    void shouldReturnErrorResponseWhenExpiredAccessTokenProvided() throws JsonProcessingException {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        AccessToken accessToken = new BearerAccessToken();
+        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        accessTokenItem.setAccessToken(accessToken.getValue());
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
+        accessTokenItem.setAccessTokenExpiryDateTime(Instant.now().minusSeconds(5).toString());
+        Map<String, String> headers =
+                Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
+        event.setHeaders(headers);
+        setRequestBodyAsPlainJWT(event);
+
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+                .thenReturn(accessTokenItem);
+
+        APIGatewayProxyResponseEvent response =
+                issueCredentialHandler.handleRequest(event, mockContext);
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(403, response.getStatusCode());
+        assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
+        assertEquals(
+                OAuth2Error.ACCESS_DENIED
+                        .appendDescription(" - The supplied access token has expired")
                         .getDescription(),
                 responseBody.get("error_description"));
     }

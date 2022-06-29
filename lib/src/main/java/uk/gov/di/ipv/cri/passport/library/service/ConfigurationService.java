@@ -32,7 +32,7 @@ public class ConfigurationService {
 
     public static final int LOCALHOST_PORT = 4567;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
-    private static final long DEFAULT_BEARER_TOKEN_TTL_IN_SECS = 3600L;
+    private static final long DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
     private static final String CLIENT_REDIRECT_URL_SEPARATOR = ",";
     public static final String CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX =
@@ -182,10 +182,10 @@ public class ConfigurationService {
                                 System.getenv("ENVIRONMENT"))));
     }
 
-    public long getBearerAccessTokenTtl() {
+    public long getAccessTokenExpirySeconds() {
         return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
                 .map(Long::valueOf)
-                .orElse(DEFAULT_BEARER_TOKEN_TTL_IN_SECS);
+                .orElse(DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS);
     }
 
     public URI getDynamoDbEndpointOverride() {

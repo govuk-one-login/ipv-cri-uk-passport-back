@@ -8,6 +8,7 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 @ExcludeFromGeneratedCoverageReport
 public class AccessTokenItem implements DynamodbItem {
     private String accessToken;
+    private String accessTokenExpiryDateTime;
     private String resourceId;
     private String revokedAtDateTime;
     private long ttl;
@@ -19,6 +20,14 @@ public class AccessTokenItem implements DynamodbItem {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public String getAccessTokenExpiryDateTime() {
+        return accessTokenExpiryDateTime;
+    }
+
+    public void setAccessTokenExpiryDateTime(String accessTokenExpiryDateTime) {
+        this.accessTokenExpiryDateTime = accessTokenExpiryDateTime;
     }
 
     public String getResourceId() {
