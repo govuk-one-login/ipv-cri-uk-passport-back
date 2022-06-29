@@ -4,26 +4,58 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
+import java.time.Instant;
+
 @ExcludeFromGeneratedCoverageReport
 public class AuditEvent {
-    @JsonProperty private int timestamp;
+    @JsonProperty private final long timestamp;
 
     @JsonProperty("event_name")
-    private AuditEventTypes event;
+    private final AuditEventTypes eventName;
+
+    @JsonProperty("component_id")
+    private final String componentId;
+
+    @JsonProperty private final AuditEventUser user;
+    @JsonProperty private final AuditRestricted restricted;
+    @JsonProperty private final AuditExtensions extensions;
 
     @JsonCreator
     public AuditEvent(
-            @JsonProperty(value = "timestamp", required = true) int timestamp,
-            @JsonProperty(value = "event_name", required = true) AuditEventTypes event) {
-        this.timestamp = timestamp;
-        this.event = event;
+            @JsonProperty(value = "event_name", required = true) AuditEventTypes eventName,
+            @JsonProperty(value = "component_id", required = false) String componentId,
+            @JsonProperty(value = "user", required = false) AuditEventUser user,
+            @JsonProperty(value = "restricted", required = false) AuditRestricted restricted,
+            @JsonProperty(value = "extensions", required = false) AuditExtensions extensions) {
+        this.timestamp = Instant.now().getEpochSecond();
+        this.eventName = eventName;
+        this.componentId = componentId;
+        this.user = user;
+        this.restricted = restricted;
+        this.extensions = extensions;
     }
 
     public long getTimestamp() {
         return timestamp;
     }
 
-    public AuditEventTypes getEvent() {
-        return event;
+    public AuditEventTypes getEventName() {
+        return eventName;
+    }
+
+    public String getComponentId() {
+        return componentId;
+    }
+
+    public AuditEventUser getUser() {
+        return user;
+    }
+
+    public AuditRestricted getRestricted() {
+        return restricted;
+    }
+
+    public AuditExtensions getExtensions() {
+        return extensions;
     }
 }

@@ -23,8 +23,10 @@ import com.nimbusds.oauth2.sdk.token.BearerTokenError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
@@ -123,7 +125,8 @@ class IssueCredentialHandlerTest {
     }
 
     @Test
-    void shouldReturn200OnSuccessfulDcsCredentialRequest() throws SqsException {
+    void shouldReturn200OnSuccessfulDcsCredentialRequest()
+            throws SqsException, JsonProcessingException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
         Map<String, String> headers =
@@ -143,7 +146,11 @@ class IssueCredentialHandlerTest {
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
 
-        verify(mockAuditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED);
+        ArgumentCaptor<AuditEvent> argumentCaptor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(mockAuditService).sendAuditEvent(argumentCaptor.capture());
+        assertEquals(
+                AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED,
+                argumentCaptor.getValue().getEventName());
 
         assertEquals(200, response.getStatusCode());
     }
