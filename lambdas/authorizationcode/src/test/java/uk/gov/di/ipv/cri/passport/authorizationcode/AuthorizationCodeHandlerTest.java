@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
@@ -52,6 +53,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -146,8 +148,16 @@ class AuthorizationCodeHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
-        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
-        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED);
+        ArgumentCaptor<AuditEvent> argumentCaptor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(auditService, times(2)).sendAuditEvent(argumentCaptor.capture());
+        List<AuditEvent> capturedValues = argumentCaptor.getAllValues();
+        assertEquals(
+                AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT,
+                capturedValues.get(0).getEventName());
+        assertEquals(
+                AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED,
+                capturedValues.get(1).getEventName());
+
         verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());

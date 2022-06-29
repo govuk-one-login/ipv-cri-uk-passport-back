@@ -17,7 +17,14 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.CredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
@@ -129,7 +136,7 @@ public class IssueCredentialHandler
             SignedJWT signedJWT =
                     generateAndSignVerifiableCredentialJwt(verifiableCredential, passportCheck);
 
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED);
+            auditService.sendAuditEvent(createAuditEvent(verifiableCredential, passportCheck));
 
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
@@ -150,6 +157,22 @@ public class IssueCredentialHandler
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
         }
+    }
+
+    private AuditEvent createAuditEvent(VerifiableCredential vc, PassportCheckDao passportCheck) {
+        CredentialSubject credentialSubject = vc.getCredentialSubject();
+        String componentId = configurationService.getVerifiableCredentialIssuer();
+        AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED;
+        AuditEventUser user = new AuditEventUser(passportCheck.getUserId(), null);
+        AuditRestricted restricted =
+                new AuditRestrictedVcCredentialSubject(
+                        credentialSubject.getName(),
+                        credentialSubject.getBirthDate(),
+                        credentialSubject.getPassport());
+        AuditExtensions extensions =
+                new AuditExtensionsVcEvidence(
+                        configurationService.getVerifiableCredentialIssuer(), vc.getEvidence());
+        return new AuditEvent(eventType, componentId, user, restricted, extensions);
     }
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(

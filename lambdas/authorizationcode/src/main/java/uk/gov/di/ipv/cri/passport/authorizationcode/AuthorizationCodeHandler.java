@@ -18,12 +18,20 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.CredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
@@ -119,11 +127,13 @@ public class AuthorizationCodeHandler
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
 
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
+            auditService.sendAuditEvent(
+                    createAuditEventRequestSent(
+                            userId, dcsPayload, authenticationRequest.getClientID().getValue()));
 
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED);
+            auditService.sendAuditEvent(createAuditEventResponseReceived());
 
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
 
@@ -172,6 +182,35 @@ public class AuthorizationCodeHandler
                                             .getMessage())
                             .toJSONObject());
         }
+    }
+
+    private AuditEvent createAuditEventRequestSent(
+            String userId, DcsPayload dcsPayload, String clientId) {
+
+        PassportCheckDao passportCheckDao =
+                new PassportCheckDao(
+                        UUID.randomUUID().toString(), dcsPayload, null, userId, clientId);
+
+        VerifiableCredential vc = VerifiableCredential.fromPassportCheckDao(passportCheckDao);
+
+        CredentialSubject credentialSubject = vc.getCredentialSubject();
+        String componentId = configurationService.getVerifiableCredentialIssuer();
+        AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT;
+        AuditEventUser user = new AuditEventUser(userId, null);
+        AuditRestricted restricted =
+                new AuditRestrictedVcCredentialSubject(
+                        credentialSubject.getName(),
+                        credentialSubject.getBirthDate(),
+                        credentialSubject.getPassport());
+        AuditExtensions extensions =
+                new AuditExtensionsVcEvidence(
+                        configurationService.getVerifiableCredentialIssuer(), null);
+        return new AuditEvent(eventType, componentId, user, restricted, extensions);
+    }
+
+    private AuditEvent createAuditEventResponseReceived() {
+        return new AuditEvent(
+                AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED, null, null, null, null);
     }
 
     private Map<String, List<String>> getQueryStringParametersAsMap(

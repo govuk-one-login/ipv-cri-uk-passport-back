@@ -332,6 +332,7 @@ Resources:
           DCS_TLS_ROOT_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsRootCertificate"
           DCS_TLS_INTERMEDIATE_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/tlsIntermediateCertificate"
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
+          VERIFIABLE_CREDENTIAL_ISSUER_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
