@@ -115,18 +115,21 @@ class AccessTokenServiceTest {
     @Test
     void shouldPersistAccessToken() {
         String testResourceId = UUID.randomUUID().toString();
+        String testPassportSessionId = UUID.randomUUID().toString();
         AccessToken accessToken = new BearerAccessToken(3600L, null);
         AccessTokenResponse accessTokenResponse =
                 new AccessTokenResponse(new Tokens(accessToken, null));
         ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
                 ArgumentCaptor.forClass(AccessTokenItem.class);
 
-        accessTokenService.persistAccessToken(accessTokenResponse, testResourceId);
+        accessTokenService.persistAccessToken(
+                accessTokenResponse, testResourceId, testPassportSessionId);
 
         verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
         AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
         assertNotNull(capturedAccessTokenItem);
         assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
+        assertEquals(testPassportSessionId, capturedAccessTokenItem.getPassportSessionId());
         assertEquals(
                 DigestUtils.sha256Hex(
                         accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
@@ -140,8 +143,14 @@ class AccessTokenServiceTest {
         String testResourceId = UUID.randomUUID().toString();
         AccessToken accessToken = new BearerAccessToken();
         String accessTokenValue = accessToken.toAuthorizationHeader();
+        String testPassportSessionId = UUID.randomUUID().toString();
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        DigestUtils.sha256Hex(accessTokenValue),
+                        testResourceId,
+                        Instant.now().toString(),
+                        testPassportSessionId);
         accessTokenItem.setResourceId(testResourceId);
         when(mockDataStore.getItem(DigestUtils.sha256Hex(accessTokenValue)))
                 .thenReturn(accessTokenItem);
@@ -170,8 +179,12 @@ class AccessTokenServiceTest {
     void shouldRevokeAccessToken() {
         String accessToken = "test-access-token";
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(accessToken);
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken,
+                        UUID.randomUUID().toString(),
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
 
         when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
 
@@ -188,8 +201,12 @@ class AccessTokenServiceTest {
     void shouldNotAttemptUpdateIfAccessTokenIsAlreadyRevoked() {
         String accessToken = "test-access-token";
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(accessToken);
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken,
+                        UUID.randomUUID().toString(),
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
         accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
 
         when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);

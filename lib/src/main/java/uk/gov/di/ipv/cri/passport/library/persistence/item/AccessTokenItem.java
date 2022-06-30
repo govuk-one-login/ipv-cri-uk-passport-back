@@ -11,7 +11,19 @@ public class AccessTokenItem implements DynamodbItem {
     private String accessTokenExpiryDateTime;
     private String resourceId;
     private String revokedAtDateTime;
+    private String passportSessionId;
     private long ttl;
+
+    public AccessTokenItem(
+            String accessToken,
+            String resourceId,
+            String accessTokenExpiryDateTime,
+            String passportSessionId) {
+        this.accessToken = accessToken;
+        this.resourceId = resourceId;
+        this.accessTokenExpiryDateTime = accessTokenExpiryDateTime;
+        this.passportSessionId = passportSessionId;
+    }
 
     @DynamoDbPartitionKey
     public String getAccessToken() {
@@ -52,5 +64,13 @@ public class AccessTokenItem implements DynamodbItem {
 
     public void setTtl(long ttl) {
         this.ttl = ttl;
+    }
+
+    public String getPassportSessionId() {
+        return passportSessionId;
+    }
+
+    public void setPassportSessionId(String passportSessionId) {
+        this.passportSessionId = passportSessionId;
     }
 }

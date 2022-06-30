@@ -38,13 +38,17 @@ public class AuthorizationCodeService {
     }
 
     public void persistAuthorizationCode(
-            String authorizationCode, String resourceId, String redirectUrl) {
+            String authorizationCode,
+            String resourceId,
+            String redirectUrl,
+            String passportSessionId) {
         dataStore.create(
                 new AuthorizationCodeItem(
                         DigestUtils.sha256Hex(authorizationCode),
                         resourceId,
                         redirectUrl,
-                        Instant.now().toString()));
+                        Instant.now().toString(),
+                        passportSessionId));
     }
 
     public void setIssuedAccessToken(String authorizationCode, String accessToken) {

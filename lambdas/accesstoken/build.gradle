@@ -6,6 +6,7 @@ plugins {
 	id "application"
 	id "idea"
 	id "jacoco"
+	id 'io.freefair.aspectj.post-compile-weaving' version '6.3.0'
 }
 
 repositories {
@@ -26,10 +27,9 @@ dependencies {
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
-			configurations.loggingImplementation,
 			project(":lib")
 
-	runtimeOnly configurations.loggingRunTimeOnly
+	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
 
 	testImplementation "com.github.tomakehurst:wiremock-jre8:2.31.0",
 			"org.junit.jupiter:junit-jupiter:5.8.2",

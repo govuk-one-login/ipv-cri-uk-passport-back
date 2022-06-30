@@ -60,6 +60,8 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.J
 class JwtAuthorizationRequestHandlerTest {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Map<String, String> TEST_EVENT_HEADERS =
+            Map.of("passport_session_id", "test-session-id", "client_id", "TEST");
 
     @Mock private ConfigurationService configurationService;
 
@@ -109,9 +111,7 @@ class JwtAuthorizationRequestHandlerTest {
                 .thenReturn(signedJWT.getJWTClaimsSet());
 
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
@@ -126,9 +126,7 @@ class JwtAuthorizationRequestHandlerTest {
                 .thenReturn(signedJWT.getJWTClaimsSet());
 
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
@@ -157,9 +155,7 @@ class JwtAuthorizationRequestHandlerTest {
     @Test
     void shouldReturn400IfMissingJWT() throws JsonProcessingException {
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(null);
 
         var response = underTest.handleRequest(event, context);
@@ -182,9 +178,7 @@ class JwtAuthorizationRequestHandlerTest {
         when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(myMock);
 
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
@@ -199,6 +193,9 @@ class JwtAuthorizationRequestHandlerTest {
     @Test
     void shouldReturn400IfClientIdIsNotSet() throws JsonProcessingException {
         var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> noClientId = new HashMap<>(TEST_EVENT_HEADERS);
+        noClientId.remove("client_id");
+        event.setHeaders(noClientId);
 
         var response = underTest.handleRequest(event, context);
 
@@ -211,15 +208,31 @@ class JwtAuthorizationRequestHandlerTest {
     }
 
     @Test
+    void shouldReturn400IfPassportSessionIdIsNotSet() throws JsonProcessingException {
+        var event = new APIGatewayProxyRequestEvent();
+        Map<String, String> noSessionId = new HashMap<>(TEST_EVENT_HEADERS);
+        noSessionId.remove("passport_session_id");
+        event.setHeaders(noSessionId);
+
+        var response = underTest.handleRequest(event, context);
+
+        Map<String, Object> error =
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
+        assertEquals(400, response.getStatusCode());
+        assertEquals(ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getCode(), error.get("code"));
+        assertEquals(
+                ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getMessage(),
+                error.get("message"));
+    }
+
+    @Test
     void shouldReturn302WhenValidationFails() throws Exception {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenThrow(new JarValidationException(OAuth2Error.INVALID_REQUEST_OBJECT));
 
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
@@ -244,9 +257,7 @@ class JwtAuthorizationRequestHandlerTest {
                                 null));
 
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
@@ -269,9 +280,7 @@ class JwtAuthorizationRequestHandlerTest {
                                 "xyz"));
 
         var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> map = new HashMap<>();
-        map.put("client_id", "TEST");
-        event.setHeaders(map);
+        event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);

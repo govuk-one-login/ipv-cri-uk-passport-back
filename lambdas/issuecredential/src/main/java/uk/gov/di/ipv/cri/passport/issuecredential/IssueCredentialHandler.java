@@ -14,8 +14,8 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.AccessTokenType;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -31,6 +31,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.KmsSigner;
+import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
@@ -47,7 +48,7 @@ import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Ver
 public class IssueCredentialHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IssueCredentialHandler.class);
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final String AUTHORIZATION_HEADER_KEY = "Authorization";
 
     private final DcsPassportCheckService dcsPassportCheckService;
@@ -83,6 +84,7 @@ public class IssueCredentialHandler
     @Override
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
+        LogHelper.attachComponentIdToLogs();
         try {
             AccessToken accessToken =
                     AccessToken.parse(
@@ -129,6 +131,7 @@ public class IssueCredentialHandler
 
             PassportCheckDao passportCheck =
                     dcsPassportCheckService.getDcsPassportCheck(accessTokenItem.getResourceId());
+            LogHelper.attachClientIdToLogs(passportCheck.getClientId());
 
             VerifiableCredential verifiableCredential =
                     VerifiableCredential.fromPassportCheckDao(passportCheck);

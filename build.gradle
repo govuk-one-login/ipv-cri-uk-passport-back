@@ -47,28 +47,11 @@ ext {
 		log4j:'2.17.1',
 		nimbusJoseJwt:'9.16',
 		nimbusdsOauth2OidcSdk:'9.22.1',
-		powertoolsParameters:'1.9.0',
-		slf4j:'1.7.33'
+		powertoolsLogging:'1.12.2',
+		powertoolsParameters:'1.9.0'
 	]
 }
 
 subprojects {
-
-	configurations {
-		loggingImplementation
-		loggingRunTimeOnly
-	}
-
-	dependencies {
-		loggingImplementation "org.slf4j:slf4j-api:$rootProject.ext.dependencyVersions.slf4j"
-
-		loggingRunTimeOnly "org.apache.logging.log4j:log4j-api:$rootProject.ext.dependencyVersions.log4j",
-				"org.apache.logging.log4j:log4j-core:$rootProject.ext.dependencyVersions.log4j",
-				"org.apache.logging.log4j:log4j-layout-template-json:$rootProject.ext.dependencyVersions.log4j",
-				"org.apache.logging.log4j:log4j-slf4j18-impl:$rootProject.ext.dependencyVersions.log4j",
-				"com.amazonaws:aws-lambda-java-log4j2:$rootProject.ext.dependencyVersions.awsLambdaJavaLog4j2",
-				"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$rootProject.ext.dependencyVersions.jackson"
-	}
-
 	task allDeps(type: DependencyReportTask) {}
 }

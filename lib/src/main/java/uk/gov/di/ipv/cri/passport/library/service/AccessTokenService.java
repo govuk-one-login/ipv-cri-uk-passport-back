@@ -12,6 +12,7 @@ import com.nimbusds.oauth2.sdk.token.Tokens;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
@@ -57,17 +58,22 @@ public class AccessTokenService {
     }
 
     public AccessTokenItem getAccessTokenItem(String accessToken) {
-        return dataStore.getItem(DigestUtils.sha256Hex(accessToken));
+        AccessTokenItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
+        if (accessTokenItem != null) {
+            LogHelper.attachSessionIdToLogs(accessTokenItem.getPassportSessionId());
+        }
+        return accessTokenItem;
     }
 
-    public void persistAccessToken(AccessTokenResponse tokenResponse, String resourceId) {
-        AccessToken accessToken = tokenResponse.getTokens().getBearerAccessToken();
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
-        accessTokenItem.setAccessToken(DigestUtils.sha256Hex(accessToken.getValue()));
-        accessTokenItem.setAccessTokenExpiryDateTime(toExpiryDateTime(accessToken.getLifetime()));
-        accessTokenItem.setResourceId(resourceId);
-
-        dataStore.create(accessTokenItem);
+    public void persistAccessToken(
+            AccessTokenResponse tokenResponse, String resourceId, String passportSessionId) {
+        BearerAccessToken accessToken = tokenResponse.getTokens().getBearerAccessToken();
+        dataStore.create(
+                new AccessTokenItem(
+                        DigestUtils.sha256Hex(accessToken.getValue()),
+                        resourceId,
+                        toExpiryDateTime(accessToken.getLifetime()),
+                        passportSessionId));
     }
 
     public void revokeAccessToken(String accessToken) throws IllegalArgumentException {

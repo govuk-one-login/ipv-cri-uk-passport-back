@@ -6,6 +6,7 @@ plugins {
 	id "application"
 	id "idea"
 	id "jacoco"
+	id 'io.freefair.aspectj.post-compile-weaving' version '6.3.0'
 }
 
 repositories {
@@ -22,10 +23,9 @@ dependencies {
 			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$rootProject.ext.dependencyVersions.jackson",
 			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
-			configurations.loggingImplementation,
 			project(":lib")
 
-	runtimeOnly configurations.loggingRunTimeOnly
+	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
 
 	testImplementation "com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
 			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",

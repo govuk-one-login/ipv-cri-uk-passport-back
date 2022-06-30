@@ -12,6 +12,7 @@ import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -40,13 +41,17 @@ class AuthorizationCodeServiceTest {
         AuthorizationCode testCode = new AuthorizationCode();
         String resourceId = "resource-12345";
         String redirectUrl = "http://example.com";
+        String testPassportSessionId = "testPassportSessionId";
         authorizationCodeService.persistAuthorizationCode(
-                testCode.getValue(), resourceId, redirectUrl);
+                testCode.getValue(), resourceId, redirectUrl, testPassportSessionId);
 
         ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
                 ArgumentCaptor.forClass(AuthorizationCodeItem.class);
         verify(mockDataStore).create(authorizationCodeItemArgumentCaptor.capture());
         assertEquals(resourceId, authorizationCodeItemArgumentCaptor.getValue().getResourceId());
+        assertEquals(
+                testPassportSessionId,
+                authorizationCodeItemArgumentCaptor.getValue().getPassportSessionId());
         assertEquals(
                 DigestUtils.sha256Hex(testCode.getValue()),
                 authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
@@ -95,7 +100,8 @@ class AuthorizationCodeServiceTest {
                         testCode.getValue(),
                         "test-resource",
                         "http://example.com",
-                        Instant.now().toString());
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
 
         when(mockDataStore.getItem(testCode.getValue())).thenReturn(authorizationCodeItem);
         authorizationCodeService.setIssuedAccessToken(testCode.getValue(), "test-access-token");
@@ -115,7 +121,8 @@ class AuthorizationCodeServiceTest {
                         "auth-code",
                         "resource-id",
                         "redirect-url",
-                        Instant.now().minusSeconds(601).toString());
+                        Instant.now().minusSeconds(601).toString(),
+                        "passport-session-id");
 
         assertTrue(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }
@@ -128,7 +135,8 @@ class AuthorizationCodeServiceTest {
                         "auth-code",
                         "resource-id",
                         "redirect-url",
-                        Instant.now().minusSeconds(599).toString());
+                        Instant.now().minusSeconds(599).toString(),
+                        "passport-session-id");
 
         assertFalse(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }

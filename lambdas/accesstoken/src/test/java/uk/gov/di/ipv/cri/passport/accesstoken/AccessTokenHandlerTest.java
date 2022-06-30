@@ -50,7 +50,8 @@ class AccessTokenHandlerTest {
                     new AuthorizationCode().toString(),
                     UUID.randomUUID().toString(),
                     "http://example.com",
-                    Instant.now().toString());
+                    Instant.now().toString(),
+                    UUID.randomUUID().toString());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
@@ -241,7 +242,8 @@ class AccessTokenHandlerTest {
                         new AuthorizationCode().toString(),
                         UUID.randomUUID().toString(),
                         "http://example.com",
-                        Instant.now().toString());
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
 
         authorizationCodeItem.setIssuedAccessToken("test-access-token");
         authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
@@ -275,7 +277,8 @@ class AccessTokenHandlerTest {
                         new AuthorizationCode().toString(),
                         UUID.randomUUID().toString(),
                         "http://example.com",
-                        Instant.now().toString());
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
 
         authorizationCodeItem.setIssuedAccessToken("test-access-token");
         authorizationCodeItem.setExchangeDateTime(Instant.now().toString());

@@ -15,8 +15,8 @@ import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -36,8 +36,10 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.IpvCryptoException;
+import uk.gov.di.ipv.cri.passport.library.exceptions.OAuthHttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
+import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
@@ -60,7 +62,7 @@ import java.util.stream.Collectors;
 public class AuthorizationCodeHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorizationCodeHandler.class);
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
     private static final int MAX_PASSPORT_GPG45_STRENGTH_VALUE = 4;
@@ -106,10 +108,12 @@ public class AuthorizationCodeHandler
     @Override
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
-        Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
-        String userId = RequestHelper.getHeaderByKey(input.getHeaders(), "user_id");
-
+        LogHelper.attachComponentIdToLogs();
         try {
+            String passportSessionId = RequestHelper.getPassportSessionId(input);
+            Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
+            String userId = RequestHelper.getHeaderByKey(input.getHeaders(), "user_id");
+
             var validationResult =
                     authRequestValidator.validateRequest(queryStringParameters, userId);
             if (validationResult.isPresent()) {
@@ -123,6 +127,8 @@ public class AuthorizationCodeHandler
 
             AuthenticationRequest authenticationRequest =
                     AuthenticationRequest.parse(queryStringParameters);
+
+            LogHelper.attachClientIdToLogs(authenticationRequest.getClientID().getValue());
 
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
@@ -152,17 +158,21 @@ public class AuthorizationCodeHandler
             authorizationCodeService.persistAuthorizationCode(
                     authorizationCode.getValue(),
                     passportCheckDao.getResourceId(),
-                    authenticationRequest.getRedirectionURI().toString());
+                    authenticationRequest.getRedirectionURI().toString(),
+                    passportSessionId);
 
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));
-        } catch (HttpResponseExceptionWithErrorBody e) {
+        } catch (OAuthHttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(),
                     new ErrorObject(OAuth2Error.SERVER_ERROR_CODE, e.getErrorReason())
                             .toJSONObject());
+        } catch (HttpResponseExceptionWithErrorBody e) {
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    e.getStatusCode(), e.getErrorResponse());
         } catch (ParseException e) {
             LOGGER.error("Authentication request could not be parsed", e);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -225,11 +235,11 @@ public class AuthorizationCodeHandler
     }
 
     private void validateDcsResponse(DcsResponse dcsResponse)
-            throws HttpResponseExceptionWithErrorBody {
+            throws OAuthHttpResponseExceptionWithErrorBody {
         if (dcsResponse.isError()) {
             String errorMessage = dcsResponse.getErrorMessage().toString();
             LOGGER.error("DCS encountered an error: {}", errorMessage);
-            throw new HttpResponseExceptionWithErrorBody(
+            throw new OAuthHttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.DCS_RETURNED_AN_ERROR);
         }
     }
@@ -243,19 +253,19 @@ public class AuthorizationCodeHandler
     }
 
     private DcsPayload parsePassportFormRequest(String input)
-            throws HttpResponseExceptionWithErrorBody {
+            throws OAuthHttpResponseExceptionWithErrorBody {
         LOGGER.info("Parsing passport form data into payload for DCS");
         try {
             return objectMapper.readValue(input, DcsPayload.class);
         } catch (JsonProcessingException e) {
             LOGGER.error(("Failed to parse payload from input: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(
+            throw new OAuthHttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_BAD_REQUEST, ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA);
         }
     }
 
     private JWSObject preparePayload(DcsPayload dcsPayload)
-            throws HttpResponseExceptionWithErrorBody {
+            throws OAuthHttpResponseExceptionWithErrorBody {
         LOGGER.info("Preparing payload for DCS");
         try {
             return dcsCryptographyService.preparePayload(dcsPayload);
@@ -265,26 +275,26 @@ public class AuthorizationCodeHandler
                 | JOSEException
                 | JsonProcessingException e) {
             LOGGER.error(("Failed to prepare payload for DCS: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(
+            throw new OAuthHttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR,
                     ErrorResponse.FAILED_TO_PREPARE_DCS_PAYLOAD);
         }
     }
 
     private DcsSignedEncryptedResponse doPassportCheck(JWSObject preparedPayload)
-            throws HttpResponseExceptionWithErrorBody {
+            throws OAuthHttpResponseExceptionWithErrorBody {
         LOGGER.info("Sending passport check to DCS");
         try {
             return passportService.dcsPassportCheck(preparedPayload);
         } catch (IOException | EmptyDcsResponseException e) {
             LOGGER.error(("Passport check with DCS failed: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(
+            throw new OAuthHttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, ErrorResponse.ERROR_CONTACTING_DCS);
         }
     }
 
     private DcsResponse unwrapDcsResponse(DcsSignedEncryptedResponse response)
-            throws HttpResponseExceptionWithErrorBody {
+            throws OAuthHttpResponseExceptionWithErrorBody {
         LOGGER.info("Unwrapping DCS response");
         try {
             return dcsCryptographyService.unwrapDcsResponse(response);
@@ -294,7 +304,7 @@ public class AuthorizationCodeHandler
                 | JsonProcessingException
                 | IpvCryptoException e) {
             LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
-            throw new HttpResponseExceptionWithErrorBody(
+            throw new OAuthHttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR,
                     ErrorResponse.FAILED_TO_UNWRAP_DCS_RESPONSE);
         }
