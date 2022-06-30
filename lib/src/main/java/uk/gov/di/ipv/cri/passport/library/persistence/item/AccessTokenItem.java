@@ -14,6 +14,9 @@ public class AccessTokenItem implements DynamodbItem {
     private String passportSessionId;
     private long ttl;
 
+    // required for DynamoDb BeanTableSchema
+    public AccessTokenItem() {}
+
     public AccessTokenItem(
             String accessToken,
             String resourceId,
