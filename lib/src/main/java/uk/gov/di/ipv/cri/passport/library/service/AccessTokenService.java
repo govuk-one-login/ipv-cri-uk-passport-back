@@ -60,7 +60,7 @@ public class AccessTokenService {
     public AccessTokenItem getAccessTokenItem(String accessToken) {
         AccessTokenItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
         if (accessTokenItem != null) {
-            LogHelper.attachSessionIdToLogs(accessTokenItem.getPassportSessionId());
+            LogHelper.attachPassportSessionIdToLogs(accessTokenItem.getPassportSessionId());
         }
         return accessTokenItem;
     }

@@ -96,7 +96,7 @@ public class AccessTokenHandler
                         OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
                         OAuth2Error.INVALID_GRANT.toJSONObject());
             }
-            LogHelper.attachSessionIdToLogs(authorizationCodeItem.getPassportSessionId());
+            LogHelper.attachPassportSessionIdToLogs(authorizationCodeItem.getPassportSessionId());
 
             if (authorizationCodeItem.getIssuedAccessToken() != null) {
                 LOGGER.error(

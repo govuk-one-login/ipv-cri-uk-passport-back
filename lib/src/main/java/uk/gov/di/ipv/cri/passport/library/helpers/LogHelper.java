@@ -13,9 +13,9 @@ public class LogHelper {
         throw new IllegalStateException("Utility class");
     }
 
-    public static final String CLIENT_ID_LOG_FIELD = "client-id";
-    public static final String SESSION_ID_LOG_FIELD = "session-id";
-    public static final String COMPONENT_ID_LOG_FIELD = "component-id";
+    public static final String CLIENT_ID_LOG_FIELD = "clientId";
+    public static final String PASSPORT_SESSION_ID_LOG_FIELD = "passportSessionId";
+    public static final String COMPONENT_ID_LOG_FIELD = "componentId";
     public static final String COMPONENT_ID = "passport-cri";
 
     public static void attachComponentIdToLogs() {
@@ -26,8 +26,8 @@ public class LogHelper {
         attachFieldToLogs(CLIENT_ID_LOG_FIELD, clientId);
     }
 
-    public static void attachSessionIdToLogs(String sessionId) {
-        attachFieldToLogs(SESSION_ID_LOG_FIELD, sessionId);
+    public static void attachPassportSessionIdToLogs(String sessionId) {
+        attachFieldToLogs(PASSPORT_SESSION_ID_LOG_FIELD, sessionId);
     }
 
     private static void attachFieldToLogs(String field, String value) {
