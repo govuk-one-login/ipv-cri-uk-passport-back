@@ -60,7 +60,7 @@ public class RequestHelper {
             throw new HttpResponseExceptionWithErrorBody(
                     HttpStatus.SC_BAD_REQUEST, ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER);
         }
-        LogHelper.attachSessionIdToLogs(ipvSessionId);
+        LogHelper.attachPassportSessionIdToLogs(ipvSessionId);
         return ipvSessionId;
     }
 }
