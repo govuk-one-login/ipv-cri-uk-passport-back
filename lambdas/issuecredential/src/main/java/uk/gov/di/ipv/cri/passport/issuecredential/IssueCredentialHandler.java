@@ -131,6 +131,8 @@ public class IssueCredentialHandler
                                 .toJSONObject());
             }
 
+            accessTokenService.revokeAccessToken(accessTokenItem.getAccessToken());
+
             PassportCheckDao passportCheck =
                     dcsPassportCheckService.getDcsPassportCheck(accessTokenItem.getResourceId());
             LogHelper.attachClientIdToLogs(passportCheck.getClientId());
@@ -161,6 +163,11 @@ public class IssueCredentialHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed to revoke access token after use because: {}", e.getMessage());
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                    ErrorResponse.FAILED_TO_REVOKE_ACCESS_TOKEN);
         }
     }
 
