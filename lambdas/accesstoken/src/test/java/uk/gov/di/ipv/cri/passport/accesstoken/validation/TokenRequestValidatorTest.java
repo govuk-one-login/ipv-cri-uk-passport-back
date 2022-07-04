@@ -18,6 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.ClientAuthJwtIdItem;
+import uk.gov.di.ipv.cri.passport.library.service.ClientAuthJwtIdService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.net.URLEncoder;
@@ -27,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,14 +48,17 @@ class TokenRequestValidatorTest {
 
     private TokenRequestValidator validator;
     @Mock private ConfigurationService mockConfigurationService;
+    @Mock private ClientAuthJwtIdService mockClientAuthJwtIdService;
 
     private final String clientId = "testClientId";
     private final String audience = "https://audience.example.com";
 
+    private final String jti = "test-jti";
+
     @BeforeEach
     void setUp() {
         when(mockConfigurationService.getAudienceForClients()).thenReturn(audience);
-        validator = new TokenRequestValidator(mockConfigurationService);
+        validator = new TokenRequestValidator(mockConfigurationService, mockClientAuthJwtIdService);
     }
 
     @Test
@@ -223,6 +229,49 @@ class TokenRequestValidatorTest {
         assertEquals("Missing client_assertion_type parameter", exception.getCause().getMessage());
     }
 
+    @Test
+    void shouldThrowIfMissingJwtId() throws Exception {
+        when(mockConfigurationService.getClientSigningPublicJwk(clientId))
+                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+        when(mockConfigurationService.getMaxClientAuthTokenTtl()).thenReturn("2400");
+        Map<String, Object> claimsSetValues = getClaimsSetValuesMissingJwtId();
+        String clientAssertion = generateClientAssertion(claimsSetValues);
+
+        ClientAuthenticationException exception =
+                assertThrows(
+                        ClientAuthenticationException.class,
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(getValidQueryParams(clientAssertion))));
+
+        assertEquals("The client auth JWT id (jti) is missing", exception.getCause().getMessage());
+    }
+
+    @Test
+    void shouldThrowIfJwtIdHasAlreadyBeenUsed() throws Exception {
+        when(mockConfigurationService.getClientSigningPublicJwk(clientId))
+                .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
+        when(mockConfigurationService.getMaxClientAuthTokenTtl()).thenReturn("2400");
+        Map<String, Object> claimsSetValues = getValidClaimsSetValues();
+        String clientAssertion = generateClientAssertion(claimsSetValues);
+
+        ClientAuthJwtIdItem clientAuthJwtIdItem =
+                new ClientAuthJwtIdItem(jti, Instant.now().toString());
+        when(mockClientAuthJwtIdService.getClientAuthJwtIdItem(jti))
+                .thenReturn(clientAuthJwtIdItem);
+
+        ClientAuthenticationException exception =
+                assertThrows(
+                        ClientAuthenticationException.class,
+                        () ->
+                                validator.authenticateClient(
+                                        queryMapToString(getValidQueryParams(clientAssertion))));
+
+        assertEquals(
+                "The client auth JWT id (jti) has already been used",
+                exception.getCause().getMessage());
+    }
+
     private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
         return (ECPrivateKey)
                 KeyFactory.getInstance("EC")
@@ -284,6 +333,20 @@ class TokenRequestValidatorTest {
                 JWTClaimNames.AUDIENCE,
                 audience,
                 JWTClaimNames.EXPIRATION_TIME,
+                fifteenMinutesFromNow(),
+                JWTClaimNames.JWT_ID,
+                jti);
+    }
+
+    private Map<String, Object> getClaimsSetValuesMissingJwtId() {
+        return Map.of(
+                JWTClaimNames.ISSUER,
+                clientId,
+                JWTClaimNames.SUBJECT,
+                clientId,
+                JWTClaimNames.AUDIENCE,
+                audience,
+                JWTClaimNames.EXPIRATION_TIME,
                 fifteenMinutesFromNow());
     }
 
@@ -309,6 +372,7 @@ class TokenRequestValidatorTest {
                 .claim(JWTClaimNames.ISSUER, claimsSetValues.get(JWTClaimNames.ISSUER))
                 .claim(JWTClaimNames.SUBJECT, claimsSetValues.get(JWTClaimNames.SUBJECT))
                 .claim(JWTClaimNames.AUDIENCE, claimsSetValues.get(JWTClaimNames.AUDIENCE))
+                .claim(JWTClaimNames.JWT_ID, claimsSetValues.get(JWTClaimNames.JWT_ID))
                 .claim(
                         JWTClaimNames.EXPIRATION_TIME,
                         claimsSetValues.get(JWTClaimNames.EXPIRATION_TIME))

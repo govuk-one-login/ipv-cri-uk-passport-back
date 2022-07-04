@@ -53,6 +53,7 @@ class AccessTokenHandlerTest {
                     Instant.now().toString(),
                     UUID.randomUUID().toString());
 
+    private static final String TEST_JWT_ID = "test-jwt-id";
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
     @Mock private AccessTokenService mockAccessTokenService;
@@ -76,6 +77,7 @@ class AccessTokenHandlerTest {
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
+
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
         Map<String, Object> responseBody =

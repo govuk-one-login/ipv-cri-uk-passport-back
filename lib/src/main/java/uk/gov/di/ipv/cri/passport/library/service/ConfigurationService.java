@@ -78,6 +78,10 @@ public class ConfigurationService {
         return System.getenv("CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME");
     }
 
+    public String getClientAuthJwtIdsTableName() {
+        return System.getenv("CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME");
+    }
+
     public String getSqsAuditEventQueueUrl() {
         return System.getenv("SQS_AUDIT_EVENT_QUEUE_URL");
     }

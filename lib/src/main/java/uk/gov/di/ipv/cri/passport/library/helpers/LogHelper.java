@@ -15,7 +15,9 @@ public class LogHelper {
         COMPONENT_ID_LOG_FIELD("componentId"),
         ERROR_CODE_LOG_FIELD("errorCode"),
         ERROR_DESCRIPTION_LOG_FIELD("errorDescription"),
-        PASSPORT_SESSION_ID_LOG_FIELD("passportSessionId");
+        PASSPORT_SESSION_ID_LOG_FIELD("passportSessionId"),
+        JTI_LOG_FIELD("jti"),
+        USED_AT_DATE_TIME_LOG_FIELD("usedAtDateTime");
 
         private final String fieldName;
 
@@ -23,7 +25,7 @@ public class LogHelper {
             this.fieldName = fieldName;
         }
 
-        String getFieldName() {
+        public String getFieldName() {
             return this.fieldName;
         }
     }
