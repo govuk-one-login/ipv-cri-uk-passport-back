@@ -70,11 +70,11 @@ class AccessTokenHandlerTest {
 
         AccessToken accessToken = new BearerAccessToken();
         TokenResponse tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
-        when(mockAccessTokenService.generateAccessToken(any())).thenReturn(tokenResponse);
+        when(mockAccessTokenService.generateAccessToken()).thenReturn(tokenResponse);
 
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
 
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -128,7 +128,7 @@ class AccessTokenHandlerTest {
 
     @Test
     void shouldReturn400IfAccessTokenServiceDeemsRequestInvalid() throws ParseException {
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(new ValidationResult<>(false, OAuth2Error.UNSUPPORTED_GRANT_TYPE));
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
@@ -154,7 +154,7 @@ class AccessTokenHandlerTest {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setBody(tokenRequestBody);
 
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(null);
@@ -175,7 +175,7 @@ class AccessTokenHandlerTest {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setBody(tokenRequestBody);
 
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
@@ -199,7 +199,7 @@ class AccessTokenHandlerTest {
 
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
 
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -251,7 +251,7 @@ class AccessTokenHandlerTest {
         when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
                 .thenReturn(authorizationCodeItem);
 
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -286,7 +286,7 @@ class AccessTokenHandlerTest {
         when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
                 .thenReturn(authorizationCodeItem);
 
-        when(mockAccessTokenService.validateTokenRequest(any()))
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
         String errorMessage = "Failed to revoke access token";

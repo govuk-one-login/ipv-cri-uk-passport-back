@@ -1,15 +1,10 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.oauth2.sdk.AccessTokenResponse;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.RefreshTokenGrant;
-import com.nimbusds.oauth2.sdk.Scope;
-import com.nimbusds.oauth2.sdk.TokenRequest;
 import com.nimbusds.oauth2.sdk.TokenResponse;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
@@ -26,7 +21,6 @@ import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
-import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -35,11 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.service.AccessTokenService.DEFAULT_SCOPE;
 
 @ExtendWith(MockitoExtension.class)
 class AccessTokenServiceTest {
@@ -55,19 +49,11 @@ class AccessTokenServiceTest {
     }
 
     @Test
-    void shouldReturnSuccessfulTokenResponseOnSuccessfulExchange() throws Exception {
+    void shouldReturnSuccessfulTokenResponseOnSuccessfulExchange() {
         long testTokenTtl = 2400L;
-        Scope testScope = new Scope("test-scope");
-        TokenRequest tokenRequest =
-                new TokenRequest(
-                        null,
-                        new ClientID("test-client-id"),
-                        new AuthorizationCodeGrant(
-                                new AuthorizationCode("123456"), new URI("http://test.com")),
-                        testScope);
         when(mockConfigurationService.getAccessTokenExpirySeconds()).thenReturn(testTokenTtl);
 
-        TokenResponse response = accessTokenService.generateAccessToken(tokenRequest);
+        TokenResponse response = accessTokenService.generateAccessToken();
 
         assertInstanceOf(AccessTokenResponse.class, response);
         assertNotNull(response.toSuccessResponse().getTokens().getAccessToken().getValue());
@@ -75,41 +61,19 @@ class AccessTokenServiceTest {
                 testTokenTtl,
                 response.toSuccessResponse().getTokens().getBearerAccessToken().getLifetime());
         assertEquals(
-                testScope,
+                DEFAULT_SCOPE,
                 response.toSuccessResponse().getTokens().getBearerAccessToken().getScope());
     }
 
     @Test
     void shouldReturnValidationErrorWhenInvalidGrantTypeProvided() {
-        TokenRequest tokenRequest =
-                new TokenRequest(
-                        null,
-                        new ClientID("test-client-id"),
-                        new RefreshTokenGrant(new RefreshToken()));
-
         ValidationResult<ErrorObject> validationResult =
-                accessTokenService.validateTokenRequest(tokenRequest);
+                accessTokenService.validateAuthorizationGrant(
+                        new RefreshTokenGrant(new RefreshToken()));
 
         assertNotNull(validationResult);
         assertFalse(validationResult.isValid());
         assertEquals(OAuth2Error.UNSUPPORTED_GRANT_TYPE, validationResult.getError());
-    }
-
-    @Test
-    void shouldNotReturnValidationErrorWhenAValidTokenRequestIsProvided() {
-        TokenRequest tokenRequest =
-                new TokenRequest(
-                        null,
-                        new ClientID("test-client-id"),
-                        new AuthorizationCodeGrant(
-                                new AuthorizationCode(), URI.create("https://test.com")));
-
-        ValidationResult<ErrorObject> validationResult =
-                accessTokenService.validateTokenRequest(tokenRequest);
-
-        assertNotNull(validationResult);
-        assertTrue(validationResult.isValid());
-        assertNull(validationResult.getError());
     }
 
     @Test
