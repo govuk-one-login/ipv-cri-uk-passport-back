@@ -4,15 +4,13 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.oauth2.sdk.AccessTokenResponse;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.TokenRequest;
-import com.nimbusds.oauth2.sdk.TokenResponse;
-import com.nimbusds.oauth2.sdk.http.HTTPRequest;
+import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +26,6 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
-import java.net.URI;
 import java.util.Objects;
 
 public class AccessTokenHandler
@@ -66,28 +63,25 @@ public class AccessTokenHandler
             APIGatewayProxyRequestEvent input, Context context) {
         LogHelper.attachComponentIdToLogs();
         try {
-            String requestBody = input.getBody();
-            tokenRequestValidator.authenticateClient(requestBody);
+            tokenRequestValidator.authenticateClient(input.getBody());
 
-            TokenRequest tokenRequest = createTokenRequest(requestBody);
-
+            AuthorizationCodeGrant authorizationGrant =
+                    (AuthorizationCodeGrant)
+                            AuthorizationGrant.parse(URLUtils.parseParameters(input.getBody()));
             ValidationResult<ErrorObject> validationResult =
-                    accessTokenService.validateTokenRequest(tokenRequest);
+                    accessTokenService.validateAuthorizationGrant(authorizationGrant);
             if (!validationResult.isValid()) {
-                LOGGER.error(
-                        "Invalid access token request, error description: {}",
-                        validationResult.getError().getDescription());
+                ErrorObject error = validationResult.getError();
+                LogHelper.logOauthError(
+                        "Invalid auth grant received", error.getCode(), error.getDescription());
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         getHttpStatusCodeForErrorResponse(validationResult.getError()),
                         validationResult.getError().toJSONObject());
             }
 
-            AuthorizationCodeGrant authorizationCodeGrant =
-                    (AuthorizationCodeGrant) tokenRequest.getAuthorizationGrant();
-
             AuthorizationCodeItem authorizationCodeItem =
                     authorizationCodeService.getAuthCodeItem(
-                            authorizationCodeGrant.getAuthorizationCode().getValue());
+                            authorizationGrant.getAuthorizationCode().getValue());
 
             if (authorizationCodeItem == null) {
                 LOGGER.error(
@@ -118,7 +112,7 @@ public class AccessTokenHandler
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
 
-            if (redirectUrlsDoNotMatch(authorizationCodeItem, authorizationCodeGrant)) {
+            if (redirectUrlsDoNotMatch(authorizationCodeItem, authorizationGrant)) {
                 LOGGER.error(
                         "Redirect URL in token request does not match that received in auth code request. Resource ID: {}",
                         authorizationCodeItem.getResourceId());
@@ -127,8 +121,8 @@ public class AccessTokenHandler
                         OAuth2Error.INVALID_REQUEST.toJSONObject());
             }
 
-            TokenResponse tokenResponse = accessTokenService.generateAccessToken(tokenRequest);
-            AccessTokenResponse accessTokenResponse = tokenResponse.toSuccessResponse();
+            AccessTokenResponse accessTokenResponse =
+                    accessTokenService.generateAccessToken().toSuccessResponse();
 
             accessTokenService.persistAccessToken(
                     accessTokenResponse,
@@ -155,17 +149,6 @@ public class AccessTokenHandler
                     OAuth2Error.INVALID_CLIENT.getHTTPStatusCode(),
                     OAuth2Error.INVALID_CLIENT.toJSONObject());
         }
-    }
-
-    private TokenRequest createTokenRequest(String requestBody) throws ParseException {
-        // The URI is not needed/consumed in the resultant TokenRequest
-        // therefore any value can be passed here to ensure the parse method
-        // successfully materialises a TokenRequest
-        URI arbitraryUri = URI.create("https://gds");
-        HTTPRequest request = new HTTPRequest(HTTPRequest.Method.POST, arbitraryUri);
-        request.setQuery(requestBody);
-        request.setContentType(ContentType.APPLICATION_URLENCODED.getType());
-        return TokenRequest.parse(request);
     }
 
     private int getHttpStatusCodeForErrorResponse(ErrorObject errorObject) {
