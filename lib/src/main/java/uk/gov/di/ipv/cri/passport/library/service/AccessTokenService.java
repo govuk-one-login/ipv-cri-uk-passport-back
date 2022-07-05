@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 public class AccessTokenService {
-    protected static final Scope DEFAULT_SCOPE = new Scope("default");
+    protected static final Scope DEFAULT_SCOPE = new Scope("user-credentials");
     private final DataStore<AccessTokenItem> dataStore;
     private final ConfigurationService configurationService;
 
