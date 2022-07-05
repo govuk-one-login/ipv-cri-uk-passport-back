@@ -206,8 +206,8 @@ class AccessTokenHandlerTest {
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-        assertEquals(OAuth2Error.INVALID_REQUEST.getCode(), errorResponse.getCode());
-        assertEquals(OAuth2Error.INVALID_REQUEST.getDescription(), errorResponse.getDescription());
+        assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
+        assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
     }
 
     @Test
