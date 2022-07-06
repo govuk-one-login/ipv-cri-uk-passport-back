@@ -78,8 +78,13 @@ public class ConfigurationService {
         return System.getenv("CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME");
     }
 
+<<<<<<< HEAD
     public String getClientAuthJwtIdsTableName() {
         return System.getenv("CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME");
+=======
+    public String getPassportBackSessionsTableName() {
+        return System.getenv("PASSPORT_BACK_SESSIONS_TABLE_NAME");
+>>>>>>> d53968d (BAU: Setup and initialise new passport back session in DynamoDB)
     }
 
     public String getSqsAuditEventQueueUrl() {
