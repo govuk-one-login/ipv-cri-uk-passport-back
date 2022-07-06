@@ -652,7 +652,6 @@ Resources:
         SSEEnabled: true
         SSEType: KMS
 
-
   CRIPassportBackSessionsTable:
     Type: AWS::DynamoDB::Table
     # checkov:skip=CKV_AWS_28: Point in time recovery is not necessary for this table.
