@@ -154,7 +154,9 @@ Resources:
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-issue-credential-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.issuecredential.IssueCredentialHandler::handleRequest
       Runtime: java11
@@ -237,7 +239,9 @@ Resources:
   IPVCriUKPassportAccessTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-token-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.accesstoken.AccessTokenHandler::handleRequest
       Runtime: java11
@@ -304,7 +308,9 @@ Resources:
   IPVCriUKPassportAuthorizationCodeFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-authorization-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.authorizationcode.AuthorizationCodeHandler::handleRequest
       Runtime: java11
@@ -387,7 +393,9 @@ Resources:
   IPVCriUKPassportJwTAuthorizationRequestFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-jwt-authorization-request-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.jwtauthorizationrequest.JwtAuthorizationRequestHandler::handleRequest
       Runtime: java11
