@@ -51,6 +51,14 @@ public class AuthorizationCodeService {
                         passportSessionId));
     }
 
+    public void persistAuthorizationCode(String authorizationCode, String passportSessionId) {
+        dataStore.create(
+                new AuthorizationCodeItem(
+                        DigestUtils.sha256Hex(authorizationCode),
+                        Instant.now().toString(),
+                        passportSessionId));
+    }
+
     public void setIssuedAccessToken(String authorizationCode, String accessToken) {
         AuthorizationCodeItem authorizationCodeItem = dataStore.getItem(authorizationCode);
         authorizationCodeItem.setIssuedAccessToken(DigestUtils.sha256Hex(accessToken));
