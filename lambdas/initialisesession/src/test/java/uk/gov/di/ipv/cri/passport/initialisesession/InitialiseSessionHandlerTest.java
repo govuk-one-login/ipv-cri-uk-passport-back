@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.jwtauthorizationrequest;
+package uk.gov.di.ipv.cri.passport.initialisesession;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -58,7 +58,7 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.E
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.JWE_OBJECT_STRING;
 
 @ExtendWith(MockitoExtension.class)
-class JwtAuthorizationRequestHandlerTest {
+class InitialiseSessionHandlerTest {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Map<String, String> TEST_EVENT_HEADERS =
@@ -74,7 +74,7 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Mock private PassportSessionService passportSessionService;
 
-    @InjectMocks private JwtAuthorizationRequestHandler underTest;
+    @InjectMocks private InitialiseSessionHandler underTest;
 
     private SignedJWT signedJWT;
 

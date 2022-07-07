@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.jwtauthorizationrequest;
+package uk.gov.di.ipv.cri.passport.initialisesession;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -33,7 +33,7 @@ import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
 
-public class JwtAuthorizationRequestHandler
+public class InitialiseSessionHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private final ConfigurationService configurationService;
@@ -51,7 +51,7 @@ public class JwtAuthorizationRequestHandler
     private static final String REDIRECT_URI = "redirect_uri";
     private static final String SHARED_CLAIMS = "shared_claims";
 
-    public JwtAuthorizationRequestHandler(
+    public InitialiseSessionHandler(
             ConfigurationService configurationService,
             KmsRsaDecrypter kmsRsaDecrypter,
             JarValidator jarValidator,
@@ -65,7 +65,7 @@ public class JwtAuthorizationRequestHandler
     }
 
     @ExcludeFromGeneratedCoverageReport
-    public JwtAuthorizationRequestHandler() {
+    public InitialiseSessionHandler() {
         this.configurationService = new ConfigurationService();
         this.kmsRsaDecrypter = new KmsRsaDecrypter(configurationService.getJarKmsEncryptionKeyId());
         this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
