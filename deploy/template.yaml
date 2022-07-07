@@ -393,6 +393,70 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportAuthorizationCodeFunctionLogGroup
 
+  IPVCriUKPassportBuildClientOauthResponseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
+      FunctionName: !Sub "ipv-passport-build-client-oauth-response-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.buildclientoauthresponse.BuildClientOauthResponseHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/buildclientoauthresponse
+      Architectures:
+        - arm64
+      MemorySize: 2048
+      Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt CRIPassportAuthCodesTable.Arn ] ]
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportBackSessionsTable.Arn]]
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAuthCodesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportBackSessionsTable
+        - SQSSendMessagePolicy:
+            QueueName: !ImportValue AuditEventQueueName
+        - Statement:
+            - Sid: auditEventQueueKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue AuditEventQueueEncryptionKeyArn
+      Events:
+        IPVCriUKPassportPrivateAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportPrivateAPI
+            Path: /build-client-oauth-response
+            Method: POST
+      AutoPublishAlias: live
+      ProvisionedConcurrencyConfig:
+        !If
+        - AddProvisionedConcurrency
+        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+        - !Ref AWS::NoValue
+
+  IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportBuildClientOauthResponseFunction}"
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
+
+  IPVCriUKPassportBuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup
+
 #  TODO remove this lambda function after passport-front is updated to use new initialise-session lambda
   IPVCriUKPassportJwTAuthorizationRequestFunction:
     Type: AWS::Serverless::Function
