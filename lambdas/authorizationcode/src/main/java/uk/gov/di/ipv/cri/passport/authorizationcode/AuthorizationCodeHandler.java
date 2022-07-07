@@ -26,6 +26,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthorizationCodeResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -154,6 +155,7 @@ public class AuthorizationCodeHandler
                             generateGpg45Score(unwrappedDcsResponse),
                             userId,
                             authenticationRequest.getClientID().getValue());
+
             passportService.persistDcsResponse(passportCheckDao);
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
@@ -165,13 +167,20 @@ public class AuthorizationCodeHandler
 
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
+            if (passportCheckDao.getEvidence().getValidityScore() == 0) {
+                LOGGER.info("Return fail response");
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        HttpStatus.SC_OK, generateAuthCodeResponse(false, authorizationCode));
+            }
+
             return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));
+                    HttpStatus.SC_OK, generateAuthCodeResponse(true, authorizationCode));
+
         } catch (OAuthHttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(),
-                    new ErrorObject(OAuth2Error.SERVER_ERROR_CODE, e.getErrorReason())
-                            .toJSONObject());
+                    generateErrorResponse(
+                            new ErrorObject(OAuth2Error.SERVER_ERROR_CODE, e.getErrorReason())));
         } catch (HttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(), e.getErrorResponse());
@@ -318,5 +327,14 @@ public class AuthorizationCodeHandler
 
     private List<ContraIndicators> calculateContraIndicators(DcsResponse dcsResponse) {
         return dcsResponse.isValid() ? null : List.of(ContraIndicators.D02);
+    }
+
+    private AuthorizationCodeResponse generateAuthCodeResponse(boolean isValidPassport, AuthorizationCode authorizationCode) {
+        return new AuthorizationCodeResponse(isValidPassport, authorizationCode, null, null);
+    }
+
+    private AuthorizationCodeResponse generateErrorResponse(ErrorObject errorObject) {
+        return new AuthorizationCodeResponse(
+                false, null, errorObject.getCode(), errorObject.getDescription());
     }
 }
