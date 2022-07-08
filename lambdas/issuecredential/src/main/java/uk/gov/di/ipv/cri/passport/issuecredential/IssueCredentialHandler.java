@@ -40,6 +40,7 @@ import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.time.Instant;
 import java.util.Date;
@@ -56,6 +57,7 @@ public class IssueCredentialHandler
     private final AccessTokenService accessTokenService;
     private final ConfigurationService configurationService;
     private final AuditService auditService;
+    private final PassportSessionService passportSessionService;
     private final JWSSigner kmsSigner;
 
     public IssueCredentialHandler(
@@ -63,11 +65,13 @@ public class IssueCredentialHandler
             AccessTokenService accessTokenService,
             ConfigurationService configurationService,
             AuditService auditService,
+            PassportSessionService passportSessionService,
             JWSSigner kmsSigner) {
         this.configurationService = configurationService;
         this.dcsPassportCheckService = dcsPassportCheckService;
         this.accessTokenService = accessTokenService;
         this.auditService = auditService;
+        this.passportSessionService = passportSessionService;
         this.kmsSigner = kmsSigner;
     }
 
@@ -78,6 +82,7 @@ public class IssueCredentialHandler
         this.accessTokenService = new AccessTokenService(configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
+        this.passportSessionService = new PassportSessionService(configurationService);
         this.kmsSigner =
                 new KmsSigner(configurationService.getVerifiableCredentialKmsSigningKeyId());
     }
@@ -134,7 +139,8 @@ public class IssueCredentialHandler
             accessTokenService.revokeAccessToken(accessTokenItem.getAccessToken());
 
             PassportCheckDao passportCheck =
-                    dcsPassportCheckService.getDcsPassportCheck(accessTokenItem.getResourceId());
+                    dcsPassportCheckService.getDcsPassportCheck(
+                            getPassportCheckResourceId(accessTokenItem));
             LogHelper.attachClientIdToLogs(passportCheck.getClientId());
 
             VerifiableCredential verifiableCredential =
@@ -169,6 +175,14 @@ public class IssueCredentialHandler
                     HttpStatus.SC_INTERNAL_SERVER_ERROR,
                     ErrorResponse.FAILED_TO_REVOKE_ACCESS_TOKEN);
         }
+    }
+
+    private String getPassportCheckResourceId(AccessTokenItem accessTokenItem) {
+        return StringUtils.isBlank(accessTokenItem.getResourceId())
+                ? passportSessionService
+                        .getPassportSession(accessTokenItem.getPassportSessionId())
+                        .getLatestDcsResponseResourceId()
+                : accessTokenItem.getResourceId();
     }
 
     private AuditEvent createAuditEvent(VerifiableCredential vc, PassportCheckDao passportCheck) {
