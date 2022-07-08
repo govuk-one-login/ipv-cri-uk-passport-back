@@ -18,7 +18,6 @@ import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.error.RedirectErrorResponse;
-import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
@@ -80,7 +79,6 @@ public class InitialiseSessionHandler
             APIGatewayProxyRequestEvent input, Context context) {
         LogHelper.attachComponentIdToLogs();
         try {
-            RequestHelper.getPassportSessionId(input);
             String clientId = RequestHelper.getHeaderByKey(input.getHeaders(), CLIENT_ID);
 
             if (StringUtils.isBlank(clientId)) {
@@ -125,9 +123,6 @@ public class InitialiseSessionHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
-        } catch (HttpResponseExceptionWithErrorBody e) {
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    e.getStatusCode(), e.getErrorResponse());
         }
     }
 

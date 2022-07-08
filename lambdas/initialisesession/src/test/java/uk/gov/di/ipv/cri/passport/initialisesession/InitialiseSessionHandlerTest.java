@@ -236,24 +236,6 @@ class InitialiseSessionHandlerTest {
     }
 
     @Test
-    void shouldReturn400IfPassportSessionIdIsNotSet() throws JsonProcessingException {
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> noSessionId = new HashMap<>(TEST_EVENT_HEADERS);
-        noSessionId.remove("passport_session_id");
-        event.setHeaders(noSessionId);
-
-        var response = underTest.handleRequest(event, context);
-
-        Map<String, Object> error =
-                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-        assertEquals(400, response.getStatusCode());
-        assertEquals(ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getCode(), error.get("code"));
-        assertEquals(
-                ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getMessage(),
-                error.get("message"));
-    }
-
-    @Test
     void shouldReturn302WhenValidationFails() throws Exception {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
