@@ -23,6 +23,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
+import uk.gov.di.ipv.cri.passport.library.service.ClientAuthJwtIdService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
@@ -54,7 +55,9 @@ public class AccessTokenHandler
         this.configurationService = new ConfigurationService();
         this.accessTokenService = new AccessTokenService(configurationService);
         this.authorizationCodeService = new AuthorizationCodeService(configurationService);
-        this.tokenRequestValidator = new TokenRequestValidator(configurationService);
+        this.tokenRequestValidator =
+                new TokenRequestValidator(
+                        configurationService, new ClientAuthJwtIdService(configurationService));
     }
 
     @Override

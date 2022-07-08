@@ -256,6 +256,7 @@ Resources:
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+          CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME: !Ref CRIPassportClientAuthJwtIdsTable
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
@@ -264,6 +265,8 @@ Resources:
             TableName: !Ref CRIPassportAuthCodesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAccessTokensTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportClientAuthJwtIdsTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
         - SSMParameterReadPolicy:
@@ -524,6 +527,26 @@ Resources:
           AttributeType: "S"
       KeySchema:
         - AttributeName: "accessToken"
+          KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: true
+      SSESpecification:
+        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
+        SSEEnabled: true
+        SSEType: KMS
+
+  CRIPassportClientAuthJwtIdsTable:
+    Type: AWS::DynamoDB::Table
+    # checkov:skip=CKV_AWS_28: Point in time recovery is not necessary for this table.
+    Properties:
+      TableName: !Sub "cri-passport-client-auth-jwt-ids-${Environment}"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "jwtId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "jwtId"
           KeyType: "HASH"
       TimeToLiveSpecification:
         AttributeName: "ttl"
