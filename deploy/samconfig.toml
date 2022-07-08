@@ -1,11 +1,27 @@
 version = 0.1
 
 
-[development.deploy.parameters]
-stack_name = "ipv-passport-back-development"
+[development-a.deploy.parameters]
+stack_name = "ipv-passport-back-development-a"
 s3_bucket = "di-ipv-cri-lambda-artifact-bucket"
-s3_prefix = "passport-back-development"
+s3_prefix = "passport-back-development-a"
 region = "eu-west-2"
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=\"development\""
+parameter_overrides = "Environment=\"development-a\""
+
+[development-b.deploy.parameters]
+stack_name = "ipv-passport-back-development-b"
+s3_bucket = "di-ipv-cri-lambda-artifact-bucket"
+s3_prefix = "passport-back-development-b"
+region = "eu-west-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"development-b\""
+
+[development-c.deploy.parameters]
+stack_name = "ipv-passport-back-development-c"
+s3_bucket = "di-ipv-cri-lambda-artifact-bucket"
+s3_prefix = "passport-back-development-c"
+region = "eu-west-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"development-c\""
 

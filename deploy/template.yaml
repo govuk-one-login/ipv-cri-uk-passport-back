@@ -12,7 +12,9 @@ Globals:
 Parameters:
   Environment:
     AllowedValues:
-      - development
+      - development-a
+      - development-b
+      - development-c
       - build
       - staging
       - integration
@@ -21,7 +23,11 @@ Parameters:
 
 Mappings:
   EnvironmentConfiguration:
-    development:
+    development-a:
+      provisionedConcurrency: 0
+    development-b:
+      provisionedConcurrency: 0
+    development-c:
       provisionedConcurrency: 0
     build:
       provisionedConcurrency: 0
@@ -113,7 +119,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
-      Name: IPV CRI UK Passport API Gateway
+      Name: !Sub IPV CRI UK Passport API Gateway ${Environment}
       StageName: !Sub ${Environment}
       TracingEnabled: true
       Auth:
