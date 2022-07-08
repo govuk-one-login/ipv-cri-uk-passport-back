@@ -365,11 +365,17 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
-        IPVCriUKPassportPrivateAPI:
+        IPVCriUKPassportPrivateAPIDeprecate:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportPrivateAPI
             Path: /authorization
+            Method: POST
+        IPVCriUKPassportPrivateAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportPrivateAPI
+            Path: /check-passport
             Method: POST
       AutoPublishAlias: live
       ProvisionedConcurrencyConfig:
