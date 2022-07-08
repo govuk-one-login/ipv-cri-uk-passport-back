@@ -3,7 +3,6 @@ package uk.gov.di.ipv.cri.passport.library.service;
 import com.nimbusds.jwt.JWTClaimsSet;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
-import uk.gov.di.ipv.cri.passport.library.domain.JarOauthParams;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.SecureTokenHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
