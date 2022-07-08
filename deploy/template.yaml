@@ -393,6 +393,7 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportAuthorizationCodeFunctionLogGroup
 
+#  TODO remove this lambda function after passport-front is updated to use new initialise-session lambda
   IPVCriUKPassportJwTAuthorizationRequestFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -400,16 +401,18 @@ Resources:
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-jwt-authorization-request-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.jwtauthorizationrequest.JwtAuthorizationRequestHandler::handleRequest
+      Handler: uk.gov.di.ipv.cri.passport.initialisesession.InitialiseSessionHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/jwtauthorizationrequest
+      CodeUri: ../lambdas/initialisesession
       Architectures:
         - arm64
       MemorySize: 2048
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
@@ -418,6 +421,8 @@ Resources:
           # for use in the integration-test
           JAR_KMS_PUBLIC_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey"
       Policies:
+        - DynamoDBCrudPolicy:
+              TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
         - SSMParameterReadPolicy:
@@ -430,6 +435,8 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -475,6 +482,95 @@ Resources:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportJwTAuthorizationRequestFunctionLogGroup
+
+  IPVCriUKPassportInitialiseSessionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
+      FunctionName: !Sub "ipv-passport-initialise-session-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.initialisesession.InitialiseSessionHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/initialisesession
+      Architectures:
+        - arm64
+      MemorySize: 2048
+      Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
+        Variables:
+          ENVIRONMENT: !Sub "${Environment}"
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt CRIPassportBackSessionsTable.Arn ] ]
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
+          PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
+          PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
+          SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
+          JAR_ENCRYPTION_KEY_ID_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId"
+          # for use in the integration-test
+          JAR_KMS_PUBLIC_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportBackSessionsTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+        - SQSSendMessagePolicy:
+            QueueName: !ImportValue AuditEventQueueName
+        - Statement:
+            - Sid: jarKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue PassportCriEncryptionKeyArn
+            - Sid: auditEventQueueKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue AuditEventQueueEncryptionKeyArn
+      Events:
+        IPVCriUKPassportPrivateAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportPrivateAPI
+            Path: /initialise-session
+            Method: POST
+      AutoPublishAlias: live
+      ProvisionedConcurrencyConfig:
+        !If
+        - AddProvisionedConcurrency
+        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+        - !Ref AWS::NoValue
+
+  IPVCriUKPassportInitialiseSessionFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportInitialiseSessionFunction}"
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
+
+  IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Condition: IsNotDevelopmentEnvironment
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      FilterPattern: ""
+      LogGroupName: !Ref IPVCriUKPassportInitialiseSessionFunctionLogGroup
 
   DCSResponseTable:
     Type: AWS::DynamoDB::Table
@@ -555,6 +651,27 @@ Resources:
         # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+
+
+CRIPassportBackSessionsTable:
+  Type: AWS::DynamoDB::Table
+  # checkov:skip=CKV_AWS_28: Point in time recovery is not necessary for this table.
+  Properties:
+    TableName: !Sub "cri-passport-back-sessions-${Environment}"
+    BillingMode: "PAY_PER_REQUEST"
+    AttributeDefinitions:
+      - AttributeName: "passportSessionId"
+        AttributeType: "S"
+    KeySchema:
+      - AttributeName: "passportSessionId"
+        KeyType: "HASH"
+    TimeToLiveSpecification:
+      AttributeName: "ttl"
+      Enabled: true
+    SSESpecification:
+      # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
+      SSEEnabled: true
+      SSEType: KMS
 
   LoggingKmsKey:
     Type: AWS::KMS::Key

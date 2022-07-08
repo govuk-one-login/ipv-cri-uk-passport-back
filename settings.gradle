@@ -4,5 +4,5 @@ include "lib",
 		"lambdas:accesstoken",
 		"lambdas:issuecredential",
 		"lambdas:authorizationcode",
-		"lambdas:jwtauthorizationrequest",
+		"lambdas:initialisesession",
 		"integration-test"

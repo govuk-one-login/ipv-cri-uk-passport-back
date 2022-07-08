@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.jwtauthorizationrequest;
+package uk.gov.di.ipv.cri.passport.initialisesession;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -30,6 +30,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationExc
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.security.KeyFactory;
@@ -57,7 +58,7 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.E
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.JWE_OBJECT_STRING;
 
 @ExtendWith(MockitoExtension.class)
-class JwtAuthorizationRequestHandlerTest {
+class InitialiseSessionHandlerTest {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Map<String, String> TEST_EVENT_HEADERS =
@@ -71,7 +72,9 @@ class JwtAuthorizationRequestHandlerTest {
 
     @Mock private AuditService auditService;
 
-    @InjectMocks private JwtAuthorizationRequestHandler underTest;
+    @Mock private PassportSessionService passportSessionService;
+
+    @InjectMocks private InitialiseSessionHandler underTest;
 
     private SignedJWT signedJWT;
 
@@ -109,6 +112,7 @@ class JwtAuthorizationRequestHandlerTest {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
+        when(passportSessionService.generatePassportSession(any())).thenReturn("12345");
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);
@@ -124,6 +128,7 @@ class JwtAuthorizationRequestHandlerTest {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
+        when(passportSessionService.generatePassportSession(any())).thenReturn("12345");
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);
@@ -172,10 +177,33 @@ class JwtAuthorizationRequestHandlerTest {
     void shouldReturn400IfFailedToParseJWTClaimSet()
             throws JsonProcessingException, JarValidationException, ParseException {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
+        when(jarValidator.validateRequestJwt(any(), anyString()))
+                .thenReturn(signedJWT.getJWTClaimsSet());
+        when(passportSessionService.generatePassportSession(any()))
+                .thenThrow(new ParseException("Failed to parse jwt claim set", 0));
+
+        var event = new APIGatewayProxyRequestEvent();
+        event.setHeaders(TEST_EVENT_HEADERS);
+        event.setBody(JWE_OBJECT_STRING);
+
+        var response = underTest.handleRequest(event, context);
+
+        Map<String, Object> error =
+                OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
+        assertEquals(400, response.getStatusCode());
+        assertEquals(ErrorResponse.FAILED_TO_PARSE.getCode(), error.get("code"));
+        assertEquals(ErrorResponse.FAILED_TO_PARSE.getMessage(), error.get("message"));
+    }
+
+    @Test
+    void shouldReturn400IfFailedToParseJWTClaimSetWhenGeneratingSession()
+            throws JsonProcessingException, JarValidationException, ParseException {
+        when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         JWTClaimsSet myMock = mock(JWTClaimsSet.class);
         when(myMock.getJSONObjectClaim(anyString()))
                 .thenThrow(new ParseException("Failed to parse jwt claim set", 0));
         when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(myMock);
+        when(passportSessionService.generatePassportSession(any())).thenReturn("12345");
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);

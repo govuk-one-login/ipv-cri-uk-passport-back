@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.jwtauthorizationrequest;
+package uk.gov.di.ipv.cri.passport.initialisesession;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -28,17 +28,19 @@ import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
 
-public class JwtAuthorizationRequestHandler
+public class InitialiseSessionHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private final ConfigurationService configurationService;
     private final KmsRsaDecrypter kmsRsaDecrypter;
     private final JarValidator jarValidator;
     private final AuditService auditService;
+    private final PassportSessionService passportSessionService;
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Integer OK = 200;
@@ -49,24 +51,27 @@ public class JwtAuthorizationRequestHandler
     private static final String REDIRECT_URI = "redirect_uri";
     private static final String SHARED_CLAIMS = "shared_claims";
 
-    public JwtAuthorizationRequestHandler(
+    public InitialiseSessionHandler(
             ConfigurationService configurationService,
             KmsRsaDecrypter kmsRsaDecrypter,
             JarValidator jarValidator,
-            AuditService auditService) {
+            AuditService auditService,
+            PassportSessionService passportSessionService) {
         this.configurationService = configurationService;
         this.kmsRsaDecrypter = kmsRsaDecrypter;
         this.jarValidator = jarValidator;
         this.auditService = auditService;
+        this.passportSessionService = passportSessionService;
     }
 
     @ExcludeFromGeneratedCoverageReport
-    public JwtAuthorizationRequestHandler() {
+    public InitialiseSessionHandler() {
         this.configurationService = new ConfigurationService();
         this.kmsRsaDecrypter = new KmsRsaDecrypter(configurationService.getJarKmsEncryptionKeyId());
         this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
+        this.passportSessionService = new PassportSessionService(configurationService);
     }
 
     @Override
@@ -95,7 +100,9 @@ public class JwtAuthorizationRequestHandler
 
             JWTClaimsSet claimsSet = jarValidator.validateRequestJwt(signedJWT, clientId);
 
-            JarResponse response = generateJarResponse(claimsSet);
+            String passportSessionId = passportSessionService.generatePassportSession(claimsSet);
+
+            JarResponse response = generateJarResponse(claimsSet, passportSessionId);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, response);
         } catch (RecoverableJarValidationException e) {
@@ -124,7 +131,8 @@ public class JwtAuthorizationRequestHandler
         }
     }
 
-    private JarResponse generateJarResponse(JWTClaimsSet claimsSet) throws ParseException {
+    private JarResponse generateJarResponse(JWTClaimsSet claimsSet, String passportSessionId)
+            throws ParseException {
         AuthParams authParams =
                 new AuthParams(
                         claimsSet.getStringClaim(RESPONSE_TYPE),
@@ -133,6 +141,9 @@ public class JwtAuthorizationRequestHandler
                         claimsSet.getStringClaim(REDIRECT_URI));
 
         return new JarResponse(
-                authParams, claimsSet.getSubject(), claimsSet.getJSONObjectClaim(SHARED_CLAIMS));
+                authParams,
+                claimsSet.getSubject(),
+                claimsSet.getJSONObjectClaim(SHARED_CLAIMS),
+                passportSessionId);
     }
 }

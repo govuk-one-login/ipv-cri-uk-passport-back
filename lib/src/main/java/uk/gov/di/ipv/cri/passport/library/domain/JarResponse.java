@@ -16,10 +16,18 @@ public class JarResponse {
     @JsonProperty("shared_claims")
     private Map<String, Object> sharedClaims;
 
-    public JarResponse(AuthParams authParams, String userId, Map<String, Object> sharedClaims) {
+    @JsonProperty("passportSessionId")
+    private String passportSessionId;
+
+    public JarResponse(
+            AuthParams authParams,
+            String userId,
+            Map<String, Object> sharedClaims,
+            String passportSessionId) {
         this.authParams = authParams;
         this.userId = userId;
         this.sharedClaims = sharedClaims;
+        this.passportSessionId = passportSessionId;
     }
 
     public AuthParams getAuthParams() {
@@ -32,5 +40,9 @@ public class JarResponse {
 
     public Map<String, Object> getSharedClaims() {
         return sharedClaims;
+    }
+
+    public String getPassportSessionId() {
+        return passportSessionId;
     }
 }
