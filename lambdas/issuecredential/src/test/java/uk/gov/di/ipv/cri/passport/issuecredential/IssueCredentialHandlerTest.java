@@ -20,11 +20,12 @@ import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerTokenError;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -37,10 +38,12 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -80,24 +83,19 @@ class IssueCredentialHandlerTest {
     public static final String DATE_OF_BIRTH = "1984-09-28";
     public static final String EXPIRY_DATE = "2024-09-03";
     public static final String SUBJECT = "subject";
+    public static final String TEST_PASSPORT_SESSION_ID = "a-test-passport-session-id";
 
     @Mock private Context mockContext;
-
     @Mock private DcsPassportCheckService mockDcsPassportCheckService;
-
     @Mock private AccessTokenService mockAccessTokenService;
-
     @Mock private AuditService mockAuditService;
-
     @Mock private ConfigurationService mockConfigurationService;
+    @Mock private PassportSessionService mockPassportSessionService;
+    @Spy private ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
+    @InjectMocks private IssueCredentialHandler issueCredentialHandler;
 
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
-
-    private IssueCredentialHandler issueCredentialHandler;
-    private PassportCheckDao passportCheckDao;
-    private Map<String, String> responseBody;
-
     private final DcsPayload dcsPayload =
             new DcsPayload(
                     PASSPORT_NUMBER,
@@ -105,26 +103,14 @@ class IssueCredentialHandlerTest {
                     FORENAMES,
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
-
     private final Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
-
     private final String userId = "test-user-id";
     private final String clientId = "test-client-id";
+    private final PassportCheckDao passportCheckDao =
+            new PassportCheckDao(TEST_RESOURCE_ID, dcsPayload, evidence, userId, clientId);
+    private Map<String, String> responseBody = new HashMap<>();
 
-    @BeforeEach
-    void setUp() throws Exception {
-        passportCheckDao =
-                new PassportCheckDao(TEST_RESOURCE_ID, dcsPayload, evidence, userId, clientId);
-        responseBody = new HashMap<>();
-        ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
-        issueCredentialHandler =
-                new IssueCredentialHandler(
-                        mockDcsPassportCheckService,
-                        mockAccessTokenService,
-                        mockConfigurationService,
-                        mockAuditService,
-                        ecSigner);
-    }
+    IssueCredentialHandlerTest() throws Exception {}
 
     @Test
     void shouldReturn200OnSuccessfulDcsCredentialRequest() throws SqsException {
@@ -158,6 +144,41 @@ class IssueCredentialHandlerTest {
                 argumentCaptor.getValue().getEventName());
 
         assertEquals(200, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturn200WhenResourceIdInSessionDcsCredentialRequest() throws Exception {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        AccessToken accessToken = new BearerAccessToken();
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken.getValue(),
+                        null,
+                        Instant.now().plusSeconds(3600).toString(),
+                        TEST_PASSPORT_SESSION_ID);
+        Map<String, String> headers =
+                Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
+        event.setHeaders(headers);
+
+        setRequestBodyAsPlainJWT(event);
+
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+                .thenReturn(accessTokenItem);
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setLatestDcsResponseResourceId(TEST_RESOURCE_ID);
+
+        when(mockPassportSessionService.getPassportSession(TEST_PASSPORT_SESSION_ID))
+                .thenReturn(passportSessionItem);
+
+        when(mockDcsPassportCheckService.getDcsPassportCheck(TEST_RESOURCE_ID))
+                .thenReturn(passportCheckDao);
+
+        APIGatewayProxyResponseEvent response =
+                issueCredentialHandler.handleRequest(event, mockContext);
+
+        assertEquals(200, response.getStatusCode());
+        assertEquals(
+                "test-user-id", SignedJWT.parse(response.getBody()).getJWTClaimsSet().getSubject());
     }
 
     @Test
@@ -448,7 +469,8 @@ class IssueCredentialHandlerTest {
                 responseBody.get("message"));
     }
 
-    private ECPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private static ECPrivateKey getPrivateKey()
+            throws InvalidKeySpecException, NoSuchAlgorithmException {
         return (ECPrivateKey)
                 KeyFactory.getInstance("EC")
                         .generatePrivate(
