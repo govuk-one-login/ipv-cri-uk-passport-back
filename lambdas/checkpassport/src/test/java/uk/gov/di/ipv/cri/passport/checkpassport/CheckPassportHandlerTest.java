@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.authorizationcode;
+package uk.gov.di.ipv.cri.passport.checkpassport;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
+import uk.gov.di.ipv.cri.passport.checkpassport.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
@@ -59,7 +59,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AuthorizationCodeHandlerTest {
+class CheckPassportHandlerTest {
     private static final Map<String, String> TEST_EVENT_HEADERS =
             Map.of("passport_session_id", "test-session-id", "user_id", "test-user-id");
     public static final String PASSPORT_NUMBER = "1234567890";
@@ -105,7 +105,7 @@ class AuthorizationCodeHandlerTest {
     @Mock AuthRequestValidator authRequestValidator;
     @Mock JWSObject jwsObject;
 
-    private AuthorizationCodeHandler underTest;
+    private CheckPassportHandler underTest;
     private AuthorizationCode authorizationCode;
 
     @BeforeEach
@@ -113,7 +113,7 @@ class AuthorizationCodeHandlerTest {
         authorizationCode = new AuthorizationCode();
 
         underTest =
-                new AuthorizationCodeHandler(
+                new CheckPassportHandler(
                         passportService,
                         authorizationCodeService,
                         configurationService,

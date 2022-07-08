@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.authorizationcode;
+package uk.gov.di.ipv.cri.passport.checkpassport;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -18,7 +18,7 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
-import uk.gov.di.ipv.cri.passport.authorizationcode.validation.AuthRequestValidator;
+import uk.gov.di.ipv.cri.passport.checkpassport.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -60,7 +60,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class AuthorizationCodeHandler
+public class CheckPassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -79,7 +79,7 @@ public class AuthorizationCodeHandler
     private final AuditService auditService;
     private final AuthRequestValidator authRequestValidator;
 
-    public AuthorizationCodeHandler(
+    public CheckPassportHandler(
             PassportService passportService,
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
@@ -94,7 +94,7 @@ public class AuthorizationCodeHandler
         this.authRequestValidator = authRequestValidator;
     }
 
-    public AuthorizationCodeHandler()
+    public CheckPassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();

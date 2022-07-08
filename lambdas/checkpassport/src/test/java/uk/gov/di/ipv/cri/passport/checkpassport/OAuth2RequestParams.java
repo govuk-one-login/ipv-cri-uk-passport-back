@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.authorizationcode;
+package uk.gov.di.ipv.cri.passport.checkpassport;
 
 public class OAuth2RequestParams {
     public static final String REDIRECT_URI = "redirect_uri";

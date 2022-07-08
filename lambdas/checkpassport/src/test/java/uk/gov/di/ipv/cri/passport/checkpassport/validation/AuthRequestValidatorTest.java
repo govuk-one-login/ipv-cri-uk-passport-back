@@ -1,11 +1,11 @@
-package uk.gov.di.ipv.cri.passport.authorizationcode.validation;
+package uk.gov.di.ipv.cri.passport.checkpassport.validation;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.authorizationcode.OAuth2RequestParams;
+import uk.gov.di.ipv.cri.passport.checkpassport.OAuth2RequestParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
