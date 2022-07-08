@@ -51,6 +51,7 @@ public class PassportSessionService {
 
         passportSessionItem.setCreationDateTime(Instant.now().toString());
         passportSessionItem.setAttemptCount(0);
+        passportSessionItem.setUserId(jwtClaimsSet.getSubject());
 
         AuthParams authParams =
                 new AuthParams(
@@ -59,9 +60,7 @@ public class PassportSessionService {
                         jwtClaimsSet.getStringClaim(STATE),
                         jwtClaimsSet.getStringClaim(REDIRECT_URI));
 
-        JarOauthParams jarOauthParams = new JarOauthParams(authParams, jwtClaimsSet.getSubject());
-
-        passportSessionItem.setJarOauthParams(jarOauthParams);
+        passportSessionItem.setAuthParams(authParams);
 
         dataStore.create(passportSessionItem);
 

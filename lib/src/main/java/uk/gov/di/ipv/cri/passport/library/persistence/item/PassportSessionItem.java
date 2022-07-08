@@ -3,6 +3,7 @@ package uk.gov.di.ipv.cri.passport.library.persistence.item;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.JarOauthParams;
 
 @DynamoDbBean
@@ -11,8 +12,9 @@ public class PassportSessionItem implements DynamodbItem {
     private String passportSessionId;
     private String creationDateTime;
     private String latestDcsResponseResourceId;
+    private String userId;
     private int attemptCount;
-    private JarOauthParams jarOauthParams;
+    private AuthParams authParams;
     private long ttl;
 
     @DynamoDbPartitionKey
@@ -40,6 +42,14 @@ public class PassportSessionItem implements DynamodbItem {
         this.latestDcsResponseResourceId = latestDcsResponseResourceId;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public int getAttemptCount() {
         return attemptCount;
     }
@@ -48,12 +58,12 @@ public class PassportSessionItem implements DynamodbItem {
         this.attemptCount = attemptCount;
     }
 
-    public JarOauthParams getJarOauthParams() {
-        return jarOauthParams;
+    public AuthParams getAuthParams() {
+        return authParams;
     }
 
-    public void setJarOauthParams(JarOauthParams jarOauthParams) {
-        this.jarOauthParams = jarOauthParams;
+    public void setAuthParams(AuthParams authParams) {
+        this.authParams = authParams;
     }
 
     public long getTtl() {
