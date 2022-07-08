@@ -91,6 +91,41 @@ class AccessTokenHandlerTest {
     }
 
     @Test
+    void shouldReturnAccessTokenWhenNoResourceIdInAuthCode() throws Exception {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        String tokenRequestBody =
+                "code=12345&redirect_uri=http://example.com&grant_type=authorization_code&client_id=test_client_id";
+        event.setBody(tokenRequestBody);
+
+        AccessToken accessToken = new BearerAccessToken();
+        TokenResponse tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
+        when(mockAccessTokenService.generateAccessToken()).thenReturn(tokenResponse);
+
+        AuthorizationCodeItem authorizationCodeItemWithNoResourceId =
+                new AuthorizationCodeItem(
+                        new AuthorizationCode().toString(),
+                        null,
+                        "http://example.com",
+                        Instant.now().toString(),
+                        UUID.randomUUID().toString());
+
+        when(mockAuthorizationCodeService.getAuthCodeItem("12345"))
+                .thenReturn(authorizationCodeItemWithNoResourceId);
+
+        when(mockAccessTokenService.validateAuthorizationGrant(any()))
+                .thenReturn(ValidationResult.createValidResult());
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+        assertEquals(200, response.getStatusCode());
+        assertEquals(
+                tokenResponse.toSuccessResponse().getTokens().getAccessToken().getValue(),
+                responseBody.get("access_token").toString());
+    }
+
+    @Test
     void shouldReturn400WhenInvalidTokenRequestProvided() throws Exception {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         String invalidTokenRequest = "invalid-token-request";
