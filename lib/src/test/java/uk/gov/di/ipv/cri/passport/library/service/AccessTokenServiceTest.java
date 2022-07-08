@@ -103,6 +103,29 @@ class AccessTokenServiceTest {
     }
 
     @Test
+    void shouldPersistAccessTokenWhenResourceIdNull() {
+        String testPassportSessionId = UUID.randomUUID().toString();
+        AccessToken accessToken = new BearerAccessToken(3600L, null);
+        AccessTokenResponse accessTokenResponse =
+                new AccessTokenResponse(new Tokens(accessToken, null));
+        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
+                ArgumentCaptor.forClass(AccessTokenItem.class);
+
+        accessTokenService.persistAccessToken(accessTokenResponse, null, testPassportSessionId);
+
+        verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
+        AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
+        assertNotNull(capturedAccessTokenItem);
+        assertNull(capturedAccessTokenItem.getResourceId());
+        assertEquals(testPassportSessionId, capturedAccessTokenItem.getPassportSessionId());
+        assertEquals(
+                DigestUtils.sha256Hex(
+                        accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
+                capturedAccessTokenItem.getAccessToken());
+        assertNotNull(capturedAccessTokenItem.getAccessTokenExpiryDateTime());
+    }
+
+    @Test
     void shouldGetSessionIdByAccessTokenWhenValidAccessTokenProvided() {
         String testResourceId = UUID.randomUUID().toString();
         AccessToken accessToken = new BearerAccessToken();
