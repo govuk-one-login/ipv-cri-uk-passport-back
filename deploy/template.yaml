@@ -411,8 +411,8 @@ Resources:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
-          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt CRIPassportAuthCodesTable.Arn ] ]
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportBackSessionsTable.Arn]]
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref CRIPassportAuthCodesTable
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
