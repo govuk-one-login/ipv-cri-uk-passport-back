@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.authorizationcode.validation;
+package uk.gov.di.ipv.cri.passport.checkpassport.validation;
 
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.slf4j.Logger;

@@ -314,17 +314,17 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportAccessTokenFunctionLogGroup
 
-  IPVCriUKPassportAuthorizationCodeFunction:
+  IPVCriUKPassportCheckPassportFunction:
     Type: AWS::Serverless::Function
     Properties:
       # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-authorization-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.authorizationcode.AuthorizationCodeHandler::handleRequest
+      Handler: uk.gov.di.ipv.cri.passport.checkpassport.CheckPassportHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/authorizationcode
+      CodeUri: ../lambdas/checkpassport
       Architectures:
         - arm64
       MemorySize: 2048
@@ -371,11 +371,17 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
-        IPVCriUKPassportPrivateAPI:
+        IPVCriUKPassportPrivateAPIDeprecate:
           Type: Api
           Properties:
             RestApiId: !Ref IPVCriUKPassportPrivateAPI
             Path: /authorization
+            Method: POST
+        IPVCriUKPassportPrivateAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportPrivateAPI
+            Path: /check-passport
             Method: POST
       AutoPublishAlias: live
       ProvisionedConcurrencyConfig:
@@ -384,20 +390,20 @@ Resources:
           - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
           - !Ref AWS::NoValue
 
-  IPVCriUKPassportAuthorizationCodeFunctionLogGroup:
+  IPVCriUKPassportCheckPassportFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportAuthorizationCodeFunction}"
+      LogGroupName: !Sub "/aws/lambda/${IPVCriUKPassportCheckPassportFunction}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportAuthorizationCodeFunctionLogGroupSubscriptionFilter:
+  IPVCriUKPassportCheckPassportFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportAuthorizationCodeFunctionLogGroup
+      LogGroupName: !Ref IPVCriUKPassportCheckPassportFunctionLogGroup
 
   IPVCriUKPassportBuildClientOauthResponseFunction:
     Type: AWS::Serverless::Function
