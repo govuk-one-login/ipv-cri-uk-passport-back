@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,8 +29,8 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
-import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
@@ -53,8 +52,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -75,7 +72,7 @@ class CheckPassportHandlerTest {
             new Evidence(UUID.randomUUID().toString(), 4, 0, List.of(ContraIndicators.D02));
     private static final Map<String, String> VALID_QUERY_PARAMS =
             Map.of(
-                    OAuth2RequestParams.REDIRECT_URI, "http://example.com",
+                    OAuth2RequestParams.REDIRECT_URI, "https://example.com",
                     OAuth2RequestParams.CLIENT_ID, "12345",
                     OAuth2RequestParams.RESPONSE_TYPE, "code",
                     OAuth2RequestParams.SCOPE, "openid");
@@ -100,7 +97,6 @@ class CheckPassportHandlerTest {
 
     @Mock Context context;
     @Mock PassportService passportService;
-    @Mock AuthorizationCodeService authorizationCodeService;
     @Mock ConfigurationService configurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
     @Mock PassportSessionService passportSessionService;
@@ -109,16 +105,12 @@ class CheckPassportHandlerTest {
     @Mock JWSObject jwsObject;
 
     private CheckPassportHandler underTest;
-    private AuthorizationCode authorizationCode;
 
     @BeforeEach
     void setUp() {
-        authorizationCode = new AuthorizationCode();
-
         underTest =
                 new CheckPassportHandler(
                         passportService,
-                        authorizationCodeService,
                         configurationService,
                         dcsCryptographyService,
                         auditService,
@@ -131,25 +123,12 @@ class CheckPassportHandlerTest {
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException, SqsException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
-                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(validDcsResponse);
-        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
+        mockDcsResponse(validDcsResponse);
+        mockPassportSessionItem(0);
 
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "12345", objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
 
@@ -164,59 +143,85 @@ class CheckPassportHandlerTest {
                 capturedValues.get(1).getEventName());
 
         verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
-
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
     @Test
-    void shouldReturnAuthResponseOnSuccessfulOauthRequest()
+    void shouldPersistPassportCheckDao()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
-                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(validDcsResponse);
-        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
+        mockDcsResponse(validDcsResponse);
+        mockPassportSessionItem(0);
 
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "test-client-id");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "12345", objectMapper.writeValueAsString(validPassportFormData));
 
-        var response = underTest.handleRequest(event, context);
+        underTest.handleRequest(event, context);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Map<String, String>> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-        Map<String, String> authCode = responseBody.get("code");
-
-        ArgumentCaptor<PassportCheckDao> persistedDcsResponseItem =
+        ArgumentCaptor<PassportCheckDao> persistedPassportCheckDao =
                 ArgumentCaptor.forClass(PassportCheckDao.class);
-        verify(passportService).persistDcsResponse(persistedDcsResponseItem.capture());
-        assertEquals("test-client-id", persistedDcsResponseItem.getValue().getClientId());
 
-        verify(authorizationCodeService)
-                .persistAuthorizationCode(
-                        authCode.get("value"),
-                        persistedDcsResponseItem.getValue().getResourceId(),
-                        params.get(OAuth2RequestParams.REDIRECT_URI),
-                        PASSPORT_SESSION_ID);
-        assertEquals(authorizationCode.toString(), authCode.get("value"));
+        verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
+        assertEquals(
+                validPassportFormData.get("passportNumber"),
+                persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
+        assertEquals(
+                VALID_PASSPORT_EVIDENCE.getStrengthScore(),
+                persistedPassportCheckDao.getValue().getEvidence().getStrengthScore());
+        assertEquals(
+                VALID_PASSPORT_EVIDENCE.getValidityScore(),
+                persistedPassportCheckDao.getValue().getEvidence().getValidityScore());
+        assertNull(persistedPassportCheckDao.getValue().getEvidence().getCi());
+    }
 
-        verify(passportSessionService)
-                .setLatestDcsResponseResourceId(
-                        PASSPORT_SESSION_ID, persistedDcsResponseItem.getValue().getResourceId());
-        verify(passportSessionService).incrementAttemptCount(PASSPORT_SESSION_ID);
+    @Test
+    void shouldReturnFinishOnValidDCSResponseAndBelowAttemptCountLimit()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
+        mockDcsResponse(validDcsResponse);
+        mockPassportSessionItem(0);
+
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
+
+        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+        assertEquals("finish", responseBody.get("result"));
+    }
+
+    @Test
+    void shouldReturnRetryOnInvalidDCSResponseAndBelowAttemptCountLimit()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
+        mockDcsResponse(invalidDcsResponse);
+        mockPassportSessionItem(0);
+
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
+
+        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+        assertEquals("retry", responseBody.get("result"));
+    }
+
+    @Test
+    void shouldReturnFinishOnInvalidDCSResponseAndAttemptCountLimitReached()
+            throws IOException, CertificateException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, JOSEException, ParseException,
+                    EmptyDcsResponseException {
+        mockDcsResponse(invalidDcsResponse);
+        mockPassportSessionItem(2);
+
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
+
+        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+        assertEquals("finish", responseBody.get("result"));
     }
 
     @Test
@@ -227,11 +232,7 @@ class CheckPassportHandlerTest {
         missingSessionHeaders.remove("passport_session_id");
         event.setHeaders(missingSessionHeaders);
 
-        var response = underTest.handleRequest(event, context);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
 
         assertEquals(
                 ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getCode(),
@@ -251,19 +252,11 @@ class CheckPassportHandlerTest {
         event.setHeaders(TEST_EVENT_HEADERS);
         event.setBody(objectMapper.writeValueAsString(validPassportFormData));
 
-        var response = underTest.handleRequest(event, context);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseBody =
-                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
+        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
         assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
         assertEquals(
                 ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(),
                 responseBody.get("error_description"));
-
-        verify(authorizationCodeService, never())
-                .persistAuthorizationCode(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -272,20 +265,14 @@ class CheckPassportHandlerTest {
                 .thenReturn(Optional.empty());
         var formFields = validPassportFormData.keySet();
         for (String keyToRemove : formFields) {
-            var event = new APIGatewayProxyRequestEvent();
-            Map<String, String> params = new HashMap<>();
-            params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-            params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-            params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-            params.put(OAuth2RequestParams.SCOPE, "openid");
-            event.setQueryStringParameters(params);
-            event.setHeaders(TEST_EVENT_HEADERS);
-            event.setBody(
-                    objectMapper.writeValueAsString(
-                            new HashMap<>(validPassportFormData).remove(keyToRemove)));
+            APIGatewayProxyRequestEvent event =
+                    getApiGatewayProxyRequestEvent(
+                            "12345",
+                            objectMapper.writeValueAsString(
+                                    new HashMap<>(validPassportFormData).remove(keyToRemove)));
 
             var response = underTest.handleRequest(event, context);
-            var responseBody = objectMapper.readValue(response.getBody(), Map.class);
+            var responseBody = getResponseBody(response);
 
             assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
             assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
@@ -303,18 +290,12 @@ class CheckPassportHandlerTest {
         var mangledDateInput = new HashMap<>(validPassportFormData);
         mangledDateInput.put("dateOfBirth", "28-09-1984");
 
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(mangledDateInput));
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "12345", objectMapper.writeValueAsString(mangledDateInput));
 
         var response = underTest.handleRequest(event, context);
-        var responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        var responseBody = getResponseBody(response);
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
@@ -343,19 +324,12 @@ class CheckPassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(errorDcsResponse);
 
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "12345", objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
-
-        var responseBody = objectMapper.readValue(response.getBody(), Map.class);
+        var responseBody = getResponseBody(response);
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
@@ -364,144 +338,18 @@ class CheckPassportHandlerTest {
                 responseBody.get("error_description"));
     }
 
-    @Test
-    void shouldPersistPassportCheckDaoWithValidPassport()
-            throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException,
-                    EmptyDcsResponseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
-                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(validDcsResponse);
-        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
-
+    private APIGatewayProxyRequestEvent getApiGatewayProxyRequestEvent(
+            String clientId, String body) {
         var event = new APIGatewayProxyRequestEvent();
         Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
+        params.put(OAuth2RequestParams.REDIRECT_URI, "https://example.com");
+        params.put(OAuth2RequestParams.CLIENT_ID, clientId);
         params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
         params.put(OAuth2RequestParams.SCOPE, "openid");
         event.setQueryStringParameters(params);
         event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        underTest.handleRequest(event, context);
-
-        ArgumentCaptor<PassportCheckDao> persistedPassportCheckDao =
-                ArgumentCaptor.forClass(PassportCheckDao.class);
-
-        verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
-        assertEquals(
-                validPassportFormData.get("passportNumber"),
-                persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
-        assertEquals(
-                VALID_PASSPORT_EVIDENCE.getStrengthScore(),
-                persistedPassportCheckDao.getValue().getEvidence().getStrengthScore());
-        assertEquals(
-                VALID_PASSPORT_EVIDENCE.getValidityScore(),
-                persistedPassportCheckDao.getValue().getEvidence().getValidityScore());
-        assertNull(persistedPassportCheckDao.getValue().getEvidence().getCi());
-    }
-
-    @Test
-    void shouldPersistPassportCheckDaoWithInValidPassport()
-            throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException,
-                    EmptyDcsResponseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
-                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(invalidDcsResponse);
-        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
-
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        underTest.handleRequest(event, context);
-
-        ArgumentCaptor<PassportCheckDao> persistedPassportCheckDao =
-                ArgumentCaptor.forClass(PassportCheckDao.class);
-
-        verify(passportService).persistDcsResponse(persistedPassportCheckDao.capture());
-        assertEquals(
-                validPassportFormData.get("passportNumber"),
-                persistedPassportCheckDao.getValue().getDcsPayload().getPassportNumber());
-        assertEquals(
-                INVALID_PASSPORT_EVIDENCE.getStrengthScore(),
-                persistedPassportCheckDao.getValue().getEvidence().getStrengthScore());
-        assertEquals(
-                INVALID_PASSPORT_EVIDENCE.getValidityScore(),
-                persistedPassportCheckDao.getValue().getEvidence().getValidityScore());
-        assertEquals(
-                INVALID_PASSPORT_EVIDENCE.getCi(),
-                persistedPassportCheckDao.getValue().getEvidence().getCi());
-    }
-
-    @Test
-    void shouldPersistAuthCode()
-            throws IOException, CertificateException, NoSuchAlgorithmException,
-                    InvalidKeySpecException, JOSEException, ParseException,
-                    EmptyDcsResponseException {
-        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
-                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
-        when(passportService.dcsPassportCheck(any(JWSObject.class)))
-                .thenReturn(dcsSignedEncryptedResponse);
-        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
-                .thenReturn(validDcsResponse);
-        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
-
-        var event = new APIGatewayProxyRequestEvent();
-        Map<String, String> params = new HashMap<>();
-        params.put(OAuth2RequestParams.REDIRECT_URI, "http://example.com");
-        params.put(OAuth2RequestParams.CLIENT_ID, "12345");
-        params.put(OAuth2RequestParams.RESPONSE_TYPE, "code");
-        params.put(OAuth2RequestParams.SCOPE, "openid");
-        event.setQueryStringParameters(params);
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
-
-        underTest.handleRequest(event, context);
-
-        ArgumentCaptor<String> authCodeArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> resourceIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> redirectUrlArgumentCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<PassportCheckDao> dcsResponseItemArgumentCaptor =
-                ArgumentCaptor.forClass(PassportCheckDao.class);
-        verify(passportService).persistDcsResponse(dcsResponseItemArgumentCaptor.capture());
-
-        verify(authorizationCodeService)
-                .persistAuthorizationCode(
-                        authCodeArgumentCaptor.capture(),
-                        resourceIdArgumentCaptor.capture(),
-                        redirectUrlArgumentCaptor.capture(),
-                        eq(TEST_EVENT_HEADERS.get("passport_session_id")));
-
-        assertEquals(authorizationCode.toString(), authCodeArgumentCaptor.getValue());
-        assertEquals(
-                dcsResponseItemArgumentCaptor.getValue().getResourceId(),
-                resourceIdArgumentCaptor.getValue());
-        assertEquals(
-                params.get(OAuth2RequestParams.REDIRECT_URI), redirectUrlArgumentCaptor.getValue());
+        event.setBody(body);
+        return event;
     }
 
     @Test
@@ -526,15 +374,39 @@ class CheckPassportHandlerTest {
 
             APIGatewayProxyResponseEvent response = underTest.handleRequest(event, context);
 
-            Map<String, Object> responseBody =
-                    objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+            Map<String, Object> responseBody = getResponseBody(response);
             assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
             assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
             assertEquals(
                     ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
                     responseBody.get("error_description"));
-            verify(authorizationCodeService, never())
-                    .persistAuthorizationCode(anyString(), anyString(), anyString(), anyString());
         }
+    }
+
+    private Map<String, Object> getResponseBody(APIGatewayProxyResponseEvent response)
+            throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+    }
+
+    private void mockDcsResponse(DcsResponse validDcsResponse)
+            throws IOException, EmptyDcsResponseException, CertificateException,
+                    NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
+                    ParseException {
+        DcsSignedEncryptedResponse dcsSignedEncryptedResponse =
+                new DcsSignedEncryptedResponse("TEST_PAYLOAD");
+        when(passportService.dcsPassportCheck(any(JWSObject.class)))
+                .thenReturn(dcsSignedEncryptedResponse);
+        when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
+        when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
+                .thenReturn(validDcsResponse);
+        when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
+    }
+
+    private void mockPassportSessionItem(int attemptCount) {
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setAttemptCount(attemptCount);
+        when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
+                .thenReturn(passportSessionItem);
     }
 }

@@ -94,11 +94,12 @@ class PassportSessionServiceTest {
         passportSessionItem.setAttemptCount(1);
 
         when(mockDataStore.getItem(passportSessionID)).thenReturn(passportSessionItem);
-        underTest.incrementAttemptCount(passportSessionID);
+        int result = underTest.incrementAttemptCount(passportSessionID);
 
         ArgumentCaptor<PassportSessionItem> passportSessionItemArgumentCaptor =
                 ArgumentCaptor.forClass(PassportSessionItem.class);
         verify(mockDataStore).update(passportSessionItemArgumentCaptor.capture());
-        assertEquals(passportSessionItemArgumentCaptor.getValue().getAttemptCount(), 2);
+        assertEquals(2, passportSessionItemArgumentCaptor.getValue().getAttemptCount());
+        assertEquals(2, result);
     }
 }
