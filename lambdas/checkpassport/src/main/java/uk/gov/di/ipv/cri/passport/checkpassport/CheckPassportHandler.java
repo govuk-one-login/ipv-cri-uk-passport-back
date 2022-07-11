@@ -48,6 +48,7 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -79,19 +80,23 @@ public class CheckPassportHandler
     private final AuditService auditService;
     private final AuthRequestValidator authRequestValidator;
 
+    private final PassportSessionService passportSessionService;
+
     public CheckPassportHandler(
             PassportService passportService,
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
-            AuthRequestValidator authRequestValidator) {
+            AuthRequestValidator authRequestValidator,
+            PassportSessionService passportSessionService) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
         this.authRequestValidator = authRequestValidator;
+        this.passportSessionService = passportSessionService;
     }
 
     public CheckPassportHandler()
@@ -104,6 +109,7 @@ public class CheckPassportHandler
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
         this.authRequestValidator = new AuthRequestValidator(configurationService);
+        this.passportSessionService = new PassportSessionService(configurationService);
     }
 
     @Override
@@ -155,6 +161,9 @@ public class CheckPassportHandler
                             userId,
                             authenticationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
+
+            persistResourceIdWithSessionId(passportSessionId, passportCheckDao);
+
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
             authorizationCodeService.persistAuthorizationCode(
@@ -194,6 +203,13 @@ public class CheckPassportHandler
                                             .getMessage())
                             .toJSONObject());
         }
+    }
+
+    private void persistResourceIdWithSessionId(
+            String passportSessionId, PassportCheckDao passportCheckDao) {
+        passportSessionService.setLatestDcsResponseResourceId(
+                passportSessionId, passportCheckDao.getResourceId());
+        passportSessionService.incrementAttemptCount(passportSessionId);
     }
 
     private AuditEvent createAuditEventRequestSent(

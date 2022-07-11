@@ -35,6 +35,7 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -60,8 +61,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CheckPassportHandlerTest {
+    public static final String PASSPORT_SESSION_ID = "test-passport-session-id";
     private static final Map<String, String> TEST_EVENT_HEADERS =
-            Map.of("passport_session_id", "test-session-id", "user_id", "test-user-id");
+            Map.of("passport_session_id", PASSPORT_SESSION_ID, "user_id", "test-user-id");
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
     public static final List<String> FORENAMES = List.of("Tubbs");
@@ -101,6 +103,7 @@ class CheckPassportHandlerTest {
     @Mock AuthorizationCodeService authorizationCodeService;
     @Mock ConfigurationService configurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
+    @Mock PassportSessionService passportSessionService;
     @Mock AuditService auditService;
     @Mock AuthRequestValidator authRequestValidator;
     @Mock JWSObject jwsObject;
@@ -119,7 +122,8 @@ class CheckPassportHandlerTest {
                         configurationService,
                         dcsCryptographyService,
                         auditService,
-                        authRequestValidator);
+                        authRequestValidator,
+                        passportSessionService);
     }
 
     @Test
@@ -206,8 +210,13 @@ class CheckPassportHandlerTest {
                         authCode.get("value"),
                         persistedDcsResponseItem.getValue().getResourceId(),
                         params.get(OAuth2RequestParams.REDIRECT_URI),
-                        "test-session-id");
+                        PASSPORT_SESSION_ID);
         assertEquals(authorizationCode.toString(), authCode.get("value"));
+
+        verify(passportSessionService)
+                .setLatestDcsResponseResourceId(
+                        PASSPORT_SESSION_ID, persistedDcsResponseItem.getValue().getResourceId());
+        verify(passportSessionService).incrementAttemptCount(PASSPORT_SESSION_ID);
     }
 
     @Test
