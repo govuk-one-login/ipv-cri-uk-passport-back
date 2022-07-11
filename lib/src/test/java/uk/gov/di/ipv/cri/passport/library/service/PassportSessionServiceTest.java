@@ -22,13 +22,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PassportSessionServiceTest {
     @Mock ConfigurationService configurationService;
-    @Mock DataStore<PassportSessionItem> dataStore;
+    @Mock DataStore<PassportSessionItem> mockDataStore;
 
     private PassportSessionService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new PassportSessionService(dataStore, configurationService);
+        underTest = new PassportSessionService(mockDataStore, configurationService);
     }
 
     @Test
@@ -39,13 +39,13 @@ class PassportSessionServiceTest {
         passportSessionItem.setPassportSessionId(passportSessionID);
         passportSessionItem.setCreationDateTime(new Date().toString());
 
-        when(dataStore.getItem(passportSessionID)).thenReturn(passportSessionItem);
+        when(mockDataStore.getItem(passportSessionID)).thenReturn(passportSessionItem);
 
         PassportSessionItem result = underTest.getPassportSession(passportSessionID);
 
         ArgumentCaptor<String> passportSessionIDArgumentCaptor =
                 ArgumentCaptor.forClass(String.class);
-        verify(dataStore).getItem(passportSessionIDArgumentCaptor.capture());
+        verify(mockDataStore).getItem(passportSessionIDArgumentCaptor.capture());
         assertEquals(passportSessionID, passportSessionIDArgumentCaptor.getValue());
         assertEquals(passportSessionItem.getPassportSessionId(), result.getPassportSessionId());
         assertEquals(passportSessionItem.getCreationDateTime(), result.getCreationDateTime());
@@ -63,10 +63,42 @@ class PassportSessionServiceTest {
 
         ArgumentCaptor<PassportSessionItem> passportSessionItemArgumentCaptor =
                 ArgumentCaptor.forClass(PassportSessionItem.class);
-        verify(dataStore).create(passportSessionItemArgumentCaptor.capture());
+        verify(mockDataStore).create(passportSessionItemArgumentCaptor.capture());
         assertNotNull(passportSessionItemArgumentCaptor.getValue().getCreationDateTime());
         assertEquals(
                 passportSessionItemArgumentCaptor.getValue().getPassportSessionId(),
                 passportSessionID);
+    }
+
+    @Test
+    void shouldUpdateLatestDcsResponseResourceId() {
+        String passportSessionID = SecureTokenHelper.generate();
+        String latestDcsResponseResourceId = "test";
+
+        when(mockDataStore.getItem(passportSessionID)).thenReturn(new PassportSessionItem());
+        underTest.setLatestDcsResponseResourceId(passportSessionID, latestDcsResponseResourceId);
+
+        ArgumentCaptor<PassportSessionItem> passportSessionItemArgumentCaptor =
+                ArgumentCaptor.forClass(PassportSessionItem.class);
+        verify(mockDataStore).update(passportSessionItemArgumentCaptor.capture());
+        assertEquals(
+                passportSessionItemArgumentCaptor.getValue().getLatestDcsResponseResourceId(),
+                latestDcsResponseResourceId);
+    }
+
+    @Test
+    void shouldIncrementAttemptCount() {
+        String passportSessionID = SecureTokenHelper.generate();
+
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setAttemptCount(1);
+
+        when(mockDataStore.getItem(passportSessionID)).thenReturn(passportSessionItem);
+        underTest.incrementAttemptCount(passportSessionID);
+
+        ArgumentCaptor<PassportSessionItem> passportSessionItemArgumentCaptor =
+                ArgumentCaptor.forClass(PassportSessionItem.class);
+        verify(mockDataStore).update(passportSessionItemArgumentCaptor.capture());
+        assertEquals(2, passportSessionItemArgumentCaptor.getValue().getAttemptCount());
     }
 }

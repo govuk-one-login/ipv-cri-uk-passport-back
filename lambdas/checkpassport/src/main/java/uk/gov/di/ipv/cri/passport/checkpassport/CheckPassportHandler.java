@@ -48,6 +48,7 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -70,6 +71,9 @@ public class CheckPassportHandler
     private static final int MAX_PASSPORT_GPG45_VALIDITY_VALUE = 2;
     private static final int MIN_PASSPORT_GPG45_VALUE = 0;
 
+    public static final String RESULT = "result";
+    public static final String RESULT_FINISH = "finish";
+    public static final String RESULT_RETRY = "retry";
     public static final String AUTHORIZATION_CODE = "code";
 
     private final PassportService passportService;
@@ -79,19 +83,23 @@ public class CheckPassportHandler
     private final AuditService auditService;
     private final AuthRequestValidator authRequestValidator;
 
+    private final PassportSessionService passportSessionService;
+
     public CheckPassportHandler(
             PassportService passportService,
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
-            AuthRequestValidator authRequestValidator) {
+            AuthRequestValidator authRequestValidator,
+            PassportSessionService passportSessionService) {
         this.passportService = passportService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
         this.authRequestValidator = authRequestValidator;
+        this.passportSessionService = passportSessionService;
     }
 
     public CheckPassportHandler()
@@ -104,6 +112,7 @@ public class CheckPassportHandler
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
         this.authRequestValidator = new AuthRequestValidator(configurationService);
+        this.passportSessionService = new PassportSessionService(configurationService);
     }
 
     @Override
@@ -155,6 +164,7 @@ public class CheckPassportHandler
                             userId,
                             authenticationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
+
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
             authorizationCodeService.persistAuthorizationCode(
@@ -165,8 +175,12 @@ public class CheckPassportHandler
 
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_OK, Map.of(AUTHORIZATION_CODE, authorizationCode));
+            passportSessionService.setLatestDcsResponseResourceId(
+                    passportSessionId, passportCheckDao.getResourceId());
+
+            return validateResponseAndAttemptCount(
+                    passportSessionId, unwrappedDcsResponse, authorizationCode);
+
         } catch (OAuthHttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(),
@@ -194,6 +208,27 @@ public class CheckPassportHandler
                                             .getMessage())
                             .toJSONObject());
         }
+    }
+
+    private APIGatewayProxyResponseEvent validateResponseAndAttemptCount(
+            String passportSessionId,
+            DcsResponse unwrappedDcsResponse,
+            AuthorizationCode authorizationCode) {
+        int attemptCount =
+                passportSessionService.getPassportSession(passportSessionId).getAttemptCount();
+
+        passportSessionService.incrementAttemptCount(passportSessionId);
+
+        if (unwrappedDcsResponse.isValid()
+                || attemptCount >= configurationService.getMaximumAttemptCount()) {
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_OK,
+                    Map.of(AUTHORIZATION_CODE, authorizationCode, RESULT, RESULT_FINISH));
+        }
+
+        return ApiGatewayResponseGenerator.proxyJsonResponse(
+                HttpStatus.SC_OK,
+                Map.of(AUTHORIZATION_CODE, authorizationCode, RESULT, RESULT_RETRY));
     }
 
     private AuditEvent createAuditEventRequestSent(

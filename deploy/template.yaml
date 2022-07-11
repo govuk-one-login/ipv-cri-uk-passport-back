@@ -182,11 +182,14 @@ Resources:
           VERIFIABLE_CREDENTIAL_ISSUER_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAccessTokensTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
         - SSMParameterReadPolicy:
@@ -266,6 +269,7 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
@@ -273,6 +277,8 @@ Resources:
             TableName: !Ref CRIPassportAccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportClientAuthJwtIdsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
         - SSMParameterReadPolicy:
@@ -349,11 +355,15 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           VERIFIABLE_CREDENTIAL_ISSUER_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          MAXIMUM_ATTEMPT_COUNT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maximumAttemptCount"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAccessTokensTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportBackSessionsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
         - SSMParameterReadPolicy:

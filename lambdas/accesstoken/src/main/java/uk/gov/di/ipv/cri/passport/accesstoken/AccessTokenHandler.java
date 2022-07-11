@@ -21,10 +21,12 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ClientAuthJwtIdService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.util.Objects;
@@ -39,15 +41,19 @@ public class AccessTokenHandler
     private final ConfigurationService configurationService;
     private final TokenRequestValidator tokenRequestValidator;
 
+    private final PassportSessionService passportSessionService;
+
     public AccessTokenHandler(
             AccessTokenService accessTokenService,
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
-            TokenRequestValidator tokenRequestValidator) {
+            TokenRequestValidator tokenRequestValidator,
+            PassportSessionService passportSessionService) {
         this.accessTokenService = accessTokenService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.tokenRequestValidator = tokenRequestValidator;
+        this.passportSessionService = passportSessionService;
     }
 
     @ExcludeFromGeneratedCoverageReport
@@ -58,6 +64,7 @@ public class AccessTokenHandler
         this.tokenRequestValidator =
                 new TokenRequestValidator(
                         configurationService, new ClientAuthJwtIdService(configurationService));
+        this.passportSessionService = new PassportSessionService(configurationService);
     }
 
     @Override
@@ -115,7 +122,11 @@ public class AccessTokenHandler
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
 
-            if (redirectUrlsDoNotMatch(authorizationCodeItem, authorizationGrant)) {
+            PassportSessionItem passportSessionItem =
+                    passportSessionService.getPassportSession(
+                            authorizationCodeItem.getPassportSessionId());
+
+            if (redirectUrlsDoNotMatch(passportSessionItem, authorizationGrant)) {
                 LOGGER.error(
                         "Redirect URL in token request does not match that received in auth code request. Resource ID: {}",
                         authorizationCodeItem.getResourceId());
@@ -161,15 +172,14 @@ public class AccessTokenHandler
     }
 
     private boolean redirectUrlsDoNotMatch(
-            AuthorizationCodeItem authorizationCodeItem,
-            AuthorizationCodeGrant authorizationGrant) {
+            PassportSessionItem passportSessionItem, AuthorizationCodeGrant authorizationGrant) {
 
-        if (Objects.isNull(authorizationCodeItem.getRedirectUrl())
+        if (Objects.isNull(passportSessionItem.getAuthParams().getRedirectUri())
                 && Objects.isNull(authorizationGrant.getRedirectionURI())) {
             return false;
         }
 
-        if (Objects.isNull(authorizationCodeItem.getRedirectUrl())
+        if (Objects.isNull(passportSessionItem.getAuthParams().getRedirectUri())
                 || Objects.isNull(authorizationGrant.getRedirectionURI())) {
             return true;
         }
@@ -177,7 +187,7 @@ public class AccessTokenHandler
         return !authorizationGrant
                 .getRedirectionURI()
                 .toString()
-                .equals(authorizationCodeItem.getRedirectUrl());
+                .equals(passportSessionItem.getAuthParams().getRedirectUri());
     }
 
     private ErrorObject revokeAccessToken(String accessToken) {
