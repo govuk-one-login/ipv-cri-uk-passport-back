@@ -65,4 +65,16 @@ public class PassportSessionService {
 
         return passportSessionItem.getPassportSessionId();
     }
+
+    public void setLatestDcsResponseResourceId(String passportSessionID, String resourceId) {
+        PassportSessionItem passportSessionItem = dataStore.getItem(passportSessionID);
+        passportSessionItem.setLatestDcsResponseResourceId(resourceId);
+        dataStore.update(passportSessionItem);
+    }
+
+    public void incrementAttemptCount(String passportSessionID) {
+        PassportSessionItem passportSessionItem = dataStore.getItem(passportSessionID);
+        passportSessionItem.setAttemptCount(passportSessionItem.getAttemptCount() + 1);
+        dataStore.update(passportSessionItem);
+    }
 }
