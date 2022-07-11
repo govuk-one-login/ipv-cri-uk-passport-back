@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
+import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
@@ -52,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,9 +73,10 @@ class CheckPassportHandlerTest {
             new Evidence(UUID.randomUUID().toString(), 4, 2, null);
     public static final Evidence INVALID_PASSPORT_EVIDENCE =
             new Evidence(UUID.randomUUID().toString(), 4, 0, List.of(ContraIndicators.D02));
+    public static final String TEST_REDIRECT_URI = "https://example.com";
     private static final Map<String, String> VALID_QUERY_PARAMS =
             Map.of(
-                    OAuth2RequestParams.REDIRECT_URI, "https://example.com",
+                    OAuth2RequestParams.REDIRECT_URI, TEST_REDIRECT_URI,
                     OAuth2RequestParams.CLIENT_ID, "12345",
                     OAuth2RequestParams.RESPONSE_TYPE, "code",
                     OAuth2RequestParams.SCOPE, "openid");
@@ -97,6 +101,7 @@ class CheckPassportHandlerTest {
 
     @Mock Context context;
     @Mock PassportService passportService;
+    @Mock AuthorizationCodeService authorizationCodeService;
     @Mock ConfigurationService configurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
     @Mock PassportSessionService passportSessionService;
@@ -105,12 +110,15 @@ class CheckPassportHandlerTest {
     @Mock JWSObject jwsObject;
 
     private CheckPassportHandler underTest;
+    private AuthorizationCode authorizationCode;
 
     @BeforeEach
     void setUp() {
+        authorizationCode = new AuthorizationCode();
         underTest =
                 new CheckPassportHandler(
                         passportService,
+                        authorizationCodeService,
                         configurationService,
                         dcsCryptographyService,
                         auditService,
@@ -174,6 +182,30 @@ class CheckPassportHandlerTest {
                 VALID_PASSPORT_EVIDENCE.getValidityScore(),
                 persistedPassportCheckDao.getValue().getEvidence().getValidityScore());
         assertNull(persistedPassportCheckDao.getValue().getEvidence().getCi());
+    }
+
+    @Test
+    void shouldPersistAndReturnAuthorizationCode()
+            throws CertificateException, IOException, NoSuchAlgorithmException,
+                    InvalidKeySpecException, ParseException, EmptyDcsResponseException,
+                    JOSEException {
+        mockDcsResponse(validDcsResponse);
+        mockPassportSessionItem(0);
+
+        APIGatewayProxyRequestEvent event =
+                getApiGatewayProxyRequestEvent(
+                        "12345", objectMapper.writeValueAsString(validPassportFormData));
+
+        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+
+        Map<String, String> authCode = (Map<String, String>) responseBody.get("code");
+        verify(authorizationCodeService)
+                .persistAuthorizationCode(
+                        eq(authorizationCode.toString()),
+                        anyString(),
+                        eq(TEST_REDIRECT_URI),
+                        eq(PASSPORT_SESSION_ID));
+        assertEquals(authorizationCode.toString(), authCode.get("value"));
     }
 
     @Test
@@ -403,6 +435,7 @@ class CheckPassportHandlerTest {
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
         when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
+        when(authorizationCodeService.generateAuthorizationCode()).thenReturn(authorizationCode);
     }
 
     private void mockPassportSessionItem(int attemptCount) {

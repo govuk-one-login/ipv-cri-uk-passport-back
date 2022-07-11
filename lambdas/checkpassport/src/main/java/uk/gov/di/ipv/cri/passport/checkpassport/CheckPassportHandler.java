@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -43,6 +44,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
+import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
@@ -72,8 +74,10 @@ public class CheckPassportHandler
     public static final String RESULT = "result";
     public static final String RESULT_FINISH = "finish";
     public static final String RESULT_RETRY = "retry";
+    public static final String AUTHORIZATION_CODE = "code";
 
     private final PassportService passportService;
+    private final AuthorizationCodeService authorizationCodeService;
     private final ConfigurationService configurationService;
     private final DcsCryptographyService dcsCryptographyService;
     private final AuditService auditService;
@@ -83,12 +87,14 @@ public class CheckPassportHandler
 
     public CheckPassportHandler(
             PassportService passportService,
+            AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
             AuthRequestValidator authRequestValidator,
             PassportSessionService passportSessionService) {
         this.passportService = passportService;
+        this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
@@ -101,6 +107,7 @@ public class CheckPassportHandler
                     KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.passportService = new PassportService(configurationService);
+        this.authorizationCodeService = new AuthorizationCodeService(configurationService);
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
@@ -158,12 +165,21 @@ public class CheckPassportHandler
                             authenticationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
 
+            AuthorizationCode authorizationCode =
+                    authorizationCodeService.generateAuthorizationCode();
+            authorizationCodeService.persistAuthorizationCode(
+                    authorizationCode.getValue(),
+                    passportCheckDao.getResourceId(),
+                    authenticationRequest.getRedirectionURI().toString(),
+                    passportSessionId);
+
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
 
             passportSessionService.setLatestDcsResponseResourceId(
                     passportSessionId, passportCheckDao.getResourceId());
 
-            return validateResponseAndAttemptCount(passportSessionId, unwrappedDcsResponse);
+            return validateResponseAndAttemptCount(
+                    passportSessionId, unwrappedDcsResponse, authorizationCode);
 
         } catch (OAuthHttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -195,7 +211,9 @@ public class CheckPassportHandler
     }
 
     private APIGatewayProxyResponseEvent validateResponseAndAttemptCount(
-            String passportSessionId, DcsResponse unwrappedDcsResponse) {
+            String passportSessionId,
+            DcsResponse unwrappedDcsResponse,
+            AuthorizationCode authorizationCode) {
         int attemptCount =
                 passportSessionService.getPassportSession(passportSessionId).getAttemptCount();
 
@@ -204,11 +222,13 @@ public class CheckPassportHandler
         if (unwrappedDcsResponse.isValid()
                 || attemptCount >= configurationService.getMaximumAttemptCount()) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_OK, Map.of(RESULT, RESULT_FINISH));
+                    HttpStatus.SC_OK,
+                    Map.of(AUTHORIZATION_CODE, authorizationCode, RESULT, RESULT_FINISH));
         }
 
         return ApiGatewayResponseGenerator.proxyJsonResponse(
-                HttpStatus.SC_OK, Map.of(RESULT, RESULT_RETRY));
+                HttpStatus.SC_OK,
+                Map.of(AUTHORIZATION_CODE, authorizationCode, RESULT, RESULT_RETRY));
     }
 
     private AuditEvent createAuditEventRequestSent(
