@@ -199,6 +199,7 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(0);
+        when(configurationService.getMaximumAttemptCount()).thenReturn(2);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
@@ -215,6 +216,7 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(2);
+        when(configurationService.getMaximumAttemptCount()).thenReturn(2);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(

@@ -350,6 +350,7 @@ Resources:
           VERIFIABLE_CREDENTIAL_ISSUER_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          MAXIMUM_ATTEMPT_COUNT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/maximumAttemptCount"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable

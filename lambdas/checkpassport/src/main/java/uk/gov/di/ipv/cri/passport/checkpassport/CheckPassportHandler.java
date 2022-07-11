@@ -201,17 +201,14 @@ public class CheckPassportHandler
 
         passportSessionService.incrementAttemptCount(passportSessionId);
 
-        if (unwrappedDcsResponse.isValid() || attemptCount >= 2) {
+        if (unwrappedDcsResponse.isValid()
+                || attemptCount >= configurationService.getMaximumAttemptCount()) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, Map.of(RESULT, RESULT_FINISH));
         }
 
         return ApiGatewayResponseGenerator.proxyJsonResponse(
                 HttpStatus.SC_OK, Map.of(RESULT, RESULT_RETRY));
-    }
-
-    private int getAttemptCount(String passportSessionId) {
-        return passportSessionService.incrementAttemptCount(passportSessionId);
     }
 
     private AuditEvent createAuditEventRequestSent(

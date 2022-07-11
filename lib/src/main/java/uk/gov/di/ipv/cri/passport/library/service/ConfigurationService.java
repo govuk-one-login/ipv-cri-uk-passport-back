@@ -264,4 +264,8 @@ public class ConfigurationService {
                                 "/%s/credentialIssuers/ukPassport/self/backendSessionTtl",
                                 System.getenv("ENVIRONMENT"))));
     }
+
+    public int getMaximumAttemptCount() {
+        return Integer.parseInt(ssmProvider.get(System.getenv("MAXIMUM_ATTEMPT_COUNT_PARAM")));
+    }
 }
