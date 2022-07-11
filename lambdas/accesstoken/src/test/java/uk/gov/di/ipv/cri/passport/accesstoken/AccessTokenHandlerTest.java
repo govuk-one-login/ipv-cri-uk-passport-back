@@ -25,10 +25,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
-import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.time.Instant;
@@ -45,20 +47,20 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AccessTokenHandlerTest {
 
+    public static final String PASSPORT_SESSION_ID = UUID.randomUUID().toString();
     private static final AuthorizationCodeItem TEST_AUTH_CODE_ITEM =
             new AuthorizationCodeItem(
                     new AuthorizationCode().toString(),
                     UUID.randomUUID().toString(),
                     "http://example.com",
                     Instant.now().toString(),
-                    UUID.randomUUID().toString());
+                    PASSPORT_SESSION_ID);
 
-    private static final String TEST_JWT_ID = "test-jwt-id";
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
     @Mock private AccessTokenService mockAccessTokenService;
     @Mock private AuthorizationCodeService mockAuthorizationCodeService;
-    @Mock private ConfigurationService mockConfigurationService;
+    @Mock private PassportSessionService mockPassportSessionService;
     @Mock private TokenRequestValidator mockTokenRequestValidator;
     @InjectMocks private AccessTokenHandler handler;
 
@@ -77,6 +79,7 @@ class AccessTokenHandlerTest {
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
+        mockSessionItem();
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -107,13 +110,14 @@ class AccessTokenHandlerTest {
                         null,
                         "http://example.com",
                         Instant.now().toString(),
-                        UUID.randomUUID().toString());
+                        PASSPORT_SESSION_ID);
 
         when(mockAuthorizationCodeService.getAuthCodeItem("12345"))
                 .thenReturn(authorizationCodeItemWithNoResourceId);
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
+        mockSessionItem();
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -235,6 +239,7 @@ class AccessTokenHandlerTest {
         event.setBody(tokenRequestBody);
 
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
+        mockSessionItem();
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
@@ -245,6 +250,15 @@ class AccessTokenHandlerTest {
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
+    }
+
+    private void mockSessionItem() {
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setAuthParams(
+                new AuthParams(
+                        "responseType", "12345", "read", TEST_AUTH_CODE_ITEM.getRedirectUrl()));
+        when(mockPassportSessionService.getPassportSession(PASSPORT_SESSION_ID))
+                .thenReturn(passportSessionItem);
     }
 
     @Test
