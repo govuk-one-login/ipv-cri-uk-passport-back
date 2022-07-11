@@ -358,6 +358,8 @@ Resources:
             TableName: !Ref CRIPassportAccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAuthCodesTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/*
         - SSMParameterReadPolicy:
