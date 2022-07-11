@@ -19,6 +19,7 @@ public class AuthorizationCodeItem implements DynamodbItem {
 
     public AuthorizationCodeItem() {}
 
+    // TODO: Clean up - remove this constructor after new auth code lambda is used
     public AuthorizationCodeItem(
             String authCode,
             String resourceId,
@@ -28,6 +29,13 @@ public class AuthorizationCodeItem implements DynamodbItem {
         this.authCode = authCode;
         this.resourceId = resourceId;
         this.redirectUrl = redirectUrl;
+        this.creationDateTime = creationDateTime;
+        this.passportSessionId = passportSessionId;
+    }
+
+    public AuthorizationCodeItem(
+            String authCode, String creationDateTime, String passportSessionId) {
+        this.authCode = authCode;
         this.creationDateTime = creationDateTime;
         this.passportSessionId = passportSessionId;
     }

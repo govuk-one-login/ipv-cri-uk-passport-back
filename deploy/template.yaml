@@ -425,11 +425,14 @@ Resources:
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref CRIPassportAuthCodesTable
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
