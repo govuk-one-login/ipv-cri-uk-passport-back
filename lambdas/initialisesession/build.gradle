@@ -3,7 +3,6 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
 	id "java"
-	id "application"
 	id "idea"
 	id "jacoco"
 	id 'io.freefair.aspectj.post-compile-weaving' version '6.3.0'
