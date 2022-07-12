@@ -32,11 +32,11 @@ Mappings:
     build:
       provisionedConcurrency: 0
     staging:
-      provisionedConcurrency: 1
+      provisionedConcurrency: 0
     integration:
       provisionedConcurrency: 1
     production:
-      provisionedConcurrency: 1
+      provisionedConcurrency: 0
 
 Conditions:
   AddProvisionedConcurrency: !Not
