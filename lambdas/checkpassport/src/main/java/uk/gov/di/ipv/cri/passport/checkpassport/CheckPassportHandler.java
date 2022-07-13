@@ -122,6 +122,9 @@ public class CheckPassportHandler
         LogHelper.attachComponentIdToLogs();
         try {
             String passportSessionId = RequestHelper.getPassportSessionId(input);
+
+            passportSessionService.incrementAttemptCount(passportSessionId);
+
             Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
             String userId = RequestHelper.getHeaderByKey(input.getHeaders(), "user_id");
 
@@ -214,10 +217,9 @@ public class CheckPassportHandler
             String passportSessionId,
             DcsResponse unwrappedDcsResponse,
             AuthorizationCode authorizationCode) {
+
         int attemptCount =
                 passportSessionService.getPassportSession(passportSessionId).getAttemptCount();
-
-        passportSessionService.incrementAttemptCount(passportSessionId);
 
         if (unwrappedDcsResponse.isValid()
                 || attemptCount >= configurationService.getMaximumAttemptCount()) {
