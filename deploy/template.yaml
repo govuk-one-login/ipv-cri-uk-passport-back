@@ -342,7 +342,6 @@ Resources:
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
-          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
           DCS_ENCRYPTION_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/encryptionCertForPassportToEncrypt"
           DCS_SIGNING_CERT_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/dcs/signingCertForPassportToVerify"
           PASSPORT_CRI_SIGNING_KEY_PARAM: !Sub "/${Environment}/credentialIssuers/ukPassport/self/signingKeyForPassportToSign"
@@ -366,8 +365,6 @@ Resources:
             TableName: !Ref CRIPassportAccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportAuthCodesTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/*
         - SSMParameterReadPolicy:
