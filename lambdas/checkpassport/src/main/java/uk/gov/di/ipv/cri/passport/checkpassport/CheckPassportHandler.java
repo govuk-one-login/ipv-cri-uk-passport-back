@@ -9,15 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
-import com.nimbusds.oauth2.sdk.ErrorObject;
-import com.nimbusds.oauth2.sdk.OAuth2Error;
-import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.*;
+import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.id.State;
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
-import uk.gov.di.ipv.cri.passport.checkpassport.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -42,6 +41,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
@@ -49,15 +49,14 @@ import uk.gov.di.ipv.cri.passport.library.service.PassportService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class CheckPassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -77,7 +76,6 @@ public class CheckPassportHandler
     private final ConfigurationService configurationService;
     private final DcsCryptographyService dcsCryptographyService;
     private final AuditService auditService;
-    private final AuthRequestValidator authRequestValidator;
 
     private final PassportSessionService passportSessionService;
 
@@ -86,25 +84,22 @@ public class CheckPassportHandler
             ConfigurationService configurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
-            AuthRequestValidator authRequestValidator,
             PassportSessionService passportSessionService) {
         this.passportService = passportService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
-        this.authRequestValidator = authRequestValidator;
         this.passportSessionService = passportSessionService;
     }
 
     public CheckPassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    KeyStoreException, IOException {
+            KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.passportService = new PassportService(configurationService);
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
-        this.authRequestValidator = new AuthRequestValidator(configurationService);
         this.passportSessionService = new PassportSessionService(configurationService);
     }
 
@@ -116,24 +111,23 @@ public class CheckPassportHandler
         try {
             String passportSessionId = RequestHelper.getPassportSessionId(input);
 
-            passportSessionService.incrementAttemptCount(passportSessionId);
+            PassportSessionItem passportSessionItem = passportSessionService.getPassportSession(passportSessionId);
 
-            Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
-            String userId = RequestHelper.getHeaderByKey(input.getHeaders(), "user_id");
-
-            var validationResult =
-                    authRequestValidator.validateRequest(queryStringParameters, userId);
-            if (validationResult.isPresent()) {
+            if(passportSessionItem == null){
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_BAD_REQUEST,
                         new ErrorObject(
-                                        OAuth2Error.SERVER_ERROR_CODE,
-                                        validationResult.get().getMessage())
+                                OAuth2Error.SERVER_ERROR_CODE,
+                                ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage())
                                 .toJSONObject());
             }
 
-            AuthenticationRequest authenticationRequest =
-                    AuthenticationRequest.parse(queryStringParameters);
+            passportSessionService.incrementAttemptCount(passportSessionId);
+
+            String userId = passportSessionItem.getUserId();
+            var authParams = passportSessionItem.getAuthParams();
+
+            AuthenticationRequest authenticationRequest = new AuthenticationRequest(null, ResponseType.parse(authParams.getResponseType()), new Scope("openid"), new ClientID(authParams.getClientId()), URI.create(authParams.getRedirectUri()), State.parse(authParams.getState()), null);
 
             LogHelper.attachClientIdToLogs(authenticationRequest.getClientID().getValue());
 
@@ -181,18 +175,18 @@ public class CheckPassportHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     new ErrorObject(
-                                    OAuth2Error.SERVER_ERROR_CODE,
-                                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS
-                                            .getMessage())
+                            OAuth2Error.SERVER_ERROR_CODE,
+                            ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS
+                                    .getMessage())
                             .toJSONObject());
         } catch (SqsException e) {
             LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     new ErrorObject(
-                                    OAuth2Error.SERVER_ERROR_CODE,
-                                    ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE
-                                            .getMessage())
+                            OAuth2Error.SERVER_ERROR_CODE,
+                            ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE
+                                    .getMessage())
                             .toJSONObject());
         }
     }
@@ -240,17 +234,6 @@ public class CheckPassportHandler
     private AuditEvent createAuditEventResponseReceived() {
         return new AuditEvent(
                 AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED, null, null, null, null);
-    }
-
-    private Map<String, List<String>> getQueryStringParametersAsMap(
-            APIGatewayProxyRequestEvent input) {
-        if (input.getQueryStringParameters() != null) {
-            return input.getQueryStringParameters().entrySet().stream()
-                    .collect(
-                            Collectors.toMap(
-                                    Map.Entry::getKey, entry -> List.of(entry.getValue())));
-        }
-        return Collections.emptyMap();
     }
 
     private void validateDcsResponse(DcsResponse dcsResponse)

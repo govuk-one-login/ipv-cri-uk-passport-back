@@ -17,9 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.checkpassport.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -44,14 +44,11 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,13 +67,6 @@ class CheckPassportHandlerTest {
             new Evidence(UUID.randomUUID().toString(), 4, 2, null);
     public static final Evidence INVALID_PASSPORT_EVIDENCE =
             new Evidence(UUID.randomUUID().toString(), 4, 0, List.of(ContraIndicators.D02));
-    public static final String TEST_REDIRECT_URI = "https://example.com";
-    private static final Map<String, String> VALID_QUERY_PARAMS =
-            Map.of(
-                    OAuth2RequestParams.REDIRECT_URI, TEST_REDIRECT_URI,
-                    OAuth2RequestParams.CLIENT_ID, "12345",
-                    OAuth2RequestParams.RESPONSE_TYPE, "code",
-                    OAuth2RequestParams.SCOPE, "openid");
 
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
@@ -102,7 +92,6 @@ class CheckPassportHandlerTest {
     @Mock DcsCryptographyService dcsCryptographyService;
     @Mock PassportSessionService passportSessionService;
     @Mock AuditService auditService;
-    @Mock AuthRequestValidator authRequestValidator;
     @Mock JWSObject jwsObject;
 
     private CheckPassportHandler underTest;
@@ -115,7 +104,6 @@ class CheckPassportHandlerTest {
                         configurationService,
                         dcsCryptographyService,
                         auditService,
-                        authRequestValidator,
                         passportSessionService);
     }
 
@@ -246,26 +234,26 @@ class CheckPassportHandlerTest {
     }
 
     @Test
-    void shouldReturn400OAuthErrorIfRequestFailsValidation() throws Exception {
-        when(authRequestValidator.validateRequest(anyMap(), any()))
-                .thenReturn(Optional.of(ErrorResponse.MISSING_QUERY_PARAMETERS));
+    void shouldReturn400IfPassportSessionItemIsNotFound() throws Exception {
+        when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
+                .thenReturn(null);
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setQueryStringParameters(new HashMap<>());
-        event.setHeaders(TEST_EVENT_HEADERS);
-        event.setBody(objectMapper.writeValueAsString(validPassportFormData));
+        Map<String, String> missingSessionHeaders = new HashMap<>(TEST_EVENT_HEADERS);
+        event.setHeaders(missingSessionHeaders);
 
         Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
-        assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
+
         assertEquals(
-                ErrorResponse.MISSING_QUERY_PARAMETERS.getMessage(),
+                ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage(),
                 responseBody.get("error_description"));
     }
 
+
     @Test
     void shouldReturn400OAuthErrorIfDataIsMissing() throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
+        mockPassportSessionItem(0);
         var formFields = validPassportFormData.keySet();
         for (String keyToRemove : formFields) {
             APIGatewayProxyRequestEvent event =
@@ -287,8 +275,7 @@ class CheckPassportHandlerTest {
 
     @Test
     void shouldReturn400OAuthErrorIfDateStringsAreWrongFormat() throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
+        mockPassportSessionItem(2);
 
         var mangledDateInput = new HashMap<>(validPassportFormData);
         mangledDateInput.put("dateOfBirth", "28-09-1984");
@@ -314,8 +301,6 @@ class CheckPassportHandlerTest {
         when(passportService.dcsPassportCheck(any(JWSObject.class)))
                 .thenReturn(dcsSignedEncryptedResponse);
         when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
 
         DcsResponse errorDcsResponse =
                 new DcsResponse(
@@ -326,6 +311,8 @@ class CheckPassportHandlerTest {
                         List.of("Test DCS error message"));
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(errorDcsResponse);
+
+        mockPassportSessionItem(0);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
@@ -355,36 +342,6 @@ class CheckPassportHandlerTest {
         return event;
     }
 
-    @Test
-    void shouldReturn400OAuthErrorIfCanNotParseAuthRequestFromQueryStringParams()
-            throws JsonProcessingException {
-        when(authRequestValidator.validateRequest(anyMap(), anyString()))
-                .thenReturn(Optional.empty());
-
-        List<String> paramsToRemove =
-                List.of(
-                        OAuth2RequestParams.REDIRECT_URI,
-                        OAuth2RequestParams.CLIENT_ID,
-                        OAuth2RequestParams.RESPONSE_TYPE,
-                        OAuth2RequestParams.SCOPE);
-        for (String param : paramsToRemove) {
-            Map<String, String> unparseableParams = new HashMap<>(VALID_QUERY_PARAMS);
-            unparseableParams.remove(param);
-
-            APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-            event.setQueryStringParameters(unparseableParams);
-            event.setHeaders(TEST_EVENT_HEADERS);
-
-            APIGatewayProxyResponseEvent response = underTest.handleRequest(event, context);
-
-            Map<String, Object> responseBody = getResponseBody(response);
-            assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
-            assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
-            assertEquals(
-                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS.getMessage(),
-                    responseBody.get("error_description"));
-        }
-    }
 
     private Map<String, Object> getResponseBody(APIGatewayProxyResponseEvent response)
             throws JsonProcessingException {
@@ -403,13 +360,18 @@ class CheckPassportHandlerTest {
         when(dcsCryptographyService.preparePayload(any(DcsPayload.class))).thenReturn(jwsObject);
         when(dcsCryptographyService.unwrapDcsResponse(any(DcsSignedEncryptedResponse.class)))
                 .thenReturn(validDcsResponse);
-        when(authRequestValidator.validateRequest(any(), anyString())).thenReturn(Optional.empty());
     }
 
     private void mockPassportSessionItem(int attemptCount) {
         PassportSessionItem passportSessionItem = new PassportSessionItem();
         passportSessionItem.setAttemptCount(attemptCount);
+        passportSessionItem.setUserId("test-user-id");
+        passportSessionItem.setAuthParams(
+                new AuthParams(
+                        "code", "12345", "read", "https://example.com"));
+
         when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
                 .thenReturn(passportSessionItem);
+
     }
 }
