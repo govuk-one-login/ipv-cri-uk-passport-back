@@ -94,7 +94,7 @@ public class CheckPassportHandler
 
     public CheckPassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-            KeyStoreException, IOException {
+                    KeyStoreException, IOException {
         this.configurationService = new ConfigurationService();
         this.passportService = new PassportService(configurationService);
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
@@ -111,14 +111,15 @@ public class CheckPassportHandler
         try {
             String passportSessionId = RequestHelper.getPassportSessionId(input);
 
-            PassportSessionItem passportSessionItem = passportSessionService.getPassportSession(passportSessionId);
+            PassportSessionItem passportSessionItem =
+                    passportSessionService.getPassportSession(passportSessionId);
 
-            if(passportSessionItem == null){
+            if (passportSessionItem == null) {
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_BAD_REQUEST,
                         new ErrorObject(
-                                OAuth2Error.SERVER_ERROR_CODE,
-                                ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage())
+                                        OAuth2Error.SERVER_ERROR_CODE,
+                                        ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage())
                                 .toJSONObject());
             }
 
@@ -127,7 +128,15 @@ public class CheckPassportHandler
             String userId = passportSessionItem.getUserId();
             var authParams = passportSessionItem.getAuthParams();
 
-            AuthenticationRequest authenticationRequest = new AuthenticationRequest(null, ResponseType.parse(authParams.getResponseType()), new Scope("openid"), new ClientID(authParams.getClientId()), URI.create(authParams.getRedirectUri()), State.parse(authParams.getState()), null);
+            AuthenticationRequest authenticationRequest =
+                    new AuthenticationRequest(
+                            null,
+                            ResponseType.parse(authParams.getResponseType()),
+                            new Scope("openid"),
+                            new ClientID(authParams.getClientId()),
+                            URI.create(authParams.getRedirectUri()),
+                            State.parse(authParams.getState()),
+                            null);
 
             LogHelper.attachClientIdToLogs(authenticationRequest.getClientID().getValue());
 
@@ -175,18 +184,18 @@ public class CheckPassportHandler
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     new ErrorObject(
-                            OAuth2Error.SERVER_ERROR_CODE,
-                            ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS
-                                    .getMessage())
+                                    OAuth2Error.SERVER_ERROR_CODE,
+                                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS
+                                            .getMessage())
                             .toJSONObject());
         } catch (SqsException e) {
             LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     new ErrorObject(
-                            OAuth2Error.SERVER_ERROR_CODE,
-                            ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE
-                                    .getMessage())
+                                    OAuth2Error.SERVER_ERROR_CODE,
+                                    ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE
+                                            .getMessage())
                             .toJSONObject());
         }
     }

@@ -235,8 +235,7 @@ class CheckPassportHandlerTest {
 
     @Test
     void shouldReturn400IfPassportSessionItemIsNotFound() throws Exception {
-        when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
-                .thenReturn(null);
+        when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID)).thenReturn(null);
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         event.setQueryStringParameters(new HashMap<>());
@@ -249,7 +248,6 @@ class CheckPassportHandlerTest {
                 ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage(),
                 responseBody.get("error_description"));
     }
-
 
     @Test
     void shouldReturn400OAuthErrorIfDataIsMissing() throws JsonProcessingException {
@@ -342,7 +340,6 @@ class CheckPassportHandlerTest {
         return event;
     }
 
-
     private Map<String, Object> getResponseBody(APIGatewayProxyResponseEvent response)
             throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -367,11 +364,9 @@ class CheckPassportHandlerTest {
         passportSessionItem.setAttemptCount(attemptCount);
         passportSessionItem.setUserId("test-user-id");
         passportSessionItem.setAuthParams(
-                new AuthParams(
-                        "code", "12345", "read", "https://example.com"));
+                new AuthParams("code", "12345", "read", "https://example.com"));
 
         when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
                 .thenReturn(passportSessionItem);
-
     }
 }
