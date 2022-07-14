@@ -7,35 +7,15 @@ import java.util.Map;
 
 @ExcludeFromGeneratedCoverageReport
 public class JarResponse {
-    @JsonProperty("authParams")
-    private AuthParams authParams;
-
-    @JsonProperty("user_id")
-    private String userId;
-
     @JsonProperty("shared_claims")
     private Map<String, Object> sharedClaims;
 
     @JsonProperty("passportSessionId")
     private String passportSessionId;
 
-    public JarResponse(
-            AuthParams authParams,
-            String userId,
-            Map<String, Object> sharedClaims,
-            String passportSessionId) {
-        this.authParams = authParams;
-        this.userId = userId;
+    public JarResponse(Map<String, Object> sharedClaims, String passportSessionId) {
         this.sharedClaims = sharedClaims;
         this.passportSessionId = passportSessionId;
-    }
-
-    public AuthParams getAuthParams() {
-        return authParams;
-    }
-
-    public String getUserId() {
-        return userId;
     }
 
     public Map<String, Object> getSharedClaims() {

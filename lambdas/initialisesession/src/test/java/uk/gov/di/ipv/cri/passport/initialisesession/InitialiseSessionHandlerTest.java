@@ -23,7 +23,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
@@ -138,15 +137,6 @@ class InitialiseSessionHandlerTest {
 
         Map<String, Object> claims =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
-
-        AuthParams authParams =
-                OBJECT_MAPPER.convertValue(claims.get("authParams"), new TypeReference<>() {});
-
-        assertEquals("test-user-id", claims.get("user_id"));
-        assertEquals("code", authParams.getResponseType());
-        assertEquals("test-client", authParams.getClientId());
-        assertEquals("test-state", authParams.getState());
-        assertEquals("http://example.com", authParams.getRedirectUri());
 
         Map<String, Object> sharedClaims =
                 OBJECT_MAPPER.convertValue(claims.get("shared_claims"), new TypeReference<>() {});
