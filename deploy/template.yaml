@@ -54,6 +54,14 @@ Conditions:
   IsNotDevelopmentEnvironment: !Not
     - Condition: IsDevelopmentEnvironment
 
+  #Temporary condition to resolve stack drift in staging
+  IsNotStagingOrDevelopment: !Not
+  - !Or 
+    - !Equals [ !Ref Environment, "development-a"]
+    - !Equals [ !Ref Environment, "development-b"]
+    - !Equals [ !Ref Environment, "development-c"]
+    - !Equals [ !Ref Environment, "staging"]
+
 Resources:
   IPVCriUKPassportPrivateAPI:
     Type: AWS::Serverless::Api
@@ -109,7 +117,9 @@ Resources:
 
   IPVCriUKPassportPrivateAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    #Condition: IsNotDevelopmentEnvironment
+    #Temporary condition to resolve stack drift in staging
+    Condition: IsNotStagingOrDevelopment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -151,7 +161,9 @@ Resources:
 
   IPVCriUKPassportAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    #Condition: IsNotDevelopmentEnvironment
+    #Temporary condition to resolve stack drift in staging
+    Condition: IsNotStagingOrDevelopment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -239,7 +251,9 @@ Resources:
 
   IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    #Condition: IsNotDevelopmentEnvironment
+    #Temporary condition to resolve stack drift in staging
+    Condition: IsNotStagingOrDevelopment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -314,7 +328,9 @@ Resources:
 
   IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    #Condition: IsNotDevelopmentEnvironment
+    #Temporary condition to resolve stack drift in staging
+    Condition: IsNotStagingOrDevelopment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -566,7 +582,9 @@ Resources:
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    #Condition: IsNotDevelopmentEnvironment
+    #Temporary condition to resolve stack drift in staging
+    Condition: IsNotStagingOrDevelopment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
