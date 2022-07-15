@@ -9,15 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.oauth2.sdk.AuthorizationRequest;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
-import uk.gov.di.ipv.cri.passport.checkpassport.validation.AuthRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -25,6 +24,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -42,6 +42,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
@@ -54,10 +55,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class CheckPassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -69,6 +70,11 @@ public class CheckPassportHandler
     private static final int MAX_PASSPORT_GPG45_VALIDITY_VALUE = 2;
     private static final int MIN_PASSPORT_GPG45_VALUE = 0;
 
+    public static final String CLIENT_ID_PARAM = "client_id";
+    public static final String REDIRECT_URI_PARAM = "redirect_uri";
+    public static final String RESPONSE_TYPE_PARAM = "response_type";
+    public static final String STATE_PARAM = "state";
+
     public static final String RESULT = "result";
     public static final String RESULT_FINISH = "finish";
     public static final String RESULT_RETRY = "retry";
@@ -77,7 +83,6 @@ public class CheckPassportHandler
     private final ConfigurationService configurationService;
     private final DcsCryptographyService dcsCryptographyService;
     private final AuditService auditService;
-    private final AuthRequestValidator authRequestValidator;
 
     private final PassportSessionService passportSessionService;
 
@@ -86,13 +91,11 @@ public class CheckPassportHandler
             ConfigurationService configurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
-            AuthRequestValidator authRequestValidator,
             PassportSessionService passportSessionService) {
         this.passportService = passportService;
         this.configurationService = configurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
-        this.authRequestValidator = authRequestValidator;
         this.passportSessionService = passportSessionService;
     }
 
@@ -104,7 +107,6 @@ public class CheckPassportHandler
         this.dcsCryptographyService = new DcsCryptographyService(configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
-        this.authRequestValidator = new AuthRequestValidator(configurationService);
         this.passportSessionService = new PassportSessionService(configurationService);
     }
 
@@ -116,33 +118,34 @@ public class CheckPassportHandler
         try {
             String passportSessionId = RequestHelper.getPassportSessionId(input);
 
-            passportSessionService.incrementAttemptCount(passportSessionId);
+            PassportSessionItem passportSessionItem =
+                    passportSessionService.getPassportSession(passportSessionId);
 
-            Map<String, List<String>> queryStringParameters = getQueryStringParametersAsMap(input);
-            String userId = RequestHelper.getHeaderByKey(input.getHeaders(), "user_id");
-
-            var validationResult =
-                    authRequestValidator.validateRequest(queryStringParameters, userId);
-            if (validationResult.isPresent()) {
+            if (passportSessionItem == null) {
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_BAD_REQUEST,
                         new ErrorObject(
                                         OAuth2Error.SERVER_ERROR_CODE,
-                                        validationResult.get().getMessage())
+                                        ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage())
                                 .toJSONObject());
             }
 
-            AuthenticationRequest authenticationRequest =
-                    AuthenticationRequest.parse(queryStringParameters);
+            passportSessionService.incrementAttemptCount(passportSessionId);
 
-            LogHelper.attachClientIdToLogs(authenticationRequest.getClientID().getValue());
+            String userId = passportSessionItem.getUserId();
+            var authParams = passportSessionItem.getAuthParams();
+
+            AuthorizationRequest authorizationRequest =
+                    AuthorizationRequest.parse(getAuthParamsAsMap(authParams));
+
+            LogHelper.attachClientIdToLogs(authorizationRequest.getClientID().getValue());
 
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
 
             auditService.sendAuditEvent(
                     createAuditEventRequestSent(
-                            userId, dcsPayload, authenticationRequest.getClientID().getValue()));
+                            userId, dcsPayload, authorizationRequest.getClientID().getValue()));
 
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
@@ -158,7 +161,7 @@ public class CheckPassportHandler
                             dcsPayload,
                             generateGpg45Score(unwrappedDcsResponse),
                             userId,
-                            authenticationRequest.getClientID().getValue());
+                            authorizationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
 
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
@@ -240,17 +243,6 @@ public class CheckPassportHandler
     private AuditEvent createAuditEventResponseReceived() {
         return new AuditEvent(
                 AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED, null, null, null, null);
-    }
-
-    private Map<String, List<String>> getQueryStringParametersAsMap(
-            APIGatewayProxyRequestEvent input) {
-        if (input.getQueryStringParameters() != null) {
-            return input.getQueryStringParameters().entrySet().stream()
-                    .collect(
-                            Collectors.toMap(
-                                    Map.Entry::getKey, entry -> List.of(entry.getValue())));
-        }
-        return Collections.emptyMap();
     }
 
     private void validateDcsResponse(DcsResponse dcsResponse)
@@ -335,5 +327,20 @@ public class CheckPassportHandler
 
     private List<ContraIndicators> calculateContraIndicators(DcsResponse dcsResponse) {
         return dcsResponse.isValid() ? null : List.of(ContraIndicators.D02);
+    }
+
+    private Map<String, List<String>> getAuthParamsAsMap(AuthParams params) {
+        if (params != null) {
+            Map<String, List<String>> authParams = new HashMap<>();
+            authParams.put(
+                    RESPONSE_TYPE_PARAM, Collections.singletonList(params.getResponseType()));
+            authParams.put(CLIENT_ID_PARAM, Collections.singletonList(params.getClientId()));
+            authParams.put(REDIRECT_URI_PARAM, Collections.singletonList(params.getRedirectUri()));
+            authParams.put(STATE_PARAM, Collections.singletonList(params.getState()));
+
+            return authParams;
+        }
+
+        return Collections.emptyMap();
     }
 }

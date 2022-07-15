@@ -23,7 +23,8 @@ public enum ErrorResponse {
             1016, "Failed to send message to aws SQS audit event queue"),
     MISSING_USER_ID_HEADER(1017, "Missing user_id header in authorisation request"),
     MISSING_PASSPORT_SESSION_ID_HEADER(1018, "Missing passport_session_id header"),
-    FAILED_TO_REVOKE_ACCESS_TOKEN(1019, "Failed to revoke access token");
+    FAILED_TO_REVOKE_ACCESS_TOKEN(1019, "Failed to revoke access token"),
+    PASSPORT_SESSION_NOT_FOUND(1020, "Passport session not found");
 
     private final int code;
     private final String message;
