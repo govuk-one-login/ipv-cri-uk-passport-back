@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.error.RedirectErrorResponse;
@@ -44,10 +43,7 @@ public class InitialiseSessionHandler
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Integer OK = 200;
     private static final Integer BAD_REQUEST = 400;
-    private static final String RESPONSE_TYPE = "response_type";
     private static final String CLIENT_ID = "client_id";
-    private static final String STATE = "state";
-    private static final String REDIRECT_URI = "redirect_uri";
     private static final String SHARED_CLAIMS = "shared_claims";
 
     public InitialiseSessionHandler(
@@ -128,17 +124,6 @@ public class InitialiseSessionHandler
 
     private JarResponse generateJarResponse(JWTClaimsSet claimsSet, String passportSessionId)
             throws ParseException {
-        AuthParams authParams =
-                new AuthParams(
-                        claimsSet.getStringClaim(RESPONSE_TYPE),
-                        claimsSet.getStringClaim(CLIENT_ID),
-                        claimsSet.getStringClaim(STATE),
-                        claimsSet.getStringClaim(REDIRECT_URI));
-
-        return new JarResponse(
-                authParams,
-                claimsSet.getSubject(),
-                claimsSet.getJSONObjectClaim(SHARED_CLAIMS),
-                passportSessionId);
+        return new JarResponse(claimsSet.getJSONObjectClaim(SHARED_CLAIMS), passportSessionId);
     }
 }
