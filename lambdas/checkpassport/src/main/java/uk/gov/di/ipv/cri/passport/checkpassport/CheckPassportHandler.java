@@ -9,14 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.oauth2.sdk.AuthorizationRequest;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.ResponseType;
-import com.nimbusds.oauth2.sdk.Scope;
-import com.nimbusds.oauth2.sdk.id.ClientID;
-import com.nimbusds.oauth2.sdk.id.State;
-import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +24,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -53,11 +50,12 @@ import uk.gov.di.ipv.cri.passport.library.service.PassportService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,6 +69,11 @@ public class CheckPassportHandler
     private static final int MAX_PASSPORT_GPG45_STRENGTH_VALUE = 4;
     private static final int MAX_PASSPORT_GPG45_VALIDITY_VALUE = 2;
     private static final int MIN_PASSPORT_GPG45_VALUE = 0;
+
+    public static final String CLIENT_ID_PARAM = "client_id";
+    public static final String REDIRECT_URI_PARAM = "redirect_uri";
+    public static final String RESPONSE_TYPE_PARAM = "response_type";
+    public static final String STATE_PARAM = "state";
 
     public static final String RESULT = "result";
     public static final String RESULT_FINISH = "finish";
@@ -132,24 +135,17 @@ public class CheckPassportHandler
             String userId = passportSessionItem.getUserId();
             var authParams = passportSessionItem.getAuthParams();
 
-            AuthenticationRequest authenticationRequest =
-                    new AuthenticationRequest(
-                            null,
-                            ResponseType.parse(authParams.getResponseType()),
-                            new Scope("openid"),
-                            new ClientID(authParams.getClientId()),
-                            URI.create(authParams.getRedirectUri()),
-                            State.parse(authParams.getState()),
-                            null);
+            AuthorizationRequest authorizationRequest =
+                    AuthorizationRequest.parse(getAuthParamsAsMap(authParams));
 
-            LogHelper.attachClientIdToLogs(authenticationRequest.getClientID().getValue());
+            LogHelper.attachClientIdToLogs(authorizationRequest.getClientID().getValue());
 
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
 
             auditService.sendAuditEvent(
                     createAuditEventRequestSent(
-                            userId, dcsPayload, authenticationRequest.getClientID().getValue()));
+                            userId, dcsPayload, authorizationRequest.getClientID().getValue()));
 
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
@@ -165,7 +161,7 @@ public class CheckPassportHandler
                             dcsPayload,
                             generateGpg45Score(unwrappedDcsResponse),
                             userId,
-                            authenticationRequest.getClientID().getValue());
+                            authorizationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
 
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
@@ -331,5 +327,20 @@ public class CheckPassportHandler
 
     private List<ContraIndicators> calculateContraIndicators(DcsResponse dcsResponse) {
         return dcsResponse.isValid() ? null : List.of(ContraIndicators.D02);
+    }
+
+    private Map<String, List<String>> getAuthParamsAsMap(AuthParams params) {
+        if (params != null) {
+            Map<String, List<String>> authParams = new HashMap<>();
+            authParams.put(
+                    RESPONSE_TYPE_PARAM, Collections.singletonList(params.getResponseType()));
+            authParams.put(CLIENT_ID_PARAM, Collections.singletonList(params.getClientId()));
+            authParams.put(REDIRECT_URI_PARAM, Collections.singletonList(params.getRedirectUri()));
+            authParams.put(STATE_PARAM, Collections.singletonList(params.getState()));
+
+            return authParams;
+        }
+
+        return Collections.emptyMap();
     }
 }
