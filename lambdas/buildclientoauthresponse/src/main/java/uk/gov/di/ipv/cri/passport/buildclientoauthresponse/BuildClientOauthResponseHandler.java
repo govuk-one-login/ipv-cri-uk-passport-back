@@ -69,6 +69,18 @@ public class BuildClientOauthResponseHandler
             PassportSessionItem passportSessionItem =
                     passportSessionService.getPassportSession(passportSessionId);
 
+            if (passportSessionItem.getAttemptCount() == 0) {
+                LOGGER.info(
+                        "No passport details attempt has been made - returning Access Denied response");
+                auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
+                        OAuth2Error.ACCESS_DENIED
+                                .appendDescription(" - No passport details attempt has been made")
+                                .toJSONObject());
+            }
+
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
 

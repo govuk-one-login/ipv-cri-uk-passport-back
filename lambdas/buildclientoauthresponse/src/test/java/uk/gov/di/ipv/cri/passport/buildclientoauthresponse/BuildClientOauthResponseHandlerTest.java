@@ -190,7 +190,30 @@ class BuildClientOauthResponseHandlerTest {
         objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
-        ;
+    }
+
+    @Test
+    void shouldReturnAccessDeniedIfNoPassportAttemptHasBeenMade()
+            throws JsonProcessingException, SqsException, URISyntaxException {
+        PassportSessionItem passportSessionItem = generatePassportSessionItem();
+        passportSessionItem.setAttemptCount(0);
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
+
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+
+        event.setHeaders(TEST_EVENT_HEADERS);
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        Map<String, Object> responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(), response.getStatusCode());
+        assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
+        assertEquals(
+                "Access denied by resource owner or authorization server - No passport details attempt has been made",
+                responseBody.get("error_description"));
     }
 
     private PassportSessionItem generatePassportSessionItem() {
@@ -203,6 +226,7 @@ class BuildClientOauthResponseHandlerTest {
         item.setPassportSessionId(SecureTokenHelper.generate());
         item.setCreationDateTime(new Date().toString());
         item.setUserId("user-id");
+        item.setAttemptCount(1);
 
         return item;
     }
