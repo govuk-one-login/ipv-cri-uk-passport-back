@@ -52,7 +52,7 @@ class BuildClientOauthResponseHandlerTest {
     private AuthorizationCode authorizationCode;
     private BuildClientOauthResponseHandler handler;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
@@ -172,8 +172,7 @@ class BuildClientOauthResponseHandlerTest {
     }
 
     @Test
-    void shouldReturn500OnInvalidUriStringForRedirectUri()
-            throws JsonProcessingException, SqsException, URISyntaxException {
+    void shouldReturn500OnInvalidUriStringForRedirectUri() throws JsonProcessingException {
         when(mockAuthorizationCodeService.generateAuthorizationCode())
                 .thenReturn(authorizationCode);
         PassportSessionItem passportSessionItem = generatePassportSessionItem();

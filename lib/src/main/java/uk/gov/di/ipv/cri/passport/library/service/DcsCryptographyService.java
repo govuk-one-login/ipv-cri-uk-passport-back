@@ -60,7 +60,7 @@ public class DcsCryptographyService {
     }
 
     public DcsResponse unwrapDcsResponse(DcsSignedEncryptedResponse dcsSignedEncryptedResponse)
-            throws CertificateException, ParseException, JOSEException, JsonProcessingException {
+            throws CertificateException, ParseException, JOSEException {
         JWSObject outerSignedPayload = JWSObject.parse(dcsSignedEncryptedResponse.getPayload());
         if (isInvalidSignature(outerSignedPayload)) {
             throw new IpvCryptoException("DCS Response Outer Signature invalid.");

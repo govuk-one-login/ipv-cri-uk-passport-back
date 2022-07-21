@@ -312,7 +312,6 @@ public class CheckPassportHandler
         } catch (CertificateException
                 | java.text.ParseException
                 | JOSEException
-                | JsonProcessingException
                 | IpvCryptoException e) {
             LOGGER.error(("Failed to unwrap response from DCS: " + e.getMessage()));
             throw new OAuthHttpResponseExceptionWithErrorBody(

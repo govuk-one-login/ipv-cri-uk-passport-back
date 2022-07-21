@@ -64,8 +64,7 @@ public class JarValidator {
         URI redirectUri = validateRedirectUri(claimsSet, clientId);
 
         try {
-            JWTClaimsSet validatedClaimSet = getValidatedClaimSet(signedJWT, clientId);
-            return validatedClaimSet;
+            return getValidatedClaimSet(signedJWT, clientId);
         } catch (JarValidationException e) {
             String state = claimsSet.getStringClaim(STATE);
             throw new RecoverableJarValidationException(
