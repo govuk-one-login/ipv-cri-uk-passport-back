@@ -18,9 +18,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
+import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.ClientAuthJwtIdItem;
 import uk.gov.di.ipv.cri.passport.library.service.ClientAuthJwtIdService;
-import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

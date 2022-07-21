@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.library.service;
+package uk.gov.di.ipv.cri.passport.library.config;
 
 import com.nimbusds.jose.jwk.ECKey;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_CERT_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.ENVIRONMENT;
 
 public class ConfigurationService {
 
@@ -66,108 +69,48 @@ public class ConfigurationService {
         return Boolean.parseBoolean(System.getenv(IS_LOCAL));
     }
 
-    public String getDcsResponseTableName() {
-        return System.getenv("DCS_RESPONSE_TABLE_NAME");
+    public String getEnvironmentVariable(EnvironmentVariable environmentVariable) {
+        return System.getenv(environmentVariable.name());
     }
 
-    public String getAuthCodesTableName() {
-        return System.getenv("CRI_PASSPORT_AUTH_CODES_TABLE_NAME");
+    public String getSsmParameter(ConfigurationVariable configurationVariable) {
+        return ssmProvider.get(
+                String.format(
+                        configurationVariable.getValue(), getEnvironmentVariable(ENVIRONMENT)));
     }
 
-    public String getAccessTokensTableName() {
-        return System.getenv("CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME");
-    }
-
-    public String getClientAuthJwtIdsTableName() {
-        return System.getenv("CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME");
-    }
-
-    public String getPassportBackSessionsTableName() {
-        return System.getenv("PASSPORT_BACK_SESSIONS_TABLE_NAME");
-    }
-
-    public String getSqsAuditEventQueueUrl() {
-        return System.getenv("SQS_AUDIT_EVENT_QUEUE_URL");
+    public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
+        return ssmProvider
+                .withDecryption()
+                .get(
+                        String.format(
+                                configurationVariable.getValue(),
+                                getEnvironmentVariable(ENVIRONMENT)));
     }
 
     private String getParameterFromStoreUsingEnv(String environmentVariable) {
         return ssmProvider.get(System.getenv(environmentVariable));
     }
 
-    private String getDecryptedParameterFromStoreUsingEnv(String environmentVariable) {
-        return ssmProvider.withDecryption().get(System.getenv(environmentVariable));
-    }
-
-    private Certificate getCertificateFromStoreUsingEnv(String environmentVariable)
+    public Certificate getCertificate(ConfigurationVariable configurationVariable)
             throws CertificateException {
         byte[] binaryCertificate =
-                Base64.getDecoder().decode(getParameterFromStoreUsingEnv(environmentVariable));
+                Base64.getDecoder().decode(getEncryptedSsmParameter(configurationVariable));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
 
-    private PrivateKey getKeyFromStoreUsingEnv(String environmentVariable)
+    public PrivateKey getPrivateKey(ConfigurationVariable configurationVariable)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] binaryKey =
-                Base64.getDecoder()
-                        .decode(getDecryptedParameterFromStoreUsingEnv(environmentVariable));
+                Base64.getDecoder().decode(getEncryptedSsmParameter(configurationVariable));
         KeyFactory factory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(binaryKey);
         return factory.generatePrivate(privateKeySpec);
     }
 
-    public Certificate getDcsEncryptionCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("DCS_ENCRYPTION_CERT_PARAM");
-    }
-
-    public Certificate getDcsSigningCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("DCS_SIGNING_CERT_PARAM");
-    }
-
-    public Certificate getJARSigningCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("JAR_SIGNING_CERT_PARAM");
-    }
-
-    public PrivateKey getPassportCriPrivateKey()
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return getKeyFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_KEY_PARAM");
-    }
-
-    public Certificate getPassportCriEncryptionCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("PASSPORT_CRI_ENCRYPTION_CERT_PARAM");
-    }
-
-    public PrivateKey getPassportCriSigningKey()
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return getKeyFromStoreUsingEnv("PASSPORT_CRI_SIGNING_KEY_PARAM");
-    }
-
-    public PrivateKey getPassportCriTlsKey()
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return getKeyFromStoreUsingEnv("PASSPORT_CRI_TLS_KEY_PARAM");
-    }
-
-    public Certificate getPassportCriSigningCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("PASSPORT_CRI_SIGNING_CERT_PARAM");
-    }
-
-    public Certificate getPassportCriTlsCert() throws CertificateException {
-        return getCertificateFromStoreUsingEnv("PASSPORT_CRI_TLS_CERT_PARAM");
-    }
-
-    public Certificate[] getDcsTlsCertChain() throws CertificateException {
-        return new Certificate[] {
-            getCertificateFromStoreUsingEnv("DCS_TLS_ROOT_CERT_PARAM"),
-            getCertificateFromStoreUsingEnv("DCS_TLS_INTERMEDIATE_CERT_PARAM")
-        };
-    }
-
-    public String getDCSPostUrl() {
-        return getParameterFromStoreUsingEnv("DCS_POST_URL_PARAM");
-    }
-
     public Thumbprints makeThumbprints() throws CertificateException, NoSuchAlgorithmException {
-        var cert = getPassportCriSigningCert();
+        var cert = getCertificate(PASSPORT_CRI_SIGNING_CERT_PARAM);
         return new Thumbprints(
                 getThumbprint((X509Certificate) cert, "SHA-1"),
                 getThumbprint((X509Certificate) cert, "SHA-256"));
@@ -180,14 +123,6 @@ public class ConfigurationService {
         md.update(der);
         byte[] digest = md.digest();
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-    }
-
-    public long getAuthCodeExpirySeconds() {
-        return Long.parseLong(
-                ssmProvider.get(
-                        String.format(
-                                "/%s/credentialIssuers/ukPassport/self/authCodeExpirySeconds",
-                                System.getenv("ENVIRONMENT"))));
     }
 
     public long getAccessTokenExpirySeconds() {

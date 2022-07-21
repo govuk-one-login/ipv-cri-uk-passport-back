@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.passport.accesstoken.domain.ConfigurationServicePublicKeySelector;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
+import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper.LogField;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.ClientAuthJwtIdItem;
 import uk.gov.di.ipv.cri.passport.library.service.ClientAuthJwtIdService;
-import uk.gov.di.ipv.cri.passport.library.service.ConfigurationService;
 
 import java.time.OffsetDateTime;
 import java.util.Date;

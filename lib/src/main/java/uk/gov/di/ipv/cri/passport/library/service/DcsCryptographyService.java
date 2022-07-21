@@ -19,6 +19,7 @@ import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -32,6 +33,11 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Map;
+
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_ENCRYPTION_CERT_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_SIGNING_CERT_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_ENCRYPTION_KEY_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_KEY_PARAM;
 
 public class DcsCryptographyService {
 
@@ -99,7 +105,9 @@ public class DcsCryptographyService {
                                 .build(),
                         new Payload(stringToSign));
 
-        jwsObject.sign(new RSASSASigner(configurationService.getPassportCriSigningKey()));
+        jwsObject.sign(
+                new RSASSASigner(
+                        configurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY_PARAM)));
 
         return jwsObject;
     }
@@ -114,7 +122,10 @@ public class DcsCryptographyService {
 
         jwe.encrypt(
                 new RSAEncrypter(
-                        (RSAPublicKey) configurationService.getDcsEncryptionCert().getPublicKey()));
+                        (RSAPublicKey)
+                                configurationService
+                                        .getCertificate(DCS_ENCRYPTION_CERT_PARAM)
+                                        .getPublicKey()));
 
         if (!jwe.getState().equals(JWEObject.State.ENCRYPTED)) {
             throw new IpvCryptoException("Something went wrong, couldn't encrypt JWE");
@@ -127,14 +138,18 @@ public class DcsCryptographyService {
             throws CertificateException, JOSEException {
         RSASSAVerifier rsassaVerifier =
                 new RSASSAVerifier(
-                        (RSAPublicKey) configurationService.getDcsSigningCert().getPublicKey());
+                        (RSAPublicKey)
+                                configurationService
+                                        .getCertificate(DCS_SIGNING_CERT_PARAM)
+                                        .getPublicKey());
         return !jwsObject.verify(rsassaVerifier);
     }
 
     public JWSObject decrypt(JWEObject encrypted) {
         try {
             RSADecrypter rsaDecrypter =
-                    new RSADecrypter(configurationService.getPassportCriPrivateKey());
+                    new RSADecrypter(
+                            configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY_PARAM));
             encrypted.decrypt(rsaDecrypter);
 
             return JWSObject.parse(encrypted.getPayload().toString());

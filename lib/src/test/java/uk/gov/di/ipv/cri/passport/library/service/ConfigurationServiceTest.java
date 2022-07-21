@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
-import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
+import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -18,8 +18,6 @@ import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 
@@ -30,6 +28,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_ENCRYPTION_KEY_PARAM;
 
 @WireMockTest(httpPort = ConfigurationService.LOCALHOST_PORT)
 @ExtendWith(MockitoExtension.class)
@@ -60,24 +59,16 @@ class ConfigurationServiceTest {
     }
 
     @Test
-    void shouldLoadCertificateFromParameterStore() throws CertificateException {
-        environmentVariables.set("DCS_ENCRYPTION_CERT_PARAM", "/dev/dcs/encryption-cert");
-        when(ssmProvider.get("/dev/dcs/encryption-cert")).thenReturn(TEST_CERT);
-
-        X509Certificate underTest = (X509Certificate) configurationService.getDcsEncryptionCert();
-        assertEquals("C=GB,CN=cri-uk-passport-back", underTest.getIssuerX500Principal().getName());
-    }
-
-    @Test
     void shouldLoadPrivateKeyFromParameterStore()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        environmentVariables.set(
-                "PASSPORT_CRI_ENCRYPTION_KEY_PARAM", "/dev/cri/passport/encryption-key");
+        environmentVariables.set("ENVIRONMENT", "dev");
         when(ssmProvider.withDecryption()).thenReturn(ssmProviderWithDecryption);
-        when(ssmProviderWithDecryption.get("/dev/cri/passport/encryption-key"))
+        when(ssmProviderWithDecryption.get(
+                        "/dev/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"))
                 .thenReturn(TEST_PRIVATE_KEY);
 
-        PrivateKey underTest = configurationService.getPassportCriPrivateKey();
+        PrivateKey underTest =
+                configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY_PARAM);
         assertEquals("PKCS#8", underTest.getFormat());
         assertEquals("RSA", underTest.getAlgorithm());
     }
@@ -98,17 +89,6 @@ class ConfigurationServiceTest {
 
         assertEquals("any-old-thing", requestBody.get("Name"));
         assertEquals(false, requestBody.get("WithDecryption"));
-    }
-
-    @Test
-    void shouldCreateThumbprintsFromCertificate()
-            throws CertificateException, NoSuchAlgorithmException {
-        environmentVariables.set("PASSPORT_CRI_SIGNING_CERT_PARAM", "/dev/dcs/signing-cert");
-        when(ssmProvider.get("/dev/dcs/signing-cert")).thenReturn(TEST_CERT);
-        Thumbprints underTest = configurationService.makeThumbprints();
-        assertEquals("vtBFFZdadqFdSVgScfLruzPoS14", underTest.getSha1Thumbprint());
-        assertEquals(
-                "7JNbR3kjTHvbDkYt9F_RKwjmYgFaG3dORZqRmnMB-wY", underTest.getSha256Thumbprint());
     }
 
     @Test
