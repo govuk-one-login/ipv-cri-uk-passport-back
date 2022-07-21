@@ -193,7 +193,7 @@ class BuildClientOauthResponseHandlerTest {
     }
 
     @Test
-    void shouldReturnAccessDeniedIfNoPassportAttemptHasBeenMade()
+    void shouldReturnAccessDeniedResponseIfNoPassportAttemptHasBeenMade()
             throws JsonProcessingException, SqsException, URISyntaxException {
         PassportSessionItem passportSessionItem = generatePassportSessionItem();
         passportSessionItem.setAttemptCount(0);
@@ -206,14 +206,21 @@ class BuildClientOauthResponseHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
-        Map<String, Object> responseBody =
+        assertEquals(HttpStatus.SC_OK, response.getStatusCode());
+
+        ClientResponse responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
-        assertEquals(OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(), response.getStatusCode());
-        assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
-        assertEquals(
-                "Access denied by resource owner or authorization server - No passport details attempt has been made",
-                responseBody.get("error_description"));
+        String expectedRedirectUrl =
+                new URIBuilder("https://example.com")
+                        .addParameter("error", OAuth2Error.ACCESS_DENIED.getCode())
+                        .addParameter(
+                                "error_description", OAuth2Error.ACCESS_DENIED.getDescription())
+                        .addParameter("state", "test-state")
+                        .build()
+                        .toString();
+
+        assertEquals(expectedRedirectUrl, responseBody.getClient().getRedirectUrl());
     }
 
     private PassportSessionItem generatePassportSessionItem() {
