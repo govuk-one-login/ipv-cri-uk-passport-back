@@ -34,10 +34,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.util.Map;
 
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_ENCRYPTION_CERT_PARAM;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_SIGNING_CERT_PARAM;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_ENCRYPTION_KEY_PARAM;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_KEY_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_ENCRYPTION_CERT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_SIGNING_CERT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_ENCRYPTION_KEY;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_KEY;
 
 public class DcsCryptographyService {
 
@@ -106,8 +106,7 @@ public class DcsCryptographyService {
                         new Payload(stringToSign));
 
         jwsObject.sign(
-                new RSASSASigner(
-                        configurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY_PARAM)));
+                new RSASSASigner(configurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY)));
 
         return jwsObject;
     }
@@ -124,7 +123,7 @@ public class DcsCryptographyService {
                 new RSAEncrypter(
                         (RSAPublicKey)
                                 configurationService
-                                        .getCertificate(DCS_ENCRYPTION_CERT_PARAM)
+                                        .getCertificate(DCS_ENCRYPTION_CERT)
                                         .getPublicKey()));
 
         if (!jwe.getState().equals(JWEObject.State.ENCRYPTED)) {
@@ -140,7 +139,7 @@ public class DcsCryptographyService {
                 new RSASSAVerifier(
                         (RSAPublicKey)
                                 configurationService
-                                        .getCertificate(DCS_SIGNING_CERT_PARAM)
+                                        .getCertificate(DCS_SIGNING_CERT)
                                         .getPublicKey());
         return !jwsObject.verify(rsassaVerifier);
     }
@@ -149,7 +148,7 @@ public class DcsCryptographyService {
         try {
             RSADecrypter rsaDecrypter =
                     new RSADecrypter(
-                            configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY_PARAM));
+                            configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY));
             encrypted.decrypt(rsaDecrypter);
 
             return JWSObject.parse(encrypted.getPayload().toString());

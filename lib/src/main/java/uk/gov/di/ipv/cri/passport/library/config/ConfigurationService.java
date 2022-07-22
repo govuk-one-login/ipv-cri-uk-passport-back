@@ -28,7 +28,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_CERT_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_CERT;
+import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.BEARER_TOKEN_TTL;
+import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DYNAMODB_ENDPOINT_OVERRIDE;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.ENVIRONMENT;
 
 public class ConfigurationService {
@@ -88,10 +90,6 @@ public class ConfigurationService {
                                 getEnvironmentVariable(ENVIRONMENT)));
     }
 
-    private String getParameterFromStoreUsingEnv(String environmentVariable) {
-        return ssmProvider.get(System.getenv(environmentVariable));
-    }
-
     public Certificate getCertificate(ConfigurationVariable configurationVariable)
             throws CertificateException {
         byte[] binaryCertificate =
@@ -110,7 +108,7 @@ public class ConfigurationService {
     }
 
     public Thumbprints makeThumbprints() throws CertificateException, NoSuchAlgorithmException {
-        var cert = getCertificate(PASSPORT_CRI_SIGNING_CERT_PARAM);
+        var cert = getCertificate(PASSPORT_CRI_SIGNING_CERT);
         return new Thumbprints(
                 getThumbprint((X509Certificate) cert, "SHA-1"),
                 getThumbprint((X509Certificate) cert, "SHA-256"));
@@ -126,15 +124,15 @@ public class ConfigurationService {
     }
 
     public long getAccessTokenExpirySeconds() {
-        return Optional.ofNullable(System.getenv("BEARER_TOKEN_TTL"))
+        return Optional.ofNullable(getEnvironmentVariable(BEARER_TOKEN_TTL))
                 .map(Long::valueOf)
                 .orElse(DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS);
     }
 
     public URI getDynamoDbEndpointOverride() {
-        String dynamoDbEndpointOverride = System.getenv("DYNAMODB_ENDPOINT_OVERRIDE");
+        String dynamoDbEndpointOverride = getEnvironmentVariable(DYNAMODB_ENDPOINT_OVERRIDE);
         if (dynamoDbEndpointOverride != null && !dynamoDbEndpointOverride.isEmpty()) {
-            return URI.create(System.getenv("DYNAMODB_ENDPOINT_OVERRIDE"));
+            return URI.create(dynamoDbEndpointOverride);
         }
         return null;
     }
@@ -162,45 +160,5 @@ public class ConfigurationService {
                 String.format(
                         "%s/%s/jwtAuthentication/issuer",
                         System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
-    }
-
-    public String getAudienceForClients() {
-        return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUDIENCE");
-    }
-
-    public String getVerifiableCredentialIssuer() {
-        return getParameterFromStoreUsingEnv("VERIFIABLE_CREDENTIAL_ISSUER_PARAM");
-    }
-
-    public String getMaxClientAuthTokenTtl() {
-        return getParameterFromStoreUsingEnv("PASSPORT_CRI_CLIENT_AUTH_MAX_TTL");
-    }
-
-    public String getVerifiableCredentialKmsSigningKeyId() {
-        return ssmProvider.get(System.getenv("VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID_PARAM"));
-    }
-
-    public String getJarKmsEncryptionKeyId() {
-        return ssmProvider.get(System.getenv("JAR_ENCRYPTION_KEY_ID_PARAM"));
-    }
-
-    public String getJarKmsPublicKey() {
-        return ssmProvider.get(System.getenv("JAR_KMS_PUBLIC_KEY_PARAM"));
-    }
-
-    public long maxJwtTtl() {
-        return Long.parseLong(ssmProvider.get(System.getenv("MAX_JWT_TTL")));
-    }
-
-    public long getBackendSessionTtl() {
-        return Long.parseLong(
-                ssmProvider.get(
-                        String.format(
-                                "/%s/credentialIssuers/ukPassport/self/backendSessionTtl",
-                                System.getenv("ENVIRONMENT"))));
-    }
-
-    public int getMaximumAttemptCount() {
-        return Integer.parseInt(ssmProvider.get(System.getenv("MAXIMUM_ATTEMPT_COUNT_PARAM")));
     }
 }

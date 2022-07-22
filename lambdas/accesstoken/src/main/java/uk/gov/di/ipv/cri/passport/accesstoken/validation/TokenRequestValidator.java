@@ -29,6 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUDIENCE;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUTH_MAX_TTL;
+
 public class TokenRequestValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenRequestValidator.class);
     private static final String CLIENT_ASSERTION_PARAM = "client_assertion";
@@ -68,7 +71,8 @@ public class TokenRequestValidator {
     private void validateMaxAllowedAuthClientTtl(JWTAuthenticationClaimsSet claimsSet)
             throws InvalidClientException {
         Date expirationTime = claimsSet.getExpirationTime();
-        String maxAllowedTtl = configurationService.getMaxClientAuthTokenTtl();
+        String maxAllowedTtl =
+                configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL);
 
         OffsetDateTime offsetDateTime =
                 OffsetDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
@@ -108,7 +112,10 @@ public class TokenRequestValidator {
                 new ConfigurationServicePublicKeySelector(configurationService);
         return new ClientAuthenticationVerifier<>(
                 configurationServicePublicKeySelector,
-                Set.of(new Audience(configurationService.getAudienceForClients())));
+                Set.of(
+                        new Audience(
+                                configurationService.getSsmParameter(
+                                        PASSPORT_CRI_CLIENT_AUDIENCE))));
     }
 
     private PrivateKeyJWT clientJwtWithConcatSignature(PrivateKeyJWT clientJwt, String requestBody)

@@ -28,7 +28,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_ENCRYPTION_KEY_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_ENCRYPTION_KEY;
 
 @WireMockTest(httpPort = ConfigurationService.LOCALHOST_PORT)
 @ExtendWith(MockitoExtension.class)
@@ -65,8 +65,7 @@ class ConfigurationServiceTest {
                         "/dev/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"))
                 .thenReturn(TEST_PRIVATE_KEY);
 
-        PrivateKey underTest =
-                configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY_PARAM);
+        PrivateKey underTest = configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY);
         assertEquals("PKCS#8", underTest.getFormat());
         assertEquals("RSA", underTest.getAlgorithm());
     }
@@ -87,14 +86,5 @@ class ConfigurationServiceTest {
 
         assertEquals("any-old-thing", requestBody.get("Name"));
         assertEquals(false, requestBody.get("WithDecryption"));
-    }
-
-    @Test
-    void shouldReturnBackendSessionTtl() {
-        environmentVariables.set("ENVIRONMENT", "test");
-        long ttl = 7200;
-        when(ssmProvider.get("/test/credentialIssuers/ukPassport/self/backendSessionTtl"))
-                .thenReturn(String.valueOf(ttl));
-        assertEquals(ttl, configurationService.getBackendSessionTtl());
     }
 }

@@ -31,6 +31,8 @@ import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
 
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.JAR_ENCRYPTION_KEY_ID;
+
 public class InitialiseSessionHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -62,7 +64,8 @@ public class InitialiseSessionHandler
     @ExcludeFromGeneratedCoverageReport
     public InitialiseSessionHandler() {
         this.configurationService = new ConfigurationService();
-        this.kmsRsaDecrypter = new KmsRsaDecrypter(configurationService.getJarKmsEncryptionKeyId());
+        this.kmsRsaDecrypter =
+                new KmsRsaDecrypter(configurationService.getSsmParameter(JAR_ENCRYPTION_KEY_ID));
         this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);

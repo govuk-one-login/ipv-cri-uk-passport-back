@@ -51,6 +51,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAXIMUM_ATTEMPT_COUNT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 
 @ExtendWith(MockitoExtension.class)
 class CheckPassportHandlerTest {
@@ -85,7 +87,7 @@ class CheckPassportHandlerTest {
 
     @Mock Context context;
     @Mock PassportService passportService;
-    @Mock ConfigurationService configurationService;
+    @Mock ConfigurationService mockConfigurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
     @Mock PassportSessionService passportSessionService;
     @Mock AuditService auditService;
@@ -98,7 +100,7 @@ class CheckPassportHandlerTest {
         underTest =
                 new CheckPassportHandler(
                         passportService,
-                        configurationService,
+                        mockConfigurationService,
                         dcsCryptographyService,
                         auditService,
                         passportSessionService);
@@ -185,7 +187,10 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(0);
-        when(configurationService.getMaximumAttemptCount()).thenReturn(2);
+        when(mockConfigurationService.getSsmParameter(MAXIMUM_ATTEMPT_COUNT))
+                .thenReturn(String.valueOf(2));
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+                .thenReturn("test");
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
@@ -202,7 +207,10 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(2);
-        when(configurationService.getMaximumAttemptCount()).thenReturn(2);
+        when(mockConfigurationService.getSsmParameter(MAXIMUM_ATTEMPT_COUNT))
+                .thenReturn(String.valueOf(2));
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+                .thenReturn("test");
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(

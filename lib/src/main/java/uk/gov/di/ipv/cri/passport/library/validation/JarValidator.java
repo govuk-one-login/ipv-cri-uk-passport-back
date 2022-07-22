@@ -26,6 +26,9 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUDIENCE;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUTH_MAX_TTL;
+
 public class JarValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarValidator.class);
     private static final String REDIRECT_URI_CLAIM = "redirect_uri";
@@ -145,7 +148,7 @@ public class JarValidator {
     private JWTClaimsSet getValidatedClaimSet(SignedJWT signedJWT, String clientId)
             throws JarValidationException {
 
-        String criAudience = configurationService.getAudienceForClients();
+        String criAudience = configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE);
         String clientIssuer = configurationService.getClientIssuer(clientId);
 
         DefaultJWTClaimsVerifier<?> verifier =
@@ -175,7 +178,8 @@ public class JarValidator {
     }
 
     private void validateMaxAllowedJarTtl(JWTClaimsSet claimsSet) throws JarValidationException {
-        String maxAllowedTtl = configurationService.getMaxClientAuthTokenTtl();
+        String maxAllowedTtl =
+                configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL);
         LocalDateTime maximumExpirationTime =
                 LocalDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
         LocalDateTime expirationTime =

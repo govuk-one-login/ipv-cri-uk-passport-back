@@ -68,6 +68,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.IDENTITY_CHECK_CREDENTIAL_TYPE;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VERIFIABLE_CREDENTIAL_TYPE;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
@@ -134,6 +136,8 @@ class IssueCredentialHandlerTest {
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
 
+        mockConfigurationServiceCalls();
+
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
 
@@ -173,12 +177,20 @@ class IssueCredentialHandlerTest {
         when(mockDcsPassportCheckService.getDcsPassportCheck(TEST_RESOURCE_ID))
                 .thenReturn(passportCheckDao);
 
+        mockConfigurationServiceCalls();
+
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
 
         assertEquals(200, response.getStatusCode());
         assertEquals(
                 "test-user-id", SignedJWT.parse(response.getBody()).getJWTClaimsSet().getSubject());
+    }
+
+    private void mockConfigurationServiceCalls() {
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+                .thenReturn("TEST");
+        when(mockConfigurationService.getSsmParameter(MAX_JWT_TTL)).thenReturn("1000");
     }
 
     @Test
@@ -200,9 +212,11 @@ class IssueCredentialHandlerTest {
                 .thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+                .thenReturn("test-issuer");
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
+        mockConfigurationServiceCalls();
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -448,7 +462,8 @@ class IssueCredentialHandlerTest {
         when(mockAccessTokenService.getAccessTokenItem(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-        when(mockConfigurationService.getVerifiableCredentialIssuer()).thenReturn("test-issuer");
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+                .thenReturn("test-issuer");
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
 

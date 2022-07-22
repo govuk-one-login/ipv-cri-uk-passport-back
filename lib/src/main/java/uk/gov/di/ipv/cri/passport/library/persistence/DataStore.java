@@ -17,6 +17,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.BACKEND_SESSION_TTL;
+
 public class DataStore<T extends DynamodbItem> {
 
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
@@ -48,7 +50,9 @@ public class DataStore<T extends DynamodbItem> {
     public void create(T item) {
         item.setTtl(
                 Instant.now()
-                        .plusSeconds(configurationService.getBackendSessionTtl())
+                        .plusSeconds(
+                                Long.parseLong(
+                                        configurationService.getSsmParameter(BACKEND_SESSION_TTL)))
                         .getEpochSecond());
         getTable().putItem(item);
     }
