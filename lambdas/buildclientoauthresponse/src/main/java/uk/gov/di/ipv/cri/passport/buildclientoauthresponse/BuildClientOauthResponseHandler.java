@@ -69,6 +69,18 @@ public class BuildClientOauthResponseHandler
             PassportSessionItem passportSessionItem =
                     passportSessionService.getPassportSession(passportSessionId);
 
+            if (passportSessionItem.getAttemptCount() == 0) {
+                LOGGER.info(
+                        "No passport details attempt has been made - returning Access Denied response");
+
+                ClientResponse clientResponse = generateClientErrorResponse(passportSessionItem);
+
+                auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+
+                return ApiGatewayResponseGenerator.proxyJsonResponse(
+                        HttpStatus.SC_OK, clientResponse);
+            }
+
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
 
@@ -109,6 +121,20 @@ public class BuildClientOauthResponseHandler
                 new URIBuilder(passportSessionItem.getAuthParams().getRedirectUri())
                         .addParameter("code", authorizationCode);
 
+        if (StringUtils.isNotBlank(passportSessionItem.getAuthParams().getState())) {
+            redirectUri.addParameter("state", passportSessionItem.getAuthParams().getState());
+        }
+
+        return new ClientResponse(new ClientDetails(redirectUri.build().toString()));
+    }
+
+    private ClientResponse generateClientErrorResponse(PassportSessionItem passportSessionItem)
+            throws URISyntaxException {
+        URIBuilder redirectUri =
+                new URIBuilder(passportSessionItem.getAuthParams().getRedirectUri())
+                        .addParameter("error", OAuth2Error.ACCESS_DENIED.getCode())
+                        .addParameter(
+                                "error_description", OAuth2Error.ACCESS_DENIED.getDescription());
         if (StringUtils.isNotBlank(passportSessionItem.getAuthParams().getState())) {
             redirectUri.addParameter("state", passportSessionItem.getAuthParams().getState());
         }
