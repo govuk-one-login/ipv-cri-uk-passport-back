@@ -23,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 
-import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DCS_POST_URL_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_POST_URL_PARAM;
 
 public class PassportService {
 
@@ -60,8 +60,7 @@ public class PassportService {
 
     public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload)
             throws IOException, EmptyDcsResponseException {
-        HttpPost request =
-                new HttpPost(configurationService.getEnvironmentVariable(DCS_POST_URL_PARAM));
+        HttpPost request = new HttpPost(configurationService.getSsmParameter(DCS_POST_URL_PARAM));
         request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
         request.setEntity(new StringEntity(payload.serialize()));
 
