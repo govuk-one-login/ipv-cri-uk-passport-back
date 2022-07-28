@@ -35,7 +35,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DCS_POST_URL_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_POST_URL_PARAM;
 
 @ExtendWith(MockitoExtension.class)
 class PassportServiceTest {
@@ -61,7 +61,7 @@ class PassportServiceTest {
     void shouldPostToDcsEndpoint() throws IOException, EmptyDcsResponseException {
         String expectedPayload = "Test";
         HttpEntity httpEntity = new StringEntity(expectedPayload);
-        when(configurationService.getEnvironmentVariable(DCS_POST_URL_PARAM))
+        when(configurationService.getSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(httpResponse.getEntity()).thenReturn(httpEntity);
@@ -84,7 +84,7 @@ class PassportServiceTest {
     @Test
     void shouldReturnAnErrorWhenDCSRespondsWithNon200() throws IOException {
         String expectedPayload = "Test";
-        when(configurationService.getEnvironmentVariable(DCS_POST_URL_PARAM))
+        when(configurationService.getSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(500);
@@ -103,7 +103,7 @@ class PassportServiceTest {
 
     @Test
     void shouldReturnThrowExceptionWhenResponseFromDcsIsEmpty() throws IOException {
-        when(configurationService.getEnvironmentVariable(DCS_POST_URL_PARAM))
+        when(configurationService.getSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         when(jwsObject.serialize()).thenReturn("Test");

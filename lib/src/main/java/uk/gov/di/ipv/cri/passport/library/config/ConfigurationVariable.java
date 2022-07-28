@@ -3,7 +3,7 @@ package uk.gov.di.ipv.cri.passport.library.config;
 public enum ConfigurationVariable {
     AUTH_CODE_EXPIRY_CODE_SECONDS("/%s/credentialIssuers/ukPassport/self/authCodeExpirySeconds"),
     BACKEND_SESSION_TTL("/%s/credentialIssuers/ukPassport/self/backendSessionTtl"),
-
+    DCS_POST_URL_PARAM("/%s/credentialIssuers/ukPassport/dcs/postUrl"),
     DCS_ENCRYPTION_CERT("/%s/credentialIssuers/ukPassport/dcs/encryptionCertForPassportToEncrypt"),
     DCS_SIGNING_CERT("/%s/credentialIssuers/ukPassport/dcs/signingCertForPassportToVerify"),
     DCS_TLS_INTERMEDIATE_CERT("/%s/credentialIssuers/ukPassport/dcs/tlsIntermediateCertificate"),
@@ -14,7 +14,6 @@ public enum ConfigurationVariable {
     MAXIMUM_ATTEMPT_COUNT("/%s/credentialIssuers/ukPassport/self/maximumAttemptCount"),
     PASSPORT_CRI_CLIENT_AUDIENCE("/%s/credentialIssuers/ukPassport/self/audienceForClients"),
     PASSPORT_CRI_CLIENT_AUTH_MAX_TTL("/%s/credentialIssuers/ukPassport/self/maxJwtTtl"),
-
     PASSPORT_CRI_ENCRYPTION_KEY(
             "/%s/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"),
     PASSPORT_CRI_SIGNING_CERT("/%s/credentialIssuers/ukPassport/self/signingCertForDcsToVerify"),
