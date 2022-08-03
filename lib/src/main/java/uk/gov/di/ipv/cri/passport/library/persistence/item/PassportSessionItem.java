@@ -12,6 +12,7 @@ public class PassportSessionItem implements DynamodbItem {
     private String creationDateTime;
     private String latestDcsResponseResourceId;
     private String userId;
+    private String govukSigninJourneyId;
     private int attemptCount;
     private AuthParams authParams;
     private long ttl;
@@ -47,6 +48,14 @@ public class PassportSessionItem implements DynamodbItem {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getGovukSigninJourneyId() {
+        return govukSigninJourneyId;
+    }
+
+    public void setGovukSigninJourneyId(String govukSigninJourneyId) {
+        this.govukSigninJourneyId = govukSigninJourneyId;
     }
 
     public int getAttemptCount() {

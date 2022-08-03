@@ -102,6 +102,13 @@ public class AccessTokenHandler
             }
             LogHelper.attachPassportSessionIdToLogs(authorizationCodeItem.getPassportSessionId());
 
+            PassportSessionItem passportSessionItem =
+                    passportSessionService.getPassportSession(
+                            authorizationCodeItem.getPassportSessionId());
+
+            LogHelper.attachGovukSigninJourneyIdToLogs(
+                    passportSessionItem.getGovukSigninJourneyId());
+
             if (authorizationCodeItem.getIssuedAccessToken() != null) {
                 LOGGER.error(
                         "Auth code has been used multiple times. Auth code was exchanged for an access token at: {}",
@@ -121,10 +128,6 @@ public class AccessTokenHandler
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
-
-            PassportSessionItem passportSessionItem =
-                    passportSessionService.getPassportSession(
-                            authorizationCodeItem.getPassportSessionId());
 
             if (redirectUrlsDoNotMatch(passportSessionItem, authorizationGrant)) {
                 LOGGER.error(

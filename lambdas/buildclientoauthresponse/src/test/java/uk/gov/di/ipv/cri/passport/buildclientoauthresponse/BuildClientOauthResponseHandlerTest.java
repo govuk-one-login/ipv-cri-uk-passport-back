@@ -89,7 +89,9 @@ class BuildClientOauthResponseHandlerTest {
                         authorizationCode.getValue(),
                         TEST_EVENT_HEADERS.get(PASSPORT_SESSION_ID_HEADER_NAME));
 
-        verify(mockAuditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+        verify(mockAuditService)
+                .sendAuditEvent(
+                        AuditEventTypes.IPV_PASSPORT_CRI_END, "test-govuk-signin-journey-id");
 
         String expectedRedirectUrl =
                 new URIBuilder("https://example.com")
@@ -155,7 +157,8 @@ class BuildClientOauthResponseHandlerTest {
                 .thenReturn(generatePassportSessionItem());
         doThrow(new SqsException("Test error"))
                 .when(mockAuditService)
-                .sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+                .sendAuditEvent(
+                        AuditEventTypes.IPV_PASSPORT_CRI_END, "test-govuk-signin-journey-id");
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
 
@@ -230,6 +233,7 @@ class BuildClientOauthResponseHandlerTest {
 
         item.setAuthParams(authParams);
         item.setPassportSessionId(SecureTokenHelper.generate());
+        item.setGovukSigninJourneyId("test-govuk-signin-journey-id");
         item.setCreationDateTime(new Date().toString());
         item.setUserId("user-id");
         item.setAttemptCount(1);

@@ -133,6 +133,9 @@ public class CheckPassportHandler
                                 .toJSONObject());
             }
 
+            String govukSigninJourneyId = passportSessionItem.getGovukSigninJourneyId();
+            LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
+
             passportSessionService.incrementAttemptCount(passportSessionId);
 
             String userId = passportSessionItem.getUserId();
@@ -148,11 +151,14 @@ public class CheckPassportHandler
 
             auditService.sendAuditEvent(
                     createAuditEventRequestSent(
-                            userId, dcsPayload, authorizationRequest.getClientID().getValue()));
+                            userId,
+                            dcsPayload,
+                            authorizationRequest.getClientID().getValue(),
+                            govukSigninJourneyId));
 
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
-            auditService.sendAuditEvent(createAuditEventResponseReceived());
+            auditService.sendAuditEvent(createAuditEventResponseReceived(govukSigninJourneyId));
 
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
 
@@ -167,7 +173,7 @@ public class CheckPassportHandler
                             authorizationRequest.getClientID().getValue());
             passportService.persistDcsResponse(passportCheckDao);
 
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, govukSigninJourneyId);
 
             passportSessionService.setLatestDcsResponseResourceId(
                     passportSessionId, passportCheckDao.getResourceId());
@@ -222,7 +228,7 @@ public class CheckPassportHandler
     }
 
     private AuditEvent createAuditEventRequestSent(
-            String userId, DcsPayload dcsPayload, String clientId) {
+            String userId, DcsPayload dcsPayload, String clientId, String govukSigninJourneyId) {
 
         PassportCheckDao passportCheckDao =
                 new PassportCheckDao(
@@ -242,12 +248,18 @@ public class CheckPassportHandler
         AuditExtensions extensions =
                 new AuditExtensionsVcEvidence(
                         configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER), null);
-        return new AuditEvent(eventType, componentId, user, restricted, extensions);
+        return new AuditEvent(
+                eventType, govukSigninJourneyId, componentId, user, restricted, extensions);
     }
 
-    private AuditEvent createAuditEventResponseReceived() {
+    private AuditEvent createAuditEventResponseReceived(String govukSigninJourneyId) {
         return new AuditEvent(
-                AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED, null, null, null, null);
+                AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED,
+                govukSigninJourneyId,
+                null,
+                null,
+                null,
+                null);
     }
 
     private void validateDcsResponse(DcsResponse dcsResponse)

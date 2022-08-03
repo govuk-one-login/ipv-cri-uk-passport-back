@@ -1,5 +1,6 @@
 package uk.gov.di.ipv.cri.passport.library.helpers;
 
+import com.amazonaws.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
@@ -16,6 +17,7 @@ public class LogHelper {
         ERROR_CODE_LOG_FIELD("errorCode"),
         ERROR_DESCRIPTION_LOG_FIELD("errorDescription"),
         PASSPORT_SESSION_ID_LOG_FIELD("passportSessionId"),
+        GOVUK_SIGNIN_JOURNEY_ID("govuk_signin_journey_id"),
         JTI_LOG_FIELD("jti"),
         USED_AT_DATE_TIME_LOG_FIELD("usedAtDateTime");
 
@@ -44,6 +46,14 @@ public class LogHelper {
 
     public static void attachPassportSessionIdToLogs(String sessionId) {
         attachFieldToLogs(LogField.PASSPORT_SESSION_ID_LOG_FIELD, sessionId);
+    }
+
+    public static void attachGovukSigninJourneyIdToLogs(String govukSigninJourneyId) {
+        if (StringUtils.isNullOrEmpty(govukSigninJourneyId)) {
+            attachFieldToLogs(LogField.GOVUK_SIGNIN_JOURNEY_ID, "unknown");
+        } else {
+            attachFieldToLogs(LogField.GOVUK_SIGNIN_JOURNEY_ID, govukSigninJourneyId);
+        }
     }
 
     public static void logOauthError(String message, String errorCode, String errorDescription) {

@@ -27,8 +27,9 @@ public class AuditService {
         return AmazonSQSClientBuilder.defaultClient();
     }
 
-    public void sendAuditEvent(AuditEventTypes eventType) throws SqsException {
-        sendAuditEvent(new AuditEvent(eventType, null, null, null, null));
+    public void sendAuditEvent(AuditEventTypes eventType, String govukSigninJourneyId)
+            throws SqsException {
+        sendAuditEvent(new AuditEvent(eventType, govukSigninJourneyId, null, null, null, null));
     }
 
     public void sendAuditEvent(AuditEvent auditEvent) throws SqsException {

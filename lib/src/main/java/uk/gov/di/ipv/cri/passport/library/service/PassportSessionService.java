@@ -19,6 +19,7 @@ public class PassportSessionService {
     private static final String CLIENT_ID = "client_id";
     private static final String STATE = "state";
     private static final String REDIRECT_URI = "redirect_uri";
+    private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
 
     private final DataStore<PassportSessionItem> dataStore;
     private final ConfigurationService configurationService;
@@ -55,6 +56,10 @@ public class PassportSessionService {
         passportSessionItem.setCreationDateTime(Instant.now().toString());
         passportSessionItem.setAttemptCount(0);
         passportSessionItem.setUserId(jwtClaimsSet.getSubject());
+
+        String govukSigninJourneyId = jwtClaimsSet.getStringClaim(GOVUK_SIGNIN_JOURNEY_ID);
+        passportSessionItem.setGovukSigninJourneyId(govukSigninJourneyId);
+        LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
 
         AuthParams authParams =
                 new AuthParams(

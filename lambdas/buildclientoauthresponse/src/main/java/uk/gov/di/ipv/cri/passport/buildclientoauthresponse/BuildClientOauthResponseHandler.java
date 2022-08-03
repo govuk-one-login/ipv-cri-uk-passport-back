@@ -69,13 +69,17 @@ public class BuildClientOauthResponseHandler
             PassportSessionItem passportSessionItem =
                     passportSessionService.getPassportSession(passportSessionId);
 
+            String govukSigninJourneyId = passportSessionItem.getGovukSigninJourneyId();
+            LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
+
             if (passportSessionItem.getAttemptCount() == 0) {
                 LOGGER.info(
                         "No passport details attempt has been made - returning Access Denied response");
 
                 ClientResponse clientResponse = generateClientErrorResponse(passportSessionItem);
 
-                auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+                auditService.sendAuditEvent(
+                        AuditEventTypes.IPV_PASSPORT_CRI_END, govukSigninJourneyId);
 
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_OK, clientResponse);
@@ -91,7 +95,7 @@ public class BuildClientOauthResponseHandler
                     generateClientSuccessResponse(
                             passportSessionItem, authorizationCode.getValue());
 
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, govukSigninJourneyId);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, clientResponse);
         } catch (HttpResponseExceptionWithErrorBody e) {
