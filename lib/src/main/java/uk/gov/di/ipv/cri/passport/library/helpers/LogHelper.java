@@ -10,6 +10,7 @@ import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCovera
 public class LogHelper {
     private static final Logger LOGGER = LogManager.getLogger();
     public static final String COMPONENT_ID = "passport-cri";
+    public static final String GOVUK_SIGNIN_JOURNEY_ID_DEFAULT_VALUE = "unknown";
 
     public enum LogField {
         CLIENT_ID_LOG_FIELD("clientId"),
@@ -50,7 +51,8 @@ public class LogHelper {
 
     public static void attachGovukSigninJourneyIdToLogs(String govukSigninJourneyId) {
         if (StringUtils.isNullOrEmpty(govukSigninJourneyId)) {
-            attachFieldToLogs(LogField.GOVUK_SIGNIN_JOURNEY_ID, "unknown");
+            attachFieldToLogs(
+                    LogField.GOVUK_SIGNIN_JOURNEY_ID, GOVUK_SIGNIN_JOURNEY_ID_DEFAULT_VALUE);
         } else {
             attachFieldToLogs(LogField.GOVUK_SIGNIN_JOURNEY_ID, govukSigninJourneyId);
         }

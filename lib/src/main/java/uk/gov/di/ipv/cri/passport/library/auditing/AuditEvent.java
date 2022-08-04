@@ -1,10 +1,13 @@
 package uk.gov.di.ipv.cri.passport.library.auditing;
 
+import com.amazonaws.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 
 import java.time.Instant;
+
+import static uk.gov.di.ipv.cri.passport.library.helpers.LogHelper.GOVUK_SIGNIN_JOURNEY_ID_DEFAULT_VALUE;
 
 @ExcludeFromGeneratedCoverageReport
 public class AuditEvent {
@@ -33,7 +36,11 @@ public class AuditEvent {
             @JsonProperty(value = "extensions") AuditExtensions extensions) {
         this.timestamp = Instant.now().getEpochSecond();
         this.eventName = eventName;
-        this.govukSigninJourneyId = govukSigninJourneyId;
+        if (StringUtils.isNullOrEmpty(govukSigninJourneyId)) {
+            this.govukSigninJourneyId = GOVUK_SIGNIN_JOURNEY_ID_DEFAULT_VALUE;
+        } else {
+            this.govukSigninJourneyId = govukSigninJourneyId;
+        }
         this.componentId = componentId;
         this.user = user;
         this.restricted = restricted;
