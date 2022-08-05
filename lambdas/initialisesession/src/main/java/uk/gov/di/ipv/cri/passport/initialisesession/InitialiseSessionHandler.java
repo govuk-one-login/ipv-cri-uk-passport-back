@@ -91,7 +91,7 @@ public class InitialiseSessionHandler
                         BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
             }
 
-            this.auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START);
+            this.auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START, null);
 
             SignedJWT signedJWT = jarValidator.decryptJWE(JWEObject.parse(input.getBody()));
 

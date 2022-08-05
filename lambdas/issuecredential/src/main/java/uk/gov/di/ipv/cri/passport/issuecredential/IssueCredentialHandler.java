@@ -37,6 +37,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
@@ -117,6 +118,13 @@ public class IssueCredentialHandler
                                 .toJSONObject());
             }
 
+            PassportSessionItem passportSessionItem =
+                    passportSessionService.getPassportSession(
+                            accessTokenItem.getPassportSessionId());
+
+            String govukSigninJourneyId = passportSessionItem.getGovukSigninJourneyId();
+            LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
+
             String accessTokenExpiryDateTime = accessTokenItem.getAccessTokenExpiryDateTime();
             if (Instant.now().isAfter(Instant.parse(accessTokenExpiryDateTime))) {
                 LOGGER.error(
@@ -144,7 +152,7 @@ public class IssueCredentialHandler
 
             PassportCheckDao passportCheck =
                     dcsPassportCheckService.getDcsPassportCheck(
-                            getPassportCheckResourceId(accessTokenItem));
+                            getPassportCheckResourceId(accessTokenItem, passportSessionItem));
             LogHelper.attachClientIdToLogs(passportCheck.getClientId());
 
             VerifiableCredential verifiableCredential =
@@ -153,7 +161,8 @@ public class IssueCredentialHandler
             SignedJWT signedJWT =
                     generateAndSignVerifiableCredentialJwt(verifiableCredential, passportCheck);
 
-            auditService.sendAuditEvent(createAuditEvent(verifiableCredential, passportCheck));
+            auditService.sendAuditEvent(
+                    createAuditEvent(verifiableCredential, passportCheck, govukSigninJourneyId));
 
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
@@ -181,15 +190,15 @@ public class IssueCredentialHandler
         }
     }
 
-    private String getPassportCheckResourceId(AccessTokenItem accessTokenItem) {
+    private String getPassportCheckResourceId(
+            AccessTokenItem accessTokenItem, PassportSessionItem passportSessionItem) {
         return StringUtils.isBlank(accessTokenItem.getResourceId())
-                ? passportSessionService
-                        .getPassportSession(accessTokenItem.getPassportSessionId())
-                        .getLatestDcsResponseResourceId()
+                ? passportSessionItem.getLatestDcsResponseResourceId()
                 : accessTokenItem.getResourceId();
     }
 
-    private AuditEvent createAuditEvent(VerifiableCredential vc, PassportCheckDao passportCheck) {
+    private AuditEvent createAuditEvent(
+            VerifiableCredential vc, PassportCheckDao passportCheck, String govukSigninJourneyId) {
         CredentialSubject credentialSubject = vc.getCredentialSubject();
         String componentId = configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
         AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED;
@@ -203,7 +212,8 @@ public class IssueCredentialHandler
                 new AuditExtensionsVcEvidence(
                         configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER),
                         vc.getEvidence());
-        return new AuditEvent(eventType, componentId, user, restricted, extensions);
+        return new AuditEvent(
+                eventType, govukSigninJourneyId, componentId, user, restricted, extensions);
     }
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(

@@ -130,7 +130,9 @@ class CheckPassportHandlerTest {
                 AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED,
                 capturedValues.get(1).getEventName());
 
-        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END);
+        verify(auditService)
+                .sendAuditEvent(
+                        AuditEventTypes.IPV_PASSPORT_CRI_END, "test-govuk-signin-journey-id");
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
@@ -368,6 +370,7 @@ class CheckPassportHandlerTest {
         PassportSessionItem passportSessionItem = new PassportSessionItem();
         passportSessionItem.setAttemptCount(attemptCount);
         passportSessionItem.setUserId("test-user-id");
+        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
         passportSessionItem.setAuthParams(
                 new AuthParams("code", "12345", "read", "https://example.com"));
 

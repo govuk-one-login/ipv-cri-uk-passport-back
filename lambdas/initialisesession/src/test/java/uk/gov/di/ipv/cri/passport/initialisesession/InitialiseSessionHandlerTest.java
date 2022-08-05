@@ -113,7 +113,7 @@ class InitialiseSessionHandlerTest {
 
         var response = underTest.handleRequest(event, context);
         assertEquals(200, response.getStatusCode());
-        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START);
+        verify(auditService).sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START, null);
     }
 
     @Test

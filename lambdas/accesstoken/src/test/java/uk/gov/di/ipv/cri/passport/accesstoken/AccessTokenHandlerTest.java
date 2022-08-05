@@ -222,6 +222,11 @@ class AccessTokenHandlerTest {
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
         when(mockAuthorizationCodeService.isExpired(TEST_AUTH_CODE_ITEM)).thenReturn(true);
 
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId(UUID.randomUUID().toString());
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
+
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
@@ -304,6 +309,12 @@ class AccessTokenHandlerTest {
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
+
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId(UUID.randomUUID().toString());
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
+
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
         verify(mockAccessTokenService)
@@ -344,6 +355,11 @@ class AccessTokenHandlerTest {
         doThrow(new IllegalArgumentException(errorMessage))
                 .when(mockAccessTokenService)
                 .revokeAccessToken(any());
+
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId(UUID.randomUUID().toString());
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 

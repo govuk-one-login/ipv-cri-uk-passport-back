@@ -136,6 +136,11 @@ class IssueCredentialHandlerTest {
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
 
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
+
         mockConfigurationServiceCalls();
 
         APIGatewayProxyResponseEvent response =
@@ -217,6 +222,11 @@ class IssueCredentialHandlerTest {
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
         mockConfigurationServiceCalls();
+
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -402,6 +412,11 @@ class IssueCredentialHandlerTest {
         when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
 
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
+
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
         Map<String, Object> responseBody =
@@ -433,6 +448,11 @@ class IssueCredentialHandlerTest {
 
         when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
+
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
