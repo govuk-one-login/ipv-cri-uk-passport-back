@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 
@@ -27,9 +28,12 @@ public class AuditService {
         return AmazonSQSClientBuilder.defaultClient();
     }
 
-    public void sendAuditEvent(AuditEventTypes eventType, String govukSigninJourneyId)
-            throws SqsException {
-        sendAuditEvent(new AuditEvent(eventType, govukSigninJourneyId, null, null, null, null));
+    public void sendAuditEvent(AuditEventTypes eventType) throws SqsException {
+        sendAuditEvent(new AuditEvent(eventType, null, null, null, null));
+    }
+
+    public void sendAuditEvent(AuditEventTypes eventType, AuditEventUser user) throws SqsException {
+        sendAuditEvent(new AuditEvent(eventType, null, user, null, null));
     }
 
     public void sendAuditEvent(AuditEvent auditEvent) throws SqsException {
