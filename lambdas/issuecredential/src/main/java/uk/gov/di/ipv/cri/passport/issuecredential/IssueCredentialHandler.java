@@ -122,8 +122,8 @@ public class IssueCredentialHandler
                     passportSessionService.getPassportSession(
                             accessTokenItem.getPassportSessionId());
 
-            String govukSigninJourneyId = passportSessionItem.getGovukSigninJourneyId();
-            LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
+            LogHelper.attachGovukSigninJourneyIdToLogs(
+                    passportSessionItem.getGovukSigninJourneyId());
 
             String accessTokenExpiryDateTime = accessTokenItem.getAccessTokenExpiryDateTime();
             if (Instant.now().isAfter(Instant.parse(accessTokenExpiryDateTime))) {
@@ -162,7 +162,9 @@ public class IssueCredentialHandler
                     generateAndSignVerifiableCredentialJwt(verifiableCredential, passportCheck);
 
             auditService.sendAuditEvent(
-                    createAuditEvent(verifiableCredential, passportCheck, govukSigninJourneyId));
+                    createAuditEvent(
+                            verifiableCredential,
+                            AuditEventUser.fromPassportSessionItem(passportSessionItem)));
 
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
@@ -197,12 +199,10 @@ public class IssueCredentialHandler
                 : accessTokenItem.getResourceId();
     }
 
-    private AuditEvent createAuditEvent(
-            VerifiableCredential vc, PassportCheckDao passportCheck, String govukSigninJourneyId) {
+    private AuditEvent createAuditEvent(VerifiableCredential vc, AuditEventUser user) {
         CredentialSubject credentialSubject = vc.getCredentialSubject();
         String componentId = configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
         AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED;
-        AuditEventUser user = new AuditEventUser(passportCheck.getUserId(), null);
         AuditRestricted restricted =
                 new AuditRestrictedVcCredentialSubject(
                         credentialSubject.getName(),
@@ -212,8 +212,7 @@ public class IssueCredentialHandler
                 new AuditExtensionsVcEvidence(
                         configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER),
                         vc.getEvidence());
-        return new AuditEvent(
-                eventType, govukSigninJourneyId, componentId, user, restricted, extensions);
+        return new AuditEvent(eventType, componentId, user, restricted, extensions);
     }
 
     private SignedJWT generateAndSignVerifiableCredentialJwt(

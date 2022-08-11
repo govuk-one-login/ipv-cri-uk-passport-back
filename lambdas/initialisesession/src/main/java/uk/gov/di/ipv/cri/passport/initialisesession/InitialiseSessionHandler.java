@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
@@ -24,6 +25,7 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
+import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
@@ -91,15 +93,19 @@ public class InitialiseSessionHandler
                         BAD_REQUEST, ErrorResponse.MISSING_SHARED_ATTRIBUTES_JWT);
             }
 
-            this.auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_START, null);
-
             SignedJWT signedJWT = jarValidator.decryptJWE(JWEObject.parse(input.getBody()));
 
             JWTClaimsSet claimsSet = jarValidator.validateRequestJwt(signedJWT, clientId);
 
-            String passportSessionId = passportSessionService.generatePassportSession(claimsSet);
+            PassportSessionItem passportSessionItem =
+                    passportSessionService.generatePassportSession(claimsSet);
 
-            JarResponse response = generateJarResponse(claimsSet, passportSessionId);
+            this.auditService.sendAuditEvent(
+                    AuditEventTypes.IPV_PASSPORT_CRI_START,
+                    AuditEventUser.fromPassportSessionItem(passportSessionItem));
+
+            JarResponse response =
+                    generateJarResponse(claimsSet, passportSessionItem.getPassportSessionId());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, response);
         } catch (RecoverableJarValidationException e) {

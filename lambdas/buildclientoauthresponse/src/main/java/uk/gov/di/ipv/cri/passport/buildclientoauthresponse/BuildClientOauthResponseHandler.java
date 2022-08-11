@@ -16,6 +16,7 @@ import software.amazon.lambda.powertools.logging.Logging;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientDetails;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
@@ -68,9 +69,11 @@ public class BuildClientOauthResponseHandler
 
             PassportSessionItem passportSessionItem =
                     passportSessionService.getPassportSession(passportSessionId);
+            AuditEventUser auditEventUser =
+                    AuditEventUser.fromPassportSessionItem(passportSessionItem);
 
-            String govukSigninJourneyId = passportSessionItem.getGovukSigninJourneyId();
-            LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
+            LogHelper.attachGovukSigninJourneyIdToLogs(
+                    passportSessionItem.getGovukSigninJourneyId());
 
             if (passportSessionItem.getAttemptCount() == 0) {
                 LOGGER.info(
@@ -78,8 +81,7 @@ public class BuildClientOauthResponseHandler
 
                 ClientResponse clientResponse = generateClientErrorResponse(passportSessionItem);
 
-                auditService.sendAuditEvent(
-                        AuditEventTypes.IPV_PASSPORT_CRI_END, govukSigninJourneyId);
+                auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, auditEventUser);
 
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_OK, clientResponse);
@@ -95,7 +97,7 @@ public class BuildClientOauthResponseHandler
                     generateClientSuccessResponse(
                             passportSessionItem, authorizationCode.getValue());
 
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, govukSigninJourneyId);
+            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, auditEventUser);
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, clientResponse);
         } catch (HttpResponseExceptionWithErrorBody e) {

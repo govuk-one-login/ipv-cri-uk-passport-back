@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
@@ -132,7 +133,9 @@ class CheckPassportHandlerTest {
 
         verify(auditService)
                 .sendAuditEvent(
-                        AuditEventTypes.IPV_PASSPORT_CRI_END, "test-govuk-signin-journey-id");
+                        AuditEventTypes.IPV_PASSPORT_CRI_END,
+                        new AuditEventUser(
+                                "test-user-id", "test-session-id", "test-govuk-signin-journey-id"));
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
@@ -370,6 +373,7 @@ class CheckPassportHandlerTest {
         PassportSessionItem passportSessionItem = new PassportSessionItem();
         passportSessionItem.setAttemptCount(attemptCount);
         passportSessionItem.setUserId("test-user-id");
+        passportSessionItem.setPassportSessionId("test-session-id");
         passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
         passportSessionItem.setAuthParams(
                 new AuthParams("code", "12345", "read", "https://example.com"));

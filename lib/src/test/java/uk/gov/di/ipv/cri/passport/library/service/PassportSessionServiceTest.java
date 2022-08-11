@@ -60,7 +60,7 @@ class PassportSessionServiceTest {
                         .claim("client_id", "ipv-core")
                         .build();
 
-        String passportSessionID = underTest.generatePassportSession(jwtClaimsSet);
+        PassportSessionItem passportSessionItem = underTest.generatePassportSession(jwtClaimsSet);
 
         ArgumentCaptor<PassportSessionItem> passportSessionItemArgumentCaptor =
                 ArgumentCaptor.forClass(PassportSessionItem.class);
@@ -68,7 +68,7 @@ class PassportSessionServiceTest {
         assertNotNull(passportSessionItemArgumentCaptor.getValue().getCreationDateTime());
         assertEquals(
                 passportSessionItemArgumentCaptor.getValue().getPassportSessionId(),
-                passportSessionID);
+                passportSessionItem.getPassportSessionId());
     }
 
     @Test

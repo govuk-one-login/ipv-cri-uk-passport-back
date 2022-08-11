@@ -47,7 +47,8 @@ public class PassportSessionService {
         return dataStore.getItem(passportSessionId);
     }
 
-    public String generatePassportSession(JWTClaimsSet jwtClaimsSet) throws ParseException {
+    public PassportSessionItem generatePassportSession(JWTClaimsSet jwtClaimsSet)
+            throws ParseException {
         PassportSessionItem passportSessionItem = new PassportSessionItem();
         passportSessionItem.setPassportSessionId(SecureTokenHelper.generate());
 
@@ -72,7 +73,7 @@ public class PassportSessionService {
 
         dataStore.create(passportSessionItem);
 
-        return passportSessionItem.getPassportSessionId();
+        return passportSessionItem;
     }
 
     public void setLatestDcsResponseResourceId(String passportSessionID, String resourceId) {

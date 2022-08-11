@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 
@@ -39,7 +40,7 @@ class AuditServiceTest {
 
     @Test
     void shouldSendMessageToSqsQueue() throws JsonProcessingException, SqsException {
-        auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT, "test-id");
+        auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT);
 
         ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
                 ArgumentCaptor.forClass(SendMessageRequest.class);
@@ -53,5 +54,30 @@ class AuditServiceTest {
         assertEquals(
                 AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT.name(),
                 messageBody.get("event_name").asText());
+    }
+
+    @Test
+    void shouldSendMessageToQueueWithUser() throws Exception {
+        AuditEventUser auditEventUser =
+                new AuditEventUser("someUserId", "someSessionId", "someGovUkId");
+        auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT, auditEventUser);
+
+        ArgumentCaptor<SendMessageRequest> sqsSendMessageRequestCaptor =
+                ArgumentCaptor.forClass(SendMessageRequest.class);
+        verify(mockSqs).sendMessage(sqsSendMessageRequestCaptor.capture());
+
+        assertEquals(
+                "https://example-queue-url", sqsSendMessageRequestCaptor.getValue().getQueueUrl());
+
+        JsonNode messageBody =
+                objectMapper.readTree(sqsSendMessageRequestCaptor.getValue().getMessageBody());
+        assertEquals(
+                AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT.name(),
+                messageBody.get("event_name").asText());
+
+        assertEquals("someUserId", messageBody.get("user").get("user_id").asText());
+        assertEquals("someSessionId", messageBody.get("user").get("session_id").asText());
+        assertEquals(
+                "someGovUkId", messageBody.get("user").get("govuk_signin_journey_id").asText());
     }
 }

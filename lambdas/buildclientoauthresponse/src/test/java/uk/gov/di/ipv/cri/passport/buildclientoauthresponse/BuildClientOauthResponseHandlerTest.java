@@ -17,11 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
+import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
-import uk.gov.di.ipv.cri.passport.library.helpers.SecureTokenHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
@@ -32,7 +32,9 @@ import java.util.Date;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,6 +44,9 @@ class BuildClientOauthResponseHandlerTest {
     private static final String PASSPORT_SESSION_ID_HEADER_NAME = "passport_session_id";
     private static final Map<String, String> TEST_EVENT_HEADERS =
             Map.of(PASSPORT_SESSION_ID_HEADER_NAME, "12345");
+    public static final String TEST_USER_ID = "test-user-id";
+    public static final String TEST_GOVUK_SIGNIN_JOURNEY_ID = "test-govuk-signin-journey-id";
+    public static final String TEST_PASSPORT_SESSION_ID = "test-passport-session-id";
 
     @Mock private Context context;
     @Mock private AuthorizationCodeService mockAuthorizationCodeService;
@@ -91,7 +96,11 @@ class BuildClientOauthResponseHandlerTest {
 
         verify(mockAuditService)
                 .sendAuditEvent(
-                        AuditEventTypes.IPV_PASSPORT_CRI_END, "test-govuk-signin-journey-id");
+                        AuditEventTypes.IPV_PASSPORT_CRI_END,
+                        new AuditEventUser(
+                                TEST_USER_ID,
+                                TEST_PASSPORT_SESSION_ID,
+                                TEST_GOVUK_SIGNIN_JOURNEY_ID));
 
         String expectedRedirectUrl =
                 new URIBuilder("https://example.com")
@@ -158,7 +167,7 @@ class BuildClientOauthResponseHandlerTest {
         doThrow(new SqsException("Test error"))
                 .when(mockAuditService)
                 .sendAuditEvent(
-                        AuditEventTypes.IPV_PASSPORT_CRI_END, "test-govuk-signin-journey-id");
+                        eq(AuditEventTypes.IPV_PASSPORT_CRI_END), any(AuditEventUser.class));
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
 
@@ -232,10 +241,10 @@ class BuildClientOauthResponseHandlerTest {
                 new AuthParams("code", "ipv-core", "test-state", "https://example.com");
 
         item.setAuthParams(authParams);
-        item.setPassportSessionId(SecureTokenHelper.generate());
-        item.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        item.setPassportSessionId(TEST_PASSPORT_SESSION_ID);
+        item.setGovukSigninJourneyId(TEST_GOVUK_SIGNIN_JOURNEY_ID);
         item.setCreationDateTime(new Date().toString());
-        item.setUserId("user-id");
+        item.setUserId(TEST_USER_ID);
         item.setAttemptCount(1);
 
         return item;
