@@ -226,7 +226,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/ipv-passport-issue-credential-${Environment}"
+      LogGroupName: !Sub "/aws/lambda/ipv-passport-issue-credential-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
@@ -309,7 +309,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/ipv-passport-token-${Environment}"
+      LogGroupName: !Sub "/aws/lambda/ipv-passport-token-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
@@ -396,7 +396,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/ipv-passport-check-passport-${Environment}"
+      LogGroupName: !Sub "/aws/lambda/ipv-passport-check-passport-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportCheckPassportFunctionLogGroupSubscriptionFilter:
@@ -471,7 +471,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/ipv-passport-build-client-oauth-response-${Environment}"
+      LogGroupName: !Sub "/aws/lambda/ipv-passport-build-client-oauth-response-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportBuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
@@ -563,7 +563,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/ipv-passport-initialise-session-${Environment}"
+      LogGroupName: !Sub "/aws/lambda/ipv-passport-initialise-session-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilter:
