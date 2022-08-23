@@ -183,15 +183,15 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients/*
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -280,17 +280,17 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/authCodeExpirySeconds
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/authCodeExpirySeconds
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients/*
       Events:
         IPVCriUKPassportAPI:
           Type: Api
@@ -359,9 +359,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/*
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/*
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -442,7 +442,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -515,19 +515,19 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub "${Environment}/credentialIssuers/ukPassport/clients/*"
+            ParameterName: !Sub "${AWS::StackName}/credentialIssuers/ukPassport/clients/*"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/audienceForClients
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
