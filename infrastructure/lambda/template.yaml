@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: ipv-cri-uk-passport-back
-
+Description: Digital Identity Passport Credential Issuer API
 
 Parameters:
   Environment:
@@ -710,17 +709,22 @@ Resources:
                 "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
 
 Outputs:
+  StackName:
+    Description: "CloudFormation stack name"
+    Value: !Sub "${AWS::StackName}"
+
   IPVCriUkPassportAPIGatewayID:
     Description: CRI UK Passport API Gateway ID
+    Value: !Sub "${IPVCriUKPassportAPI}"
     Export:
-      Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
-    Value: !Ref IPVCriUKPassportAPI
+      Name: !Sub ${AWS::StackName}-IPVCriUkPassportAPIGatewayID
+
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
+    Value: !Sub "${IPVCriUKPassportPrivateAPI}"
     Export:
-      Name: !Sub "IPVCriUkPassportPrivateAPIGatewayID-${Environment}"
-    Value: !Ref IPVCriUKPassportPrivateAPI
+      Name: !Sub ${AWS::StackName}-IPVCriUkPassportPrivateAPIGatewayID
+
   IpvCoreBackApiKeyId:
-    Description: >
-      The key id of the api key used by IPV Core to access passport back external api gateway
+    Description: The key id of the api key used by IPV Core to access passport back external api gateway
     Value: !Ref IPVCriUKPassportAPIApiKey
