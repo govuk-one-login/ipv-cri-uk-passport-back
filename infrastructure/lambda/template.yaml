@@ -18,7 +18,7 @@ Parameters:
 Conditions:
   AddProvisionedConcurrency: !Not
     - !Equals
-      - !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+      - !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
       -  0
 
   IsDevelopmentEnvironment: !Not
@@ -40,21 +40,14 @@ Globals:
         AWS_STACK_NAME: !Sub ${AWS::StackName}
 
 Mappings:
-  EnvironmentConfiguration:
-    development-a:
-      provisionedConcurrency: 0
-    development-b:
-      provisionedConcurrency: 0
-    development-c:
-      provisionedConcurrency: 0
-    build:
-      provisionedConcurrency: 0
-    staging:
-      provisionedConcurrency: 1
-    integration:
-      provisionedConcurrency: 1
-    production:
-      provisionedConcurrency: 1
+
+  ProvisionedConcurrency:
+    Environment:
+      dev: 0
+      build: 0
+      staging: 1
+      integration: 1
+      production: 1
 
 Resources:
   IPVCriUKPassportPrivateAPI:
@@ -228,7 +221,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+          - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
           - !Ref AWS::NoValue
 
   IPVCriUKPassportIssueCredentialFunctionLogGroup:
@@ -305,7 +298,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+          - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
           - !Ref AWS::NoValue
 
   IPVCriUKPassportAccessTokenFunctionLogGroup:
@@ -386,7 +379,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
           - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+          - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
           - !Ref AWS::NoValue
 
   IPVCriUKPassportCheckPassportFunctionLogGroup:
@@ -455,7 +448,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
         - AddProvisionedConcurrency
-        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+        - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
         - !Ref AWS::NoValue
 
   IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup:
@@ -541,7 +534,7 @@ Resources:
       ProvisionedConcurrencyConfig:
         !If
         - AddProvisionedConcurrency
-        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+        - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
         - !Ref AWS::NoValue
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroup:
