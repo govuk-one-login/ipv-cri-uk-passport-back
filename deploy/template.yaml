@@ -2,17 +2,18 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: ipv-cri-uk-passport-back
 
+
 Parameters:
   Environment:
+    Description: "The environment type"
+    Type: "String"
     AllowedValues:
-      - development-a
-      - development-b
-      - development-c
-      - build
-      - staging
-      - integration
-      - production
-    Type: String
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+    ConstraintDescription: must be dev, build, staging, integration or production
 
 Conditions:
   AddProvisionedConcurrency: !Not
@@ -36,6 +37,7 @@ Globals:
     Environment:
       Variables:
         JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+        AWS_STACK_NAME: !Sub ${AWS::StackName}
 
 Mappings:
   EnvironmentConfiguration:
