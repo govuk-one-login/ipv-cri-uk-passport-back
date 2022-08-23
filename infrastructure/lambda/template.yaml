@@ -53,7 +53,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
-      Name: !Sub IPV Passport Back Private API Gateway ${Environment}
+      Name: !Sub IPV Passport Back Private API Gateway ${AWS::StackName}
       EndpointConfiguration:
         Type: PRIVATE
       Auth:
@@ -113,7 +113,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
-      Name: !Sub IPV CRI UK Passport API Gateway ${Environment}
+      Name: !Sub IPV CRI UK Passport API Gateway ${AWS::StackName}
       StageName: !Sub ${Environment}
       TracingEnabled: true
       Auth:
