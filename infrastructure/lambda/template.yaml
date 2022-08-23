@@ -171,7 +171,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.issuecredential.IssueCredentialHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/issuecredential
+      CodeUri: ../../lambdas/issuecredential
       Architectures:
         - arm64
       MemorySize: 2048
@@ -258,7 +258,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.accesstoken.AccessTokenHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/accesstoken
+      CodeUri: ../../lambdas/accesstoken
       Architectures:
         - arm64
       MemorySize: 2048
@@ -335,7 +335,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.checkpassport.CheckPassportHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/checkpassport
+      CodeUri: ../../lambdas/checkpassport
       Architectures:
         - arm64
       MemorySize: 2048
@@ -416,7 +416,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.buildclientoauthresponse.BuildClientOauthResponseHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/buildclientoauthresponse
+      CodeUri: ../../lambdas/buildclientoauthresponse
       Architectures:
         - arm64
       MemorySize: 2048
@@ -485,7 +485,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.initialisesession.InitialiseSessionHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/initialisesession
+      CodeUri: ../../lambdas/initialisesession
       Architectures:
         - arm64
       MemorySize: 2048
