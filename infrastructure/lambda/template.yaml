@@ -127,11 +127,12 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportPrivateAPILogGroup
 
-  IPVCriUKPassportAPI:
+  PublicUKPassportAPI:
     Type: AWS::Serverless::Api
     Properties:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
-      Name: !Sub IPV CRI UK Passport API Gateway ${AWS::StackName}
+      Name: !Sub ${AWS::StackName}-PublicUKPassportApi
+      Description: Public UK Passport CRI API
       StageName: !Sub ${Environment}
       TracingEnabled: true
       Auth:
@@ -139,7 +140,7 @@ Resources:
         UsagePlan:
           CreateUsagePlan: PER_API
       AccessLogSetting:
-        DestinationArn: !GetAtt IPVCriUKPassportAPILogGroup.Arn
+        DestinationArn: !GetAtt PublicUKPassportAPILogGroup.Arn
         Format: >-
           {
           "requestId":"$context.requestId",
@@ -154,20 +155,20 @@ Resources:
           "responseLength":"$context.responseLength"
           }
 
-  IPVCriUKPassportAPILogGroup:
+  PublicUKPassportAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
       RetentionInDays: 14
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportAPILogGroupSubscriptionFilter:
+  PublicUKPassportAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevelopmentEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportAPILogGroup
+      LogGroupName: !Ref PublicUKPassportAPILogGroup
 
   IPVCriUKPassportIssueCredentialFunction:
     Type: AWS::Serverless::Function
@@ -224,10 +225,10 @@ Resources:
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
       Events:
-        IPVCriUKPassportAPI:
+        PublicUKPassportAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref IPVCriUKPassportAPI
+            RestApiId: !Ref PublicUKPassportAPI
             Path: /credentials/issue
             Method: POST
       AutoPublishAlias: live
@@ -304,10 +305,10 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients/*
       Events:
-        IPVCriUKPassportAPI:
+        PublicUKPassportAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref IPVCriUKPassportAPI
+            RestApiId: !Ref PublicUKPassportAPI
             Path: /token
             Method: POST
       AutoPublishAlias: live
@@ -716,11 +717,11 @@ Outputs:
     Description: "CloudFormation stack name"
     Value: !Sub "${AWS::StackName}"
 
-  IPVCriUkPassportAPIGatewayID:
+  PublicUKPassportAPIGatewayID:
     Description: CRI UK Passport API Gateway ID
-    Value: !Sub "${IPVCriUKPassportAPI}"
+    Value: !Sub "${PublicUKPassportAPI}"
     Export:
-      Name: !Sub ${AWS::StackName}-IPVCriUkPassportAPIGatewayID
+      Name: !Sub ${AWS::StackName}-PublicUKPassportAPIGatewayID
 
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
@@ -730,4 +731,4 @@ Outputs:
 
   IpvCoreBackApiKeyId:
     Description: The key id of the api key used by IPV Core to access passport back external api gateway
-    Value: !Ref IPVCriUKPassportAPIApiKey
+    Value: !Ref PublicUKPassportAPIApiKey
