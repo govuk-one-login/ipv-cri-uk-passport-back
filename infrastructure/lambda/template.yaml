@@ -34,6 +34,8 @@ Globals:
   Function:
     Timeout: 40
     MemorySize: !FindInMap [ MemorySizeMapping, Environment, !Ref 'Environment' ]
+    Architectures:
+      - arm64
     Environment:
       Variables:
         JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
@@ -172,8 +174,6 @@ Resources:
       Runtime: java11
       PackageType: Zip
       CodeUri: ../../lambdas/issuecredential
-      Architectures:
-        - arm64
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -264,8 +264,6 @@ Resources:
       Runtime: java11
       PackageType: Zip
       CodeUri: ../../lambdas/accesstoken
-      Architectures:
-        - arm64
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -346,8 +344,6 @@ Resources:
       Runtime: java11
       PackageType: Zip
       CodeUri: ../../lambdas/checkpassport
-      Architectures:
-        - arm64
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -432,8 +428,6 @@ Resources:
       Runtime: java11
       PackageType: Zip
       CodeUri: ../../lambdas/buildclientoauthresponse
-      Architectures:
-        - arm64
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -506,8 +500,6 @@ Resources:
       Runtime: java11
       PackageType: Zip
       CodeUri: ../../lambdas/initialisesession
-      Architectures:
-        - arm64
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
