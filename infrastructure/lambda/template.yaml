@@ -3,6 +3,14 @@ Transform: AWS::Serverless-2016-10-31
 Description: Digital Identity Passport Credential Issuer API
 
 Parameters:
+  CodeSigningEnabled:
+    Type: "String"
+    Default: "false"
+  CodeSigningConfigArn:
+    Type: String
+    Default: "none"
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
   Environment:
     Description: "The environment type"
     Type: "String"
@@ -15,20 +23,19 @@ Parameters:
     ConstraintDescription: must be dev, build, staging, integration or production
 
 Conditions:
+  EnforceCodeSigning: !Equals
+    - !Ref  CodeSigningEnabled
+    - true
+  IsDevEnvironment: !Equals
+    - !Ref Environment
+    - dev
+  IsNotDevEnvironment: !Not
+    - Condition: IsDevEnvironment
+
   AddProvisionedConcurrency: !Not
     - !Equals
       - !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
       -  0
-
-  IsDevelopmentEnvironment: !Not
-    - !Or
-      - !Equals [ !Ref Environment, "build"]
-      - !Equals [ !Ref Environment, "staging"]
-      - !Equals [ !Ref Environment, "integration"]
-      - !Equals [ !Ref Environment, "production"]
-
-  IsNotDevelopmentEnvironment: !Not
-    - Condition: IsDevelopmentEnvironment
 
 Globals:
   Function:
@@ -127,7 +134,7 @@ Resources:
               Condition:
                 StringNotEquals:
                   'aws:SourceVpce': !If
-                    - IsDevelopmentEnvironment
+                    - IsDevEnvironment
                     - !ImportValue "networking-shared-development-ApiGatewayVpcEndpointId"
                     - Fn::ImportValue:
                         !Sub "networking-${Environment}-ApiGatewayVpcEndpointId"
@@ -165,7 +172,7 @@ Resources:
 
   PrivateUKPassportAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -248,7 +255,7 @@ Resources:
 
   IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -328,7 +335,7 @@ Resources:
 
   IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -412,7 +419,7 @@ Resources:
 
   IPVCriUKPassportCheckPassportFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -484,7 +491,7 @@ Resources:
 
   IPVCriUKPassportBuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
@@ -573,7 +580,7 @@ Resources:
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
+    Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
