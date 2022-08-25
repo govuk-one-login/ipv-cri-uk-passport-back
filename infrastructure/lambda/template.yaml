@@ -198,14 +198,14 @@ Resources:
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokensTable.Arn]]
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
             TableName: !Ref AccessTokensTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportBackSessionsTable
+            TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
         - SSMParameterReadPolicy:
@@ -290,7 +290,7 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients"
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AuthCodesTable
@@ -299,7 +299,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportClientAuthJwtIdsTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportBackSessionsTable
+            TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients
         - SSMParameterReadPolicy:
@@ -368,14 +368,14 @@ Resources:
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokensTable.Arn]]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
             TableName: !Ref AccessTokensTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportBackSessionsTable
+            TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/*
         - SSMParameterReadPolicy:
@@ -449,13 +449,13 @@ Resources:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref AuthCodesTable
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AuthCodesTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportBackSessionsTable
+            TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SQSSendMessagePolicy:
@@ -520,12 +520,12 @@ Resources:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt CRIPassportBackSessionsTable.Arn ] ]
+          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt SessionTable.Arn ] ]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportBackSessionsTable
+            TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${AWS::StackName}/credentialIssuers/ukPassport/clients/*"
         - SSMParameterReadPolicy:
@@ -673,11 +673,11 @@ Resources:
         SSEEnabled: true
         SSEType: KMS
 
-  CRIPassportBackSessionsTable:
+  SessionTable:
     Type: AWS::DynamoDB::Table
     # checkov:skip=CKV_AWS_28: Point in time recovery is not necessary for this table.
     Properties:
-      TableName: !Sub "di-ipv-cri-passport-back-${AWS::StackName}-sessions"
+      TableName: SessionTable
       BillingMode: "PAY_PER_REQUEST"
       AttributeDefinitions:
         - AttributeName: "passportSessionId"
