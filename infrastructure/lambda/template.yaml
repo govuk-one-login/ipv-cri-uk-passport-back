@@ -178,10 +178,10 @@ Resources:
       FilterPattern: ""
       LogGroupName: !Ref PrivateUKPassportAPILogGroup
 
-  IPVCriUKPassportIssueCredentialFunction:
+  IssueCredentialFunction:
     Type: AWS::Serverless::Function
     DependsOn:
-      - "IPVCriUKPassportIssueCredentialFunctionLogGroup"
+      - "IssueCredentialFunctionLogGroup"
     Properties:
       # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
@@ -246,32 +246,32 @@ Resources:
           - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
           - !Ref AWS::NoValue
 
-  IPVCriUKPassportIssueCredentialFunctionLogGroup:
+  IssueCredentialFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-issue-credential-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
+  IssueCredentialFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportIssueCredentialFunctionLogGroup
+      LogGroupName: !Ref IssueCredentialFunctionLogGroup
 
-  IPVCriUKPassportIssueCredentialFunctionPermission:
+  IssueCredentialFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt IPVCriUKPassportIssueCredentialFunction.Arn
+      FunctionName: !GetAtt IssueCredentialFunction.Arn
       Principal: apigateway.amazonaws.com
 
-  IPVCriUKPassportAccessTokenFunction:
+  AccessTokenFunction:
     Type: AWS::Serverless::Function
     DependsOn:
-      - "IPVCriUKPassportAccessTokenFunctionLogGroup"
+      - "AccessTokenFunctionLogGroup"
     Properties:
       # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
@@ -326,32 +326,32 @@ Resources:
           - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
           - !Ref AWS::NoValue
 
-  IPVCriUKPassportAccessTokenFunctionLogGroup:
+  AccessTokenFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-token-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
+  AccessTokenFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportAccessTokenFunctionLogGroup
+      LogGroupName: !Ref AccessTokenFunctionLogGroup
 
-  IPVCriUKPassportAccessTokenFunctionPermission:
+  AccessTokenFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt IPVCriUKPassportAccessTokenFunction.Arn
+      FunctionName: !GetAtt AccessTokenFunction.Arn
       Principal: apigateway.amazonaws.com
 
-  IPVCriUKPassportCheckPassportFunction:
+  CheckPassportFunction:
     Type: AWS::Serverless::Function
     DependsOn:
-      - "IPVCriUKPassportCheckPassportFunctionLogGroup"
+      - "CheckPassportFunctionLogGroup"
     Properties:
       # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
@@ -410,32 +410,32 @@ Resources:
           - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
           - !Ref AWS::NoValue
 
-  IPVCriUKPassportCheckPassportFunctionLogGroup:
+  CheckPassportFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-check-passport-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportCheckPassportFunctionLogGroupSubscriptionFilter:
+  CheckPassportFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportCheckPassportFunctionLogGroup
+      LogGroupName: !Ref CheckPassportFunctionLogGroup
 
-  IPVCriUKPassportCheckPassportFunctionPermission:
+  CheckPassportFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt IPVCriUKPassportCheckPassportFunction.Arn
+      FunctionName: !GetAtt CheckPassportFunction.Arn
       Principal: apigateway.amazonaws.com
 
-  IPVCriUKPassportBuildClientOauthResponseFunction:
+  BuildClientOauthResponseFunction:
     Type: AWS::Serverless::Function
     DependsOn:
-      - "IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup"
+      - "BuildClientOauthResponseFunctionLogGroup"
     Properties:
       # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
@@ -482,32 +482,32 @@ Resources:
         - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
         - !Ref AWS::NoValue
 
-  IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup:
+  BuildClientOauthResponseFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-build-client-oauth-response-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportBuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
+  BuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup
+      LogGroupName: !Ref BuildClientOauthResponseFunctionLogGroup
 
-  IPVCriUKPassportBuildClientOauthResponseFunctionPermission:
+  BuildClientOauthResponseFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt IPVCriUKPassportBuildClientOauthResponseFunction.Arn
+      FunctionName: !GetAtt BuildClientOauthResponseFunction.Arn
       Principal: apigateway.amazonaws.com
 
-  IPVCriUKPassportInitialiseSessionFunction:
+  InitialiseSessionFunction:
     Type: AWS::Serverless::Function
     DependsOn:
-      - "IPVCriUKPassportInitialiseSessionFunctionLogGroup"
+      - "InitialiseSessionFunctionLogGroup"
     Properties:
       # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
@@ -571,26 +571,26 @@ Resources:
         - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
         - !Ref AWS::NoValue
 
-  IPVCriUKPassportInitialiseSessionFunctionLogGroup:
+  InitialiseSessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-initialise-session-${AWS::StackName}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilter:
+  InitialiseSessionFunctionLogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
       FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportInitialiseSessionFunctionLogGroup
+      LogGroupName: !Ref InitialiseSessionFunctionLogGroup
 
-  IPVCriUKPassportInitialiseSessionFunctionPermission:
+  InitialiseSessionFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt IPVCriUKPassportInitialiseSessionFunction.Arn
+      FunctionName: !GetAtt InitialiseSessionFunction.Arn
       Principal: apigateway.amazonaws.com
 
 ####################################################################
