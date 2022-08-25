@@ -195,7 +195,7 @@ Resources:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
-          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokensTable.Arn]]
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
@@ -203,7 +203,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportAccessTokensTable
+            TableName: !Ref AccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
@@ -285,7 +285,7 @@ Resources:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AuthCodesTable.Arn]]
-          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokensTable.Arn]]
           CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME: !Ref CRIPassportClientAuthJwtIdsTable
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl"
@@ -295,7 +295,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref AuthCodesTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportAccessTokensTable
+            TableName: !Ref AccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportClientAuthJwtIdsTable
         - DynamoDBCrudPolicy:
@@ -365,7 +365,7 @@ Resources:
         Variables:
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
-          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
+          CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokensTable.Arn]]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
@@ -373,7 +373,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportAccessTokensTable
+            TableName: !Ref AccessTokensTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
@@ -633,11 +633,11 @@ Resources:
         SSEEnabled: true
         SSEType: KMS
 
-  CRIPassportAccessTokensTable:
+  AccessTokensTable:
     Type: AWS::DynamoDB::Table
     # checkov:skip=CKV_AWS_28: Point in time recovery is not necessary for this table.
     Properties:
-      TableName: !Sub "di-ipv-cri-passport-back-${AWS::StackName}-accessToken"
+      TableName: AccessTokensTable
       BillingMode: "PAY_PER_REQUEST"
       AttributeDefinitions:
         - AttributeName: "accessToken"
