@@ -685,10 +685,10 @@ Resources:
                 "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
 
 Outputs:
-  IPVCriUkPassportAPIGatewayID:
+  IPVCriUkPassportBackAPIGatewayID:
     Description: CRI UK Passport API Gateway ID
     Export:
-      Name: !Sub "${AWS::StackName}-IPVCriUkPassportAPIGatewayID"
+      Name: !Sub "PassportBackAPIGatewayID-${Environment}"
     Value: !Ref IPVCriUKPassportAPI
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
