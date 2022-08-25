@@ -286,7 +286,7 @@ Resources:
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AuthCodesTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokensTable.Arn]]
-          CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME: !Ref CRIPassportClientAuthJwtIdsTable
+          CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME: !Ref ClientAuthJwtIdsTable
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl"
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients"
@@ -297,7 +297,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref AccessTokensTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CRIPassportClientAuthJwtIdsTable
+            TableName: !Ref ClientAuthJwtIdsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
@@ -653,11 +653,11 @@ Resources:
         SSEEnabled: true
         SSEType: KMS
 
-  CRIPassportClientAuthJwtIdsTable:
+  ClientAuthJwtIdsTable:
     Type: AWS::DynamoDB::Table
     # checkov:skip=CKV_AWS_28: Point in time recovery is not necessary for this table.
     Properties:
-      TableName: !Sub "di-ipv-cri-passport-back-${AWS::StackName}-client-auth-jwt-ids"
+      TableName: !Sub ClientAuthJwtIdsTable
       BillingMode: "PAY_PER_REQUEST"
       AttributeDefinitions:
         - AttributeName: "jwtId"
