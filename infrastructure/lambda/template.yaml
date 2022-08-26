@@ -193,8 +193,6 @@ Resources:
       TracingEnabled: true
       Auth:
         ApiKeyRequired: true
-        UsagePlan:
-          CreateUsagePlan: PER_API
       AccessLogSetting:
         DestinationArn: !GetAtt PublicUKPassportAPILogGroup.Arn
         Format: >-
@@ -814,6 +812,58 @@ Resources:
         # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+  ####################################################################
+  #                                                                  #
+  # API config                                                       #
+  #                                                                  #
+  ####################################################################
+
+  PublicUKPassportAPIUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - PublicUKPassportAPIStage
+    Properties:
+      ApiStages:
+        - ApiId: !Ref PublicUKPassportAPI
+          Stage: !Ref Environment
+      Quota:
+        Limit: 500000
+        Period: DAY
+      Throttle:
+        BurstLimit: 100 # requests the API can handle concurrently
+        RateLimit: 50 # allowed requests per second
+
+  PrivateUKPassportAPIUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - PrivateUKPassportAPIStage
+    Properties:
+      ApiStages:
+        - ApiId: !Ref PrivateUKPassportAPI
+          Stage: !Ref Environment
+      Quota:
+        Limit: 500000
+        Period: DAY
+      Throttle:
+        BurstLimit: 100 # requests the API can handle concurrently
+        RateLimit: 50 # allowed requests per second
+
+  LinkUsagePlanApiKey1:
+    #Condition: IsNotDevEnvironment
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !ImportValue core-infrastructure-ApiKey1
+      KeyType: API_KEY
+      UsagePlanId: !Ref PublicUKPassportAPIUsagePlan
+
+  LinkUsagePlanApiKey2:
+    #Condition: IsNotDevEnvironment
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !ImportValue core-infrastructure-ApiKey2
+      KeyType: API_KEY
+      UsagePlanId: !Ref PublicUKPassportAPIUsagePlan
+
 ####################################################################
 #                                                                  #
 # Parameters                                                       #
@@ -1034,4 +1084,4 @@ Outputs:
 
   IpvCoreBackApiKeyId:
     Description: The key id of the api key used by IPV Core to access passport back external api gateway
-    Value: !Ref PublicUKPassportAPIApiKey
+    Value: !Ref LinkUsagePlanApiKey1
