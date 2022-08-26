@@ -26,6 +26,21 @@ Conditions:
   EnforceCodeSigning: !Equals
     - !Ref  CodeSigningEnabled
     - true
+  CreateDevResources: !Equals
+    - !Ref Environment
+    - dev
+  IsProdEnvironment: !Equals
+    - !Ref Environment
+    - production
+  IsStubEnvironment: !Or
+    - !Equals [ !Ref Environment, dev]
+    - !Equals [ !Ref Environment, build ]
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+  IsProdLikeEnvironment: !Or
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
   IsDevEnvironment: !Equals
     - !Ref Environment
     - dev
@@ -39,6 +54,10 @@ Conditions:
 
 Globals:
   Function:
+    CodeSigningConfigArn: !If
+      - CreateDevResources
+      - !Ref AWS::NoValue
+      - !Ref CodeSigningConfigArn
     Timeout: 40
     MemorySize: !FindInMap [ MemorySizeMapping, Environment, !Ref 'Environment' ]
     Architectures:
@@ -73,7 +92,7 @@ Resources:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
       Name: !Sub ${AWS::StackName}-PublicUKPassportApi
       Description: Public UK Passport CRI API
-      StageName: !Sub ${Environment}
+      StageName: !Ref Environment
       TracingEnabled: true
       Auth:
         ApiKeyRequired: true
@@ -145,7 +164,7 @@ Resources:
               #      - CreateDevResources
               #      - vpce-082cab7c78139eb54
               #      - !ImportValue cri-vpc-ApiGatewayVpcEndpointId
-      StageName: !Sub ${Environment}
+      StageName: !Ref Environment
       TracingEnabled: true
       AccessLogSetting:
         DestinationArn: !GetAtt PrivateUKPassportAPILogGroup.Arn
@@ -193,7 +212,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
-          ENVIRONMENT: !Sub "${Environment}"
+          ENVIRONMENT: !Ref Environment
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
@@ -283,7 +302,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
-          ENVIRONMENT: !Sub "${Environment}"
+          ENVIRONMENT: !Ref Environment
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AuthCodesTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME: !Ref ClientAuthJwtIdsTable
@@ -363,7 +382,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
-          ENVIRONMENT: !Sub "${Environment}"
+          ENVIRONMENT: !Ref Environment
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
@@ -447,7 +466,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
-          ENVIRONMENT: !Sub "${Environment}"
+          ENVIRONMENT: !Ref Environment
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref AuthCodesTable
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
@@ -519,7 +538,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
-          ENVIRONMENT: !Sub "${Environment}"
+          ENVIRONMENT: !Ref Environment
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt SessionTable.Arn ] ]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
