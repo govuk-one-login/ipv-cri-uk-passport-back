@@ -208,6 +208,8 @@ Resources:
           "responseLatency":"$context.responseLatency",
           "responseLength":"$context.responseLength"
           }
+      EndpointConfiguration:
+        Type: REGIONAL
 
   PublicUKPassportAPILogGroup:
     Type: AWS::Logs::LogGroup
@@ -231,7 +233,7 @@ Resources:
       Name: !Sub ${AWS::StackName}-PrivateUKPassportApi
       Description: Private UK Passport CRI API
       EndpointConfiguration:
-        Type: PRIVATE
+        Type: !If [IsNotDevEnvironment, PRIVATE, REGIONAL]
       Auth:
         ResourcePolicy:
           CustomStatements:
@@ -241,7 +243,7 @@ Resources:
               Resource:
                 - 'execute-api:/*'
             - Action: 'execute-api:Invoke'
-              Effect: Deny
+              Effect: !If [IsNotDevEnvironment, Deny, Allow]
               Principal: '*'
               Resource:
                 - 'execute-api:/*'
