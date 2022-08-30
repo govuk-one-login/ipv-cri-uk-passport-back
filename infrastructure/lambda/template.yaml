@@ -1070,11 +1070,23 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-PublicUKPassportAPIGatewayID
 
+  PublicUKPassportApiBaseUrl:
+    Description: "Base url of the Public UK Passport API Gateway"
+    Value: !Sub "https://${PublicUKPassportAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
+    Export:
+      Name: !Sub ${AWS::StackName}-PublicUKPassportApiBaseUrl
+
   PrivateUKPassportAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
     Value: !Sub "${PrivateUKPassportAPI}"
     Export:
       Name: !Sub ${AWS::StackName}-PrivateUKPassportAPIGatewayID
+
+  PrivateUKPassportApiBaseUrl:
+    Description: "Base url of the Private UK Passport API Gateway"
+    Value: !Sub "https://${PrivateUKPassportAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
+    Export:
+      Name: !Sub ${AWS::StackName}-PrivateUKPassportApiBaseUrl
 
   IpvCoreBackApiKeyId:
     Description: The key id of the api key used by IPV Core to access passport back external api gateway
