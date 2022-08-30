@@ -249,18 +249,10 @@ Resources:
                 - 'execute-api:/*'
               Condition:
                 StringNotEquals:
-                  'aws:SourceVpce': !If
-                    - IsDevEnvironment
-                    - !ImportValue "networking-shared-development-ApiGatewayVpcEndpointId"
-                    - Fn::ImportValue:
-                        !Sub "networking-${Environment}-ApiGatewayVpcEndpointId"
-              # VPC configurations need compared before switching
-              #Condition:
-              #  StringNotEquals:
-              #    aws:SourceVpce: !If
-              #      - CreateDevResources
-              #      - vpce-082cab7c78139eb54
-              #      - !ImportValue cri-vpc-ApiGatewayVpcEndpointId
+                  aws:SourceVpce: !If
+                    - CreateDevResources
+                    - vpce-082cab7c78139eb54
+                    - !ImportValue cri-vpc-ApiGatewayVpcEndpointId
       StageName: !Ref Environment
       TracingEnabled: true
       AccessLogSetting:
