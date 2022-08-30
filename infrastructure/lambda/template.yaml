@@ -214,8 +214,8 @@ Resources:
   PublicUKPassportAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
-      RetentionInDays: 14
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-${PublicUKPassportAPI}-public-AccessLogs
+      RetentionInDays: 365
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   PublicUKPassportAPILogGroupSubscriptionFilter:
@@ -274,8 +274,8 @@ Resources:
   PrivateUKPassportAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-PassportBackPrivate-API-GW-AccessLogs
-      RetentionInDays: 14
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-${PrivateUKPassportAPI}-private-AccessLogs
+      RetentionInDays: 365
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   PrivateUKPassportAPILogGroupSubscriptionFilter:
