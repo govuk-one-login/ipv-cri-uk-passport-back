@@ -297,7 +297,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.issuecredential.IssueCredentialHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../../lambdas/issuecredential
+      CodeUri: ../../dist/issuecredential.zip
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -387,7 +387,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.accesstoken.AccessTokenHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../../lambdas/accesstoken
+      CodeUri: ../../dist/accesstoken.zip
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -467,7 +467,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.checkpassport.CheckPassportHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../../lambdas/checkpassport
+      CodeUri: ../../dist/checkpassport.zip
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -551,7 +551,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.buildclientoauthresponse.BuildClientOauthResponseHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../../lambdas/buildclientoauthresponse
+      CodeUri: ../../dist/buildclientoauthresponse.zip
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
@@ -623,7 +623,7 @@ Resources:
       Handler: uk.gov.di.ipv.cri.passport.initialisesession.InitialiseSessionHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../../lambdas/initialisesession
+      CodeUri: ../../dist/initialisesession.zip
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
