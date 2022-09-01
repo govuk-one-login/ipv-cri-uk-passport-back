@@ -59,10 +59,10 @@ class ConfigurationServiceTest {
     @Test
     void shouldLoadPrivateKeyFromParameterStore()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        environmentVariables.set("ENVIRONMENT", "dev");
+        environmentVariables.set("AWS_STACK_NAME", "passport-back-dev");
         when(ssmProvider.withDecryption()).thenReturn(ssmProviderWithDecryption);
         when(ssmProviderWithDecryption.get(
-                        "/dev/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"))
+                        "/passport-back-dev/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"))
                 .thenReturn(TEST_PRIVATE_KEY);
 
         PrivateKey underTest = configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY);

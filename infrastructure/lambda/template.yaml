@@ -629,35 +629,20 @@ Resources:
         Variables:
           ENVIRONMENT: !Ref Environment
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt SessionTable.Arn ] ]
-          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub "${AWS::StackName}/credentialIssuers/ukPassport/clients/*"
+            ParameterName: !Sub "${AWS::StackName}/clients/*"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub ${AWS::StackName}/clients
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
+        - KMSDecryptPolicy:
+            KeyId: !ImportValue core-infrastructure-CriDecryptionKey1Id
         - Statement:
-            - Sid: jarKmsEncryptionKeyPermission
-              Effect: Allow
-              Action:
-                - 'kms:Decrypt'
-                - 'kms:GenerateDataKey'
-              Resource:
-                - !ImportValue PassportCriEncryptionKeyArn
             - Sid: auditEventQueueKmsEncryptionKeyPermission
               Effect: Allow
               Action:
@@ -665,6 +650,16 @@ Resources:
                 - 'kms:GenerateDataKey'
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/AuthRequestKmsEncryptionKeyId"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/PassportCriAudience"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/MaxJwtTtl"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/SessionTtl"
+
       Events:
         PrivateUKPassportAPI:
           Type: Api
