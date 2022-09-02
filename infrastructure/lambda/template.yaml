@@ -69,6 +69,14 @@ Globals:
 
 Mappings:
 
+  AuthCodeExpirySeconds:
+    Environment:
+      dev: 600
+      build: 600
+      staging: 600
+      integration: 600
+      production: 600
+
   MaximumAttemptCount:
     Environment:
       dev: 2
@@ -313,7 +321,7 @@ Resources:
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
-          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
       Policies:
         - DynamoDBCrudPolicy:
@@ -323,15 +331,15 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId
+            ParameterName: !Sub "/${AWS::StackName}/verifiableCredentialKmsSigningKeyId"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
+            ParameterName: !Sub "${AWS::StackName}/verifiable-credential/issuer"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl
+            ParameterName: !Sub "${AWS::StackName}/MaxJwtTtl"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub "${AWS::StackName}/SessionTtl"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients/*
+            ParameterName: !Sub "${AWS::StackName}/clients/*"
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -339,8 +347,7 @@ Resources:
               Effect: Allow
               Action:
                 - 'kms:sign'
-              Resource:
-                - !ImportValue PassportCriVcSigningKeyArn
+              Resource: !ImportValue core-infrastructure-CriVcSigningKey1Arn
             - Sid: auditEventQueueKmsEncryptionKeyPermission
               Effect: Allow
               Action:
@@ -348,12 +355,18 @@ Resources:
                 - 'kms:GenerateDataKey'
               Resource:
                 - !ImportValue AuditEventQueueEncryptionKeyArn
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/verifiableCredentialKmsSigningKeyId"
       Events:
         PublicUKPassportAPI:
           Type: Api
           Properties:
             RestApiId: !Ref PublicUKPassportAPI
-            Path: /credentials/issue
+            Path: /credential/issue
             Method: POST
       AutoPublishAlias: live
       ProvisionedConcurrencyConfig:
@@ -403,9 +416,9 @@ Resources:
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AuthCodesTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME: !Ref ClientAuthJwtIdsTable
-          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
-          PASSPORT_CRI_CLIENT_AUTH_MAX_TTL: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl"
-          PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
+          MAX_JWT_TTL: !Sub "${AWS::StackName}/MaxJwtTtl"
+          PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${AWS::StackName}/PassportCriAudience"
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
       Policies:
         - DynamoDBCrudPolicy:
@@ -417,17 +430,24 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/audienceForClients
+            ParameterName: !Sub "/${AWS::StackName}/PassportCriAudience"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/maxJwtTtl
+            ParameterName: !Sub "${AWS::StackName}/MaxJwtTtl"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub "${AWS::StackName}/SessionTtl"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/authCodeExpirySeconds
+            ParameterName: !Sub "/${AWS::StackName}/AuthCodeExpirySeconds"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients
+            ParameterName: !Sub "${AWS::StackName}/clients"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/clients/*
+            ParameterName: !Sub "${AWS::StackName}/clients/*"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/PassportCriAudience"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/AuthCodeExpirySeconds"
       Events:
         PublicUKPassportAPI:
           Type: Api
@@ -579,7 +599,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub "${AWS::StackName}/SessionTtl"
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -872,6 +892,14 @@ Resources:
 # Parameters                                                       #
 #                                                                  #
 ####################################################################
+
+  AuthCodeExpirySeconds:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/${AWS::StackName}/AuthCodeExpirySeconds"
+      Value: !FindInMap [AuthCodeExpirySeconds, Environment, !Ref 'Environment']
+      Type: String
+      Description: auth code expiry in seconds
 
   MaximumAttemptCount:
     Type: AWS::SSM::Parameter

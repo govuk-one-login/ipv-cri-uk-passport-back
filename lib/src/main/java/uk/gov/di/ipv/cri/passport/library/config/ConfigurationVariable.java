@@ -1,7 +1,7 @@
 package uk.gov.di.ipv.cri.passport.library.config;
 
 public enum ConfigurationVariable {
-    AUTH_CODE_EXPIRY_CODE_SECONDS("/%s/credentialIssuers/ukPassport/self/authCodeExpirySeconds"),
+    AUTH_CODE_EXPIRY_CODE_SECONDS("/%s/AuthCodeExpirySeconds"),
     SESSION_TTL("/%s/SessionTtl"),
     DCS_POST_URL_PARAM("/%s/credentialIssuers/ukpassport/DCS/PostUrl"),
     DCS_ENCRYPTION_CERT("/%s/credentialIssuers/ukpassport/DCS/EncryptionCertForPassportToEncrypt"),
@@ -9,11 +9,10 @@ public enum ConfigurationVariable {
     DCS_TLS_INTERMEDIATE_CERT("/%s/credentialIssuers/ukpassport/DCS/TLSIntermediateCertificate"),
     DCS_TLS_ROOT_CERT("/%s/credentialIssuers/ukpassport/DCS/TLSRootCertificate"),
     JAR_ENCRYPTION_KEY_ID("/%s/AuthRequestKmsEncryptionKeyId"),
-    JAR_KMS_PUBLIC_KEY("/%s/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey"),
+    JAR_KMS_PUBLIC_KEY("/%s/credentialIssuers/ukPassport/JarKmsEncryptionPublicKey"),
     MAX_JWT_TTL("/%s/MaxJwtTtl"),
     MAXIMUM_ATTEMPT_COUNT("/%s/MaximumAttemptCount"),
     PASSPORT_CRI_CLIENT_AUDIENCE("/%s/PassportCriAudience"),
-    PASSPORT_CRI_CLIENT_AUTH_MAX_TTL("/%s/REPLACED_WITH_MAX_JWT_TTL"),
     PASSPORT_CRI_ENCRYPTION_KEY(
             "/%s/credentialIssuers/ukpassport/DCS/EncryptionKeyForPassportToDecrypt"),
     PASSPORT_CRI_SIGNING_CERT("/%s/credentialIssuers/ukpassport/DCS/SigningCertForDcsToVerify"),

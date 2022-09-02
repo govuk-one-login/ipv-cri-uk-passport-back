@@ -44,7 +44,7 @@ class KmsRsaDecrypterIT {
         }
 
         String kmsId = configurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID);
-        String pubKey = configurationService.getStackSsmParameter(JAR_KMS_PUBLIC_KEY);
+        String pubKey = configurationService.getEnvironmentSsmParameter(JAR_KMS_PUBLIC_KEY);
 
         var header =
                 new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
