@@ -69,6 +69,14 @@ Globals:
 
 Mappings:
 
+  MaximumAttemptCount:
+    Environment:
+      dev: 2
+      build: 2
+      staging: 2
+      integration: 2
+      production: 2
+
   ProvisionedConcurrency:
     Environment:
       dev: 0
@@ -474,7 +482,7 @@ Resources:
           ENVIRONMENT: !Ref Environment
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
-          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}/credentialIssuers/ukPassport/clients"
+          CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
       Policies:
@@ -485,9 +493,15 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionTable
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/*
+            ParameterName: !Sub "${Environment}/credentialIssuers/ukpassport/HttpClient/*"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/credentialIssuers/ukPassport/self/backendSessionTtl
+            ParameterName: !Sub "${Environment}/credentialIssuers/ukpassport/DCS/*"
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${AWS::StackName}/SessionTtl"
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${AWS::StackName}/verifiable-credential/issuer"
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${AWS::StackName}/MaximumAttemptCount"
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - Statement:
@@ -637,7 +651,7 @@ Resources:
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${AWS::StackName}/clients/*"
         - SSMParameterReadPolicy:
-            ParameterName: !Sub ${AWS::StackName}/clients
+            ParameterName: !Sub "${AWS::StackName}/clients"
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
         - KMSDecryptPolicy:
@@ -858,6 +872,14 @@ Resources:
 # Parameters                                                       #
 #                                                                  #
 ####################################################################
+
+  MaximumAttemptCount:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/${AWS::StackName}/MaximumAttemptCount"
+      Value: !FindInMap [MaximumAttemptCount, Environment, !Ref 'Environment']
+      Type: String
+      Description: maximum passport verification attempts
 
   ParameterSessionTableName:
     Type: AWS::SSM::Parameter

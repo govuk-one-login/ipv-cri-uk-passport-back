@@ -117,7 +117,8 @@ class AuthorizationCodeServiceTest {
 
     @Test
     void isExpiredReturnsTrueIfAuthCodeItemHasExpired() {
-        when(configurationService.getSsmParameter(AUTH_CODE_EXPIRY_CODE_SECONDS)).thenReturn("600");
+        when(configurationService.getStackSsmParameter(AUTH_CODE_EXPIRY_CODE_SECONDS))
+                .thenReturn("600");
         AuthorizationCodeItem expiredAuthCodeItem =
                 new AuthorizationCodeItem(
                         "auth-code",
@@ -131,7 +132,8 @@ class AuthorizationCodeServiceTest {
 
     @Test
     void isExpiredReturnsFalseIfAuthCodeItemHasNotExpired() {
-        when(configurationService.getSsmParameter(AUTH_CODE_EXPIRY_CODE_SECONDS)).thenReturn("600");
+        when(configurationService.getStackSsmParameter(AUTH_CODE_EXPIRY_CODE_SECONDS))
+                .thenReturn("600");
         AuthorizationCodeItem expiredAuthCodeItem =
                 new AuthorizationCodeItem(
                         "auth-code",

@@ -32,6 +32,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PA
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.AWS_STACK_NAME;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.BEARER_TOKEN_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DYNAMODB_ENDPOINT_OVERRIDE;
+import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.ENVIRONMENT;
 
 public class ConfigurationService {
     public static final int LOCALHOST_PORT = 4567;
@@ -74,25 +75,33 @@ public class ConfigurationService {
         return System.getenv(environmentVariable.name());
     }
 
-    public String getSsmParameter(ConfigurationVariable configurationVariable) {
+    public String getStackSsmParameter(ConfigurationVariable configurationVariable) {
         return ssmProvider.get(
                 String.format(
                         configurationVariable.getValue(), getEnvironmentVariable(AWS_STACK_NAME)));
     }
 
-    public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
+    public String getEnvironmentSsmParameter(ConfigurationVariable configurationVariable) {
+        return ssmProvider.get(
+                String.format(
+                        configurationVariable.getValue(), getEnvironmentVariable(ENVIRONMENT)));
+    }
+
+    private String getEncryptedEnvironmentSsmParameter(
+            ConfigurationVariable configurationVariable) {
         return ssmProvider
                 .withDecryption()
                 .get(
                         String.format(
                                 configurationVariable.getValue(),
-                                getEnvironmentVariable(AWS_STACK_NAME)));
+                                getEnvironmentVariable(ENVIRONMENT)));
     }
 
     public Certificate getCertificate(ConfigurationVariable configurationVariable)
             throws CertificateException {
         byte[] binaryCertificate =
-                Base64.getDecoder().decode(getEncryptedSsmParameter(configurationVariable));
+                Base64.getDecoder()
+                        .decode(getEncryptedEnvironmentSsmParameter(configurationVariable));
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new ByteArrayInputStream(binaryCertificate));
     }
@@ -100,7 +109,8 @@ public class ConfigurationService {
     public PrivateKey getPrivateKey(ConfigurationVariable configurationVariable)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] binaryKey =
-                Base64.getDecoder().decode(getEncryptedSsmParameter(configurationVariable));
+                Base64.getDecoder()
+                        .decode(getEncryptedEnvironmentSsmParameter(configurationVariable));
         KeyFactory factory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(binaryKey);
         return factory.generatePrivate(privateKeySpec);

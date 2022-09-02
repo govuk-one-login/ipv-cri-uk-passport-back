@@ -78,7 +78,7 @@ public class AuthorizationCodeService {
                         Instant.now()
                                 .minusSeconds(
                                         Long.parseLong(
-                                                configurationService.getSsmParameter(
+                                                configurationService.getStackSsmParameter(
                                                         AUTH_CODE_EXPIRY_CODE_SECONDS))));
     }
 }

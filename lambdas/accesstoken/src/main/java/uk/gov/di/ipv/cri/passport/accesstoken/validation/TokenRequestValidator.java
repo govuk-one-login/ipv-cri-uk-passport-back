@@ -72,7 +72,7 @@ public class TokenRequestValidator {
             throws InvalidClientException {
         Date expirationTime = claimsSet.getExpirationTime();
         String maxAllowedTtl =
-                configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL);
+                configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL);
 
         OffsetDateTime offsetDateTime =
                 OffsetDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
@@ -114,7 +114,7 @@ public class TokenRequestValidator {
                 configurationServicePublicKeySelector,
                 Set.of(
                         new Audience(
-                                configurationService.getSsmParameter(
+                                configurationService.getStackSsmParameter(
                                         PASSPORT_CRI_CLIENT_AUDIENCE))));
     }
 

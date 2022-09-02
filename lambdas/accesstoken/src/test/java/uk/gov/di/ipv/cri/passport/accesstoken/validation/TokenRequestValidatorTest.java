@@ -59,7 +59,7 @@ class TokenRequestValidatorTest {
 
     @BeforeEach
     void setUp() {
-        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audience);
         validator = new TokenRequestValidator(mockConfigurationService, mockClientAuthJwtIdService);
     }
@@ -68,7 +68,7 @@ class TokenRequestValidatorTest {
     void shouldNotThrowForValidJwt() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
                 .thenReturn("2400");
 
         var validQueryParams =
@@ -80,7 +80,7 @@ class TokenRequestValidatorTest {
     void shouldNotThrowForValidJwtWithDerSignature() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
                 .thenReturn("2400");
 
         SignedJWT signedJWT = SignedJWT.parse(generateClientAssertion(getValidClaimsSetValues()));
@@ -185,7 +185,7 @@ class TokenRequestValidatorTest {
     void shouldFailWhenCLientJWTContainsExpiryClaimTooFarInFuture() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
                 .thenReturn("2400");
         var expiredClaimsSetValues = new HashMap<>(getValidClaimsSetValues());
         expiredClaimsSetValues.put(
@@ -239,7 +239,7 @@ class TokenRequestValidatorTest {
     void shouldThrowIfMissingJwtId() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
                 .thenReturn("2400");
         Map<String, Object> claimsSetValues = getClaimsSetValuesMissingJwtId();
         String clientAssertion = generateClientAssertion(claimsSetValues);
@@ -258,7 +258,7 @@ class TokenRequestValidatorTest {
     void shouldThrowIfJwtIdHasAlreadyBeenUsed() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
                 .thenReturn("2400");
         Map<String, Object> claimsSetValues = getValidClaimsSetValues();
         String clientAssertion = generateClientAssertion(claimsSetValues);
