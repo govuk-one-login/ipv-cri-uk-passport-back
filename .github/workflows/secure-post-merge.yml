@@ -1,4 +1,4 @@
-name: Secure Pipeline: Test, Build, Package & Ship Passport Back
+name: Secure Pipeline Test, Build, Package & Ship Passport Back
 
 on:
   push:
