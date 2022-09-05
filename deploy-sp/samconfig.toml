@@ -1,0 +1,29 @@
+version = 0.1
+
+
+[development-a.deploy.parameters]
+stack_name = "ipv-passport-back-development-a"
+s3_bucket = "di-ipv-cri-lambda-artifact-bucket"
+s3_prefix = "passport-back-development-a"
+region = "eu-west-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"development-a\" VpcStackName=\"networking-shared-development\""
+parallel = "true"
+
+[development-b.deploy.parameters]
+stack_name = "ipv-passport-back-development-b"
+s3_bucket = "di-ipv-cri-lambda-artifact-bucket"
+s3_prefix = "passport-back-development-b"
+region = "eu-west-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"development-b\" VpcStackName=\"networking-shared-development\""
+parallel = "true"
+
+[development-c.deploy.parameters]
+stack_name = "ipv-passport-back-development-c"
+s3_bucket = "di-ipv-cri-lambda-artifact-bucket"
+s3_prefix = "passport-back-development-c"
+region = "eu-west-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=\"development-c\" VpcStackName=\"networking-shared-development\""
+parallel = "true"
