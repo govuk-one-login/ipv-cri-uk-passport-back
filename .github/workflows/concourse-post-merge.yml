@@ -1,4 +1,4 @@
-name: Concourse: Test, Build, Package & Ship Passport Back
+name: Concourse Pipeline Test, Build, Package & Ship Passport Back
 
 on:
   push:
