@@ -346,7 +346,10 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref CRIPassportAuthCodesTable
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CRIPassportAuthCodesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
