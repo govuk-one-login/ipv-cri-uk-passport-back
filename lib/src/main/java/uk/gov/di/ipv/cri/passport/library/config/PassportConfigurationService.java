@@ -34,7 +34,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.BEAR
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DYNAMODB_ENDPOINT_OVERRIDE;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.ENVIRONMENT;
 
-public class ConfigurationService {
+public class PassportConfigurationService {
     public static final int LOCALHOST_PORT = 4567;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final long DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS = 3600L;
@@ -45,11 +45,11 @@ public class ConfigurationService {
 
     private final SSMProvider ssmProvider;
 
-    public ConfigurationService(SSMProvider ssmProvider) {
+    public PassportConfigurationService(SSMProvider ssmProvider) {
         this.ssmProvider = ssmProvider;
     }
 
-    public ConfigurationService() {
+    public PassportConfigurationService() {
         if (isRunningLocally()) {
             this.ssmProvider =
                     ParamManager.getSsmProvider(

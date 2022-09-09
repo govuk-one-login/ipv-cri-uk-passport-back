@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.SQS_AUDIT_EVENT_QUEUE_URL;
@@ -19,9 +19,9 @@ public class AuditService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AuditService(AmazonSQS sqs, ConfigurationService configurationService) {
+    public AuditService(AmazonSQS sqs, PassportConfigurationService passportConfigurationService) {
         this.sqs = sqs;
-        queueUrl = configurationService.getEnvironmentVariable(SQS_AUDIT_EVENT_QUEUE_URL);
+        queueUrl = passportConfigurationService.getEnvironmentVariable(SQS_AUDIT_EVENT_QUEUE_URL);
     }
 
     public static AmazonSQS getDefaultSqsClient() {

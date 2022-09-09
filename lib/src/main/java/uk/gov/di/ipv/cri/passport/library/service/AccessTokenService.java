@@ -13,7 +13,7 @@ import com.nimbusds.oauth2.sdk.token.Tokens;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
@@ -27,31 +27,32 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.CRI_
 public class AccessTokenService {
     protected static final Scope DEFAULT_SCOPE = new Scope("user-credentials");
     private final DataStore<AccessTokenItem> dataStore;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     @ExcludeFromGeneratedCoverageReport
-    public AccessTokenService(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public AccessTokenService(PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore =
                 new DataStore<>(
-                        this.configurationService.getEnvironmentVariable(
+                        this.passportConfigurationService.getEnvironmentVariable(
                                 CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME),
                         AccessTokenItem.class,
                         DataStore.getClient(
-                                this.configurationService.getDynamoDbEndpointOverride()),
-                        this.configurationService);
+                                this.passportConfigurationService.getDynamoDbEndpointOverride()),
+                        this.passportConfigurationService);
     }
 
     public AccessTokenService(
-            DataStore<AccessTokenItem> dataStore, ConfigurationService configurationService) {
+            DataStore<AccessTokenItem> dataStore,
+            PassportConfigurationService passportConfigurationService) {
         this.dataStore = dataStore;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     public TokenResponse generateAccessToken() {
         AccessToken accessToken =
                 new BearerAccessToken(
-                        configurationService.getAccessTokenExpirySeconds(), DEFAULT_SCOPE);
+                        passportConfigurationService.getAccessTokenExpirySeconds(), DEFAULT_SCOPE);
         return new AccessTokenResponse(new Tokens(accessToken, null));
     }
 

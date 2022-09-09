@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
@@ -50,14 +50,15 @@ public class DateStorePassportCheckIT {
                     "The environment variable 'DCS_RESPONSE_TABLE_NAME' must be provided to run this test");
         }
 
-        ConfigurationService configurationService = new ConfigurationService();
+        PassportConfigurationService passportConfigurationService =
+                new PassportConfigurationService();
 
         dcsResponseDataStore =
                 new DataStore<>(
                         dcsResponseTableName,
                         PassportCheckDao.class,
                         DataStore.getClient(null),
-                        configurationService);
+                        passportConfigurationService);
 
         AmazonDynamoDB independentClient =
                 AmazonDynamoDBClient.builder().withRegion("eu-west-2").build();

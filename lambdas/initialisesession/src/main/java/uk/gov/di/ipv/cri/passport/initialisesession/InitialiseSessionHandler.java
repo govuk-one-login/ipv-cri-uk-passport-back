@@ -15,7 +15,7 @@ import software.amazon.lambda.powertools.logging.Logging;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.JarResponse;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.error.RedirectErrorResponse;
@@ -38,7 +38,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.JA
 public class InitialiseSessionHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
     private final KmsRsaDecrypter kmsRsaDecrypter;
     private final JarValidator jarValidator;
     private final AuditService auditService;
@@ -51,12 +51,12 @@ public class InitialiseSessionHandler
     private static final String SHARED_CLAIMS = "shared_claims";
 
     public InitialiseSessionHandler(
-            ConfigurationService configurationService,
+            PassportConfigurationService passportConfigurationService,
             KmsRsaDecrypter kmsRsaDecrypter,
             JarValidator jarValidator,
             AuditService auditService,
             PassportSessionService passportSessionService) {
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
         this.kmsRsaDecrypter = kmsRsaDecrypter;
         this.jarValidator = jarValidator;
         this.auditService = auditService;
@@ -65,14 +65,14 @@ public class InitialiseSessionHandler
 
     @ExcludeFromGeneratedCoverageReport
     public InitialiseSessionHandler() {
-        this.configurationService = new ConfigurationService();
+        this.passportConfigurationService = new PassportConfigurationService();
         this.kmsRsaDecrypter =
                 new KmsRsaDecrypter(
-                        configurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID));
-        this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
+                        passportConfigurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID));
+        this.jarValidator = new JarValidator(kmsRsaDecrypter, passportConfigurationService);
         this.auditService =
-                new AuditService(AuditService.getDefaultSqsClient(), configurationService);
-        this.passportSessionService = new PassportSessionService(configurationService);
+                new AuditService(AuditService.getDefaultSqsClient(), passportConfigurationService);
+        this.passportSessionService = new PassportSessionService(passportConfigurationService);
     }
 
     @Override

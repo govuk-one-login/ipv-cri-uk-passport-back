@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +24,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.SQS_
 @ExtendWith(MockitoExtension.class)
 class AuditServiceTest {
     @Mock AmazonSQS mockSqs;
-    @Mock ConfigurationService mockConfigurationService;
+    @Mock PassportConfigurationService mockPassportConfigurationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -32,10 +32,10 @@ class AuditServiceTest {
 
     @BeforeEach
     void setup() {
-        when(mockConfigurationService.getEnvironmentVariable(SQS_AUDIT_EVENT_QUEUE_URL))
+        when(mockPassportConfigurationService.getEnvironmentVariable(SQS_AUDIT_EVENT_QUEUE_URL))
                 .thenReturn("https://example-queue-url");
 
-        auditService = new AuditService(mockSqs, mockConfigurationService);
+        auditService = new AuditService(mockSqs, mockPassportConfigurationService);
     }
 
     @Test

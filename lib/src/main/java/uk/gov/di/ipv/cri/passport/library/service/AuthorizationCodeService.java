@@ -3,7 +3,7 @@ package uk.gov.di.ipv.cri.passport.library.service;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import org.apache.commons.codec.digest.DigestUtils;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
@@ -14,23 +14,25 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.CRI_
 
 public class AuthorizationCodeService {
     private final DataStore<AuthorizationCodeItem> dataStore;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     @ExcludeFromGeneratedCoverageReport
-    public AuthorizationCodeService(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public AuthorizationCodeService(PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore =
                 new DataStore<>(
-                        configurationService.getEnvironmentVariable(
+                        passportConfigurationService.getEnvironmentVariable(
                                 CRI_PASSPORT_AUTH_CODES_TABLE_NAME),
                         AuthorizationCodeItem.class,
-                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()),
-                        configurationService);
+                        DataStore.getClient(
+                                passportConfigurationService.getDynamoDbEndpointOverride()),
+                        passportConfigurationService);
     }
 
     public AuthorizationCodeService(
-            DataStore<AuthorizationCodeItem> dataStore, ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+            DataStore<AuthorizationCodeItem> dataStore,
+            PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore = dataStore;
     }
 
@@ -78,7 +80,7 @@ public class AuthorizationCodeService {
                         Instant.now()
                                 .minusSeconds(
                                         Long.parseLong(
-                                                configurationService.getStackSsmParameter(
+                                                passportConfigurationService.getStackSsmParameter(
                                                         AUTH_CODE_EXPIRY_CODE_SECONDS))));
     }
 }

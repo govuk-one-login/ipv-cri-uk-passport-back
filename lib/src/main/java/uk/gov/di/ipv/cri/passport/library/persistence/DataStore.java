@@ -9,7 +9,7 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.DynamodbItem;
 
 import java.net.URI;
@@ -24,17 +24,17 @@ public class DataStore<T extends DynamodbItem> {
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final String tableName;
     private final Class<T> typeParameterClass;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     public DataStore(
             String tableName,
             Class<T> typeParameterClass,
             DynamoDbEnhancedClient dynamoDbEnhancedClient,
-            ConfigurationService configurationService) {
+            PassportConfigurationService passportConfigurationService) {
         this.tableName = tableName;
         this.typeParameterClass = typeParameterClass;
         this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     public static DynamoDbEnhancedClient getClient(URI endpointOverride) {
@@ -52,7 +52,8 @@ public class DataStore<T extends DynamodbItem> {
                 Instant.now()
                         .plusSeconds(
                                 Long.parseLong(
-                                        configurationService.getStackSsmParameter(SESSION_TTL)))
+                                        passportConfigurationService.getStackSsmParameter(
+                                                SESSION_TTL)))
                         .getEpochSecond());
         getTable().putItem(item);
     }

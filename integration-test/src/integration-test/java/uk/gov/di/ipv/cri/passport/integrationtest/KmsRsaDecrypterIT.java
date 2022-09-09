@@ -9,7 +9,7 @@ import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 
 import java.security.KeyFactory;
@@ -22,11 +22,11 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.JA
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.JAR_KMS_PUBLIC_KEY;
 
 class KmsRsaDecrypterIT {
-    private static ConfigurationService configurationService;
+    private static PassportConfigurationService passportConfigurationService;
 
     @BeforeAll
     public static void setup() {
-        configurationService = new ConfigurationService();
+        passportConfigurationService = new PassportConfigurationService();
     }
 
     @Test
@@ -43,8 +43,8 @@ class KmsRsaDecrypterIT {
                     "The environment variable 'JAR_KMS_PUBLIC_KEY_PARAM' must be provided to run this test");
         }
 
-        String kmsId = configurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID);
-        String pubKey = configurationService.getEnvironmentSsmParameter(JAR_KMS_PUBLIC_KEY);
+        String kmsId = passportConfigurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID);
+        String pubKey = passportConfigurationService.getEnvironmentSsmParameter(JAR_KMS_PUBLIC_KEY);
 
         var header =
                 new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)

@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
@@ -51,7 +51,7 @@ class BuildClientOauthResponseHandlerTest {
     @Mock private Context context;
     @Mock private AuthorizationCodeService mockAuthorizationCodeService;
     @Mock private PassportSessionService mockPassportSessionService;
-    @Mock private ConfigurationService mockConfigurationService;
+    @Mock private PassportConfigurationService mockPassportConfigurationService;
     @Mock private AuditService mockAuditService;
 
     private AuthorizationCode authorizationCode;
@@ -67,7 +67,7 @@ class BuildClientOauthResponseHandlerTest {
                         mockAuthorizationCodeService,
                         mockPassportSessionService,
                         mockAuditService,
-                        mockConfigurationService);
+                        mockPassportConfigurationService);
     }
 
     @Test

@@ -1,7 +1,7 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 
@@ -11,13 +11,15 @@ public class DcsPassportCheckService {
     private final DataStore<PassportCheckDao> dataStore;
 
     @ExcludeFromGeneratedCoverageReport
-    public DcsPassportCheckService(ConfigurationService configurationService) {
+    public DcsPassportCheckService(PassportConfigurationService passportConfigurationService) {
         this.dataStore =
                 new DataStore<>(
-                        configurationService.getEnvironmentVariable(DCS_RESPONSE_TABLE_NAME),
+                        passportConfigurationService.getEnvironmentVariable(
+                                DCS_RESPONSE_TABLE_NAME),
                         PassportCheckDao.class,
-                        DataStore.getClient(configurationService.getDynamoDbEndpointOverride()),
-                        configurationService);
+                        DataStore.getClient(
+                                passportConfigurationService.getDynamoDbEndpointOverride()),
+                        passportConfigurationService);
     }
 
     public DcsPassportCheckService(DataStore<PassportCheckDao> dataStore) {

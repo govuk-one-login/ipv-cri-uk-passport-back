@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
 import uk.gov.di.ipv.cri.passport.accesstoken.domain.ConfigurationServicePublicKeySelector;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper.LogField;
@@ -36,18 +36,18 @@ public class TokenRequestValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenRequestValidator.class);
     private static final String CLIENT_ASSERTION_PARAM = "client_assertion";
 
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     private final ClientAuthJwtIdService clientAuthJwtIdService;
 
     private final ClientAuthenticationVerifier<Object> verifier;
 
     public TokenRequestValidator(
-            ConfigurationService configurationService,
+            PassportConfigurationService passportConfigurationService,
             ClientAuthJwtIdService clientAuthJwtIdService) {
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
         this.clientAuthJwtIdService = clientAuthJwtIdService;
-        this.verifier = getClientAuthVerifier(configurationService);
+        this.verifier = getClientAuthVerifier(passportConfigurationService);
     }
 
     public void authenticateClient(String requestBody) throws ClientAuthenticationException {
@@ -71,7 +71,7 @@ public class TokenRequestValidator {
     private void validateMaxAllowedAuthClientTtl(JWTAuthenticationClaimsSet claimsSet)
             throws InvalidClientException {
         Date expirationTime = claimsSet.getExpirationTime();
-        String maxAllowedTtl = configurationService.getStackSsmParameter(MAX_JWT_TTL);
+        String maxAllowedTtl = passportConfigurationService.getStackSsmParameter(MAX_JWT_TTL);
 
         OffsetDateTime offsetDateTime =
                 OffsetDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
@@ -105,15 +105,15 @@ public class TokenRequestValidator {
     }
 
     private ClientAuthenticationVerifier<Object> getClientAuthVerifier(
-            ConfigurationService configurationService) {
+            PassportConfigurationService passportConfigurationService) {
 
         ConfigurationServicePublicKeySelector configurationServicePublicKeySelector =
-                new ConfigurationServicePublicKeySelector(configurationService);
+                new ConfigurationServicePublicKeySelector(passportConfigurationService);
         return new ClientAuthenticationVerifier<>(
                 configurationServicePublicKeySelector,
                 Set.of(
                         new Audience(
-                                configurationService.getStackSsmParameter(
+                                passportConfigurationService.getStackSsmParameter(
                                         PASSPORT_CRI_CLIENT_AUDIENCE))));
     }
 

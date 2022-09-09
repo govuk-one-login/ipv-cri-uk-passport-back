@@ -8,7 +8,7 @@ import com.nimbusds.oauth2.sdk.auth.verifier.ClientCredentialsSelector;
 import com.nimbusds.oauth2.sdk.auth.verifier.Context;
 import com.nimbusds.oauth2.sdk.auth.verifier.InvalidClientException;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 
 import java.security.PublicKey;
 import java.text.ParseException;
@@ -16,10 +16,11 @@ import java.util.List;
 
 public class ConfigurationServicePublicKeySelector implements ClientCredentialsSelector<Object> {
 
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
-    public ConfigurationServicePublicKeySelector(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public ConfigurationServicePublicKeySelector(
+            PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     @Override
@@ -38,7 +39,7 @@ public class ConfigurationServicePublicKeySelector implements ClientCredentialsS
             throws InvalidClientException {
         try {
             return List.of(
-                    configurationService
+                    passportConfigurationService
                             .getClientSigningPublicJwk(claimedClientID.getValue())
                             .toECPublicKey());
         } catch (ParseException | JOSEException e) {

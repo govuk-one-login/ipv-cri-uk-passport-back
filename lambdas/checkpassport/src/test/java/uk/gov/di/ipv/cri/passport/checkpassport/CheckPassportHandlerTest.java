@@ -23,7 +23,7 @@ import uk.gov.di.ipv.cri.passport.checkpassport.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
@@ -98,11 +98,12 @@ class CheckPassportHandlerTest {
 
     @Mock Context context;
     @Mock PassportService passportService;
-    @Mock ConfigurationService mockConfigurationService;
+    @Mock PassportConfigurationService mockPassportConfigurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
     @Mock AuthorizationCodeService mockAuthorizationCodeService;
     @Mock PassportSessionService passportSessionService;
-    @Mock AuditService mockAuditService;
+    @Mock
+    AuditService mockAuditService;
     @Mock JWSObject jwsObject;
 
     private AuthorizationCode authorizationCode;
@@ -116,7 +117,7 @@ class CheckPassportHandlerTest {
                 new CheckPassportHandler(
                         mockAuthorizationCodeService,
                         passportService,
-                        mockConfigurationService,
+                        mockPassportConfigurationService,
                         dcsCryptographyService,
                         mockAuditService,
                         passportSessionService);
@@ -258,9 +259,9 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(0);
-        when(mockConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
+        when(mockPassportConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
                 .thenReturn(String.valueOf(2));
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockPassportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test");
 
         APIGatewayProxyRequestEvent event =
@@ -280,9 +281,9 @@ class CheckPassportHandlerTest {
         mockPassportSessionItem(2);
         when(mockAuthorizationCodeService.generateAuthorizationCode())
                 .thenReturn(authorizationCode);
-        when(mockConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
+        when(mockPassportConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
                 .thenReturn(String.valueOf(2));
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockPassportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test");
 
         APIGatewayProxyRequestEvent event =

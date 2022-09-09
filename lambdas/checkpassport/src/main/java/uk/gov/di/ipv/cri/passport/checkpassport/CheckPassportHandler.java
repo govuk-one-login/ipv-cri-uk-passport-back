@@ -29,7 +29,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
@@ -54,9 +54,11 @@ import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
+import uk.gov.di.ipv.cri.passport.library.service.ServiceFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -90,7 +92,7 @@ public class CheckPassportHandler
     public static final String RESULT_RETRY = "retry";
 
     private final PassportService passportService;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
     private final DcsCryptographyService dcsCryptographyService;
     private final AuditService auditService;
 
@@ -100,13 +102,13 @@ public class CheckPassportHandler
     public CheckPassportHandler(
             AuthorizationCodeService authorizationCodeService,
             PassportService passportService,
-            ConfigurationService configurationService,
+            PassportConfigurationService passportConfigurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
             PassportSessionService passportSessionService) {
         this.authorizationCodeService = authorizationCodeService;
         this.passportService = passportService;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
         this.passportSessionService = passportSessionService;
@@ -114,14 +116,17 @@ public class CheckPassportHandler
 
     public CheckPassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-                    KeyStoreException, IOException {
-        this.configurationService = new ConfigurationService();
-        this.passportService = new PassportService(configurationService);
-        this.dcsCryptographyService = new DcsCryptographyService(configurationService);
-        this.auditService =
-                new AuditService(AuditService.getDefaultSqsClient(), configurationService);
-        this.authorizationCodeService = new AuthorizationCodeService(configurationService);
-        this.passportSessionService = new PassportSessionService(configurationService);
+            KeyStoreException, IOException, InvalidKeyException {
+        //this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        ServiceFactory serviceFactory = new ServiceFactory(new ObjectMapper());
+
+        this.passportConfigurationService = serviceFactory.getPassportConfigurationService();
+        this.passportService = serviceFactory.getPassportService();
+        // TODO
+        this.auditService = new AuditService(AuditService.getDefaultSqsClient(), passportConfigurationService);
+        this.dcsCryptographyService = serviceFactory.getDcsCryptographyService();
+        this.authorizationCodeService = serviceFactory.getAuthorizationCodeService();
+        this.passportSessionService = serviceFactory.getPassportSessionService();
     }
 
     @Override
@@ -160,13 +165,22 @@ public class CheckPassportHandler
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
 
+            //auditService.sendAuditEvent(AuditEventType.REQUEST_SENT,new AuditEventContext(PersonIdentityDetailed personIdentity,
+            //        input.getHeaders(),
+            //        sessionItem)));
+
             auditService.sendAuditEvent(
                     createAuditEventRequestSent(
                             passportSessionItem,
                             dcsPayload,
                             authorizationRequest.getClientID().getValue()));
 
+
+
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
+
+
+
 
             AuditEventUser auditEventUser =
                     AuditEventUser.fromPassportSessionItem(passportSessionItem);
@@ -247,7 +261,8 @@ public class CheckPassportHandler
         if (unwrappedDcsResponse.isValid()
                 || attemptCount
                         >= Integer.parseInt(
-                                configurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))) {
+                                passportConfigurationService.getStackSsmParameter(
+                                        MAXIMUM_ATTEMPT_COUNT))) {
 
             AuthorizationCode authorizationCode =
                     authorizationCodeService.generateAuthorizationCode();
@@ -272,6 +287,8 @@ public class CheckPassportHandler
                 HttpStatus.SC_OK, Map.of(RESULT, RESULT_RETRY));
     }
 
+
+
     private AuditEvent createAuditEventRequestSent(
             PassportSessionItem passportSessionItem, DcsPayload dcsPayload, String clientId) {
 
@@ -287,7 +304,7 @@ public class CheckPassportHandler
 
         CredentialSubject credentialSubject = vc.getCredentialSubject();
         String componentId =
-                configurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
+                passportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
         AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT;
         AuditEventUser user = AuditEventUser.fromPassportSessionItem(passportSessionItem);
         AuditRestricted restricted =
@@ -297,7 +314,8 @@ public class CheckPassportHandler
                         credentialSubject.getPassport());
         AuditExtensions extensions =
                 new AuditExtensionsVcEvidence(
-                        configurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER),
+                        passportConfigurationService.getStackSsmParameter(
+                                VERIFIABLE_CREDENTIAL_ISSUER),
                         null);
         return new AuditEvent(eventType, componentId, user, restricted, extensions);
     }

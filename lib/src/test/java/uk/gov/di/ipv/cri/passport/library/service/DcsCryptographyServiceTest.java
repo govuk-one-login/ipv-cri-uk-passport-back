@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -77,23 +77,23 @@ class DcsCryptographyServiceTest {
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
 
-    @Mock ConfigurationService configurationService;
+    @Mock PassportConfigurationService passportConfigurationService;
     private DcsCryptographyService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new DcsCryptographyService(configurationService);
+        underTest = new DcsCryptographyService(passportConfigurationService);
     }
 
     @Test
     void shouldPreparePayloadForDcsRequest()
             throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException,
                     CertificateException, ParseException, JsonProcessingException {
-        when(configurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY))
+        when(passportConfigurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY))
                 .thenReturn(getSigningPrivateKey());
-        when(configurationService.makeThumbprints())
+        when(passportConfigurationService.makeThumbprints())
                 .thenReturn(new Thumbprints(SHA_1_THUMBPRINT, SHA_256_THUMBPRINT));
-        when(configurationService.getCertificate(DCS_ENCRYPTION_CERT))
+        when(passportConfigurationService.getCertificate(DCS_ENCRYPTION_CERT))
                 .thenReturn(getEncryptionCertificate());
 
         DcsPayload dcsPayload =
@@ -125,9 +125,9 @@ class DcsCryptographyServiceTest {
     void shouldUnwrapDcsResponse()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     ParseException, JOSEException, JsonProcessingException {
-        when(configurationService.getCertificate(DCS_SIGNING_CERT))
+        when(passportConfigurationService.getCertificate(DCS_SIGNING_CERT))
                 .thenReturn(TestUtils.getDcsSigningCertificate(BASE64_DCS_SIGNING_CERT));
-        when(configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY))
+        when(passportConfigurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY))
                 .thenReturn(getEncryptionPrivateKey());
         DcsResponse expectedDcsResponse =
                 new DcsResponse(
@@ -151,7 +151,7 @@ class DcsCryptographyServiceTest {
     void shouldThrowExceptionForInvalidOuterSignatureWhenUsingIncorrectCertificate()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     JOSEException {
-        when(configurationService.getCertificate(DCS_SIGNING_CERT))
+        when(passportConfigurationService.getCertificate(DCS_SIGNING_CERT))
                 .thenReturn(TestUtils.getDcsSigningCertificate(BASE64_ENCRYPTION_PUBLIC_CERT));
         String payload = "some test data";
         String dcsResponse = generateDCSResponse(payload);
@@ -169,9 +169,9 @@ class DcsCryptographyServiceTest {
     void shouldThrowExceptionWhenFailingToDecryptWithInvalidPrivateKey()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     JOSEException {
-        when(configurationService.getCertificate(DCS_SIGNING_CERT))
+        when(passportConfigurationService.getCertificate(DCS_SIGNING_CERT))
                 .thenReturn(TestUtils.getDcsSigningCertificate(BASE64_DCS_SIGNING_CERT));
-        when(configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY))
+        when(passportConfigurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY))
                 .thenReturn(getSigningPrivateKey());
         String payload = "some test data";
         String dcsResponse = generateDCSResponse(payload);
@@ -189,11 +189,11 @@ class DcsCryptographyServiceTest {
     void shouldThrowExceptionForInvalidInnerSignatureWhenUsingIncorrectCertificate()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     JOSEException {
-        when(configurationService.getCertificate(DCS_SIGNING_CERT))
+        when(passportConfigurationService.getCertificate(DCS_SIGNING_CERT))
                 .thenReturn(
                         TestUtils.getDcsSigningCertificate(BASE64_DCS_SIGNING_CERT),
                         TestUtils.getDcsSigningCertificate(BASE64_ENCRYPTION_PUBLIC_CERT));
-        when(configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY))
+        when(passportConfigurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY))
                 .thenReturn(getEncryptionPrivateKey());
 
         String payload = "some test data";

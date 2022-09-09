@@ -3,7 +3,7 @@ package uk.gov.di.ipv.cri.passport.library.helpers;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpClientException;
 
 import javax.net.ssl.SSLContext;
@@ -30,19 +30,20 @@ public class HttpClientSetUp {
 
     private HttpClientSetUp() {}
 
-    public static HttpClient generateHttpClient(ConfigurationService configurationService)
+    public static HttpClient generateHttpClient(
+            PassportConfigurationService passportConfigurationService)
             throws NoSuchAlgorithmException, InvalidKeySpecException, CertificateException,
                     KeyStoreException, IOException {
         KeyStore keystoreTLS =
                 createKeyStore(
-                        configurationService.getCertificate(HTTPCLIENT_TLS_CERT),
-                        configurationService.getPrivateKey(HTTPCLIENT_TLS_KEY));
+                        passportConfigurationService.getCertificate(HTTPCLIENT_TLS_CERT),
+                        passportConfigurationService.getPrivateKey(HTTPCLIENT_TLS_KEY));
 
         KeyStore trustStore =
                 createTrustStore(
                         new Certificate[] {
-                            configurationService.getCertificate(DCS_TLS_ROOT_CERT),
-                            configurationService.getCertificate(DCS_TLS_INTERMEDIATE_CERT)
+                            passportConfigurationService.getCertificate(DCS_TLS_ROOT_CERT),
+                            passportConfigurationService.getCertificate(DCS_TLS_INTERMEDIATE_CERT)
                         });
 
         return contextSetup(keystoreTLS, trustStore);

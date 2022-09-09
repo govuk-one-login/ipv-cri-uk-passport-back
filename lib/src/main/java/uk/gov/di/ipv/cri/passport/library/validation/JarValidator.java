@@ -13,7 +13,7 @@ import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.ssm.model.SsmException;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
@@ -36,12 +36,13 @@ public class JarValidator {
     private static final String STATE = "state";
 
     private final KmsRsaDecrypter kmsRsaDecrypter;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     public JarValidator(
-            KmsRsaDecrypter kmsRsaDecrypter, ConfigurationService configurationService) {
+            KmsRsaDecrypter kmsRsaDecrypter,
+            PassportConfigurationService passportConfigurationService) {
         this.kmsRsaDecrypter = kmsRsaDecrypter;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     public SignedJWT decryptJWE(JWEObject jweObject) throws JarValidationException {
@@ -78,7 +79,7 @@ public class JarValidator {
     private void validateQueryParamClientIdIsRecognised(String clientId)
             throws JarValidationException {
         try {
-            configurationService.getClientIssuer(clientId);
+            passportConfigurationService.getClientIssuer(clientId);
         } catch (SsmException e) {
             LOGGER.error("Unknown client id provided {}", clientId);
             throw new JarValidationException(
@@ -129,7 +130,8 @@ public class JarValidator {
             boolean valid =
                     concatSignatureJwt.verify(
                             new ECDSAVerifier(
-                                    configurationService.getClientSigningPublicJwk(clientId)));
+                                    passportConfigurationService.getClientSigningPublicJwk(
+                                            clientId)));
 
             if (!valid) {
                 LOGGER.error("JWT signature validation failed");
@@ -149,8 +151,8 @@ public class JarValidator {
             throws JarValidationException {
 
         String criAudience =
-                configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE);
-        String clientIssuer = configurationService.getClientIssuer(clientId);
+                passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE);
+        String clientIssuer = passportConfigurationService.getClientIssuer(clientId);
 
         DefaultJWTClaimsVerifier<?> verifier =
                 new DefaultJWTClaimsVerifier<>(
@@ -179,7 +181,7 @@ public class JarValidator {
     }
 
     private void validateMaxAllowedJarTtl(JWTClaimsSet claimsSet) throws JarValidationException {
-        String maxAllowedTtl = configurationService.getStackSsmParameter(MAX_JWT_TTL);
+        String maxAllowedTtl = passportConfigurationService.getStackSsmParameter(MAX_JWT_TTL);
         LocalDateTime maximumExpirationTime =
                 LocalDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
         LocalDateTime expirationTime =
@@ -197,7 +199,8 @@ public class JarValidator {
             throws JarValidationException {
         try {
             URI redirectUri = claimsSet.getURIClaim(REDIRECT_URI_CLAIM);
-            List<String> allowedRedirectUris = configurationService.getClientRedirectUrls(clientId);
+            List<String> allowedRedirectUris =
+                    passportConfigurationService.getClientRedirectUrls(clientId);
 
             if (!allowedRedirectUris.contains(redirectUri.toString())) {
                 LOGGER.error(

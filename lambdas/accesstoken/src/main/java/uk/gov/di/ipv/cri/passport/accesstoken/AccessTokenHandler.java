@@ -18,7 +18,7 @@ import software.amazon.lambda.powertools.logging.Logging;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
@@ -38,7 +38,7 @@ public class AccessTokenHandler
 
     private final AccessTokenService accessTokenService;
     private final AuthorizationCodeService authorizationCodeService;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
     private final TokenRequestValidator tokenRequestValidator;
 
     private final PassportSessionService passportSessionService;
@@ -46,25 +46,26 @@ public class AccessTokenHandler
     public AccessTokenHandler(
             AccessTokenService accessTokenService,
             AuthorizationCodeService authorizationCodeService,
-            ConfigurationService configurationService,
+            PassportConfigurationService passportConfigurationService,
             TokenRequestValidator tokenRequestValidator,
             PassportSessionService passportSessionService) {
         this.accessTokenService = accessTokenService;
         this.authorizationCodeService = authorizationCodeService;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
         this.tokenRequestValidator = tokenRequestValidator;
         this.passportSessionService = passportSessionService;
     }
 
     @ExcludeFromGeneratedCoverageReport
     public AccessTokenHandler() {
-        this.configurationService = new ConfigurationService();
-        this.accessTokenService = new AccessTokenService(configurationService);
-        this.authorizationCodeService = new AuthorizationCodeService(configurationService);
+        this.passportConfigurationService = new PassportConfigurationService();
+        this.accessTokenService = new AccessTokenService(passportConfigurationService);
+        this.authorizationCodeService = new AuthorizationCodeService(passportConfigurationService);
         this.tokenRequestValidator =
                 new TokenRequestValidator(
-                        configurationService, new ClientAuthJwtIdService(configurationService));
-        this.passportSessionService = new PassportSessionService(configurationService);
+                        passportConfigurationService,
+                        new ClientAuthJwtIdService(passportConfigurationService));
+        this.passportSessionService = new PassportSessionService(passportConfigurationService);
     }
 
     @Override

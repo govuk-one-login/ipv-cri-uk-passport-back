@@ -2,7 +2,7 @@ package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.SecureTokenHelper;
@@ -22,25 +22,26 @@ public class PassportSessionService {
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
 
     private final DataStore<PassportSessionItem> dataStore;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     @ExcludeFromGeneratedCoverageReport
-    public PassportSessionService(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public PassportSessionService(PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore =
                 new DataStore<>(
-                        this.configurationService.getEnvironmentVariable(
+                        this.passportConfigurationService.getEnvironmentVariable(
                                 PASSPORT_BACK_SESSIONS_TABLE_NAME),
                         PassportSessionItem.class,
                         DataStore.getClient(
-                                this.configurationService.getDynamoDbEndpointOverride()),
-                        this.configurationService);
+                                this.passportConfigurationService.getDynamoDbEndpointOverride()),
+                        this.passportConfigurationService);
     }
 
     public PassportSessionService(
-            DataStore<PassportSessionItem> dataStore, ConfigurationService configurationService) {
+            DataStore<PassportSessionItem> dataStore,
+            PassportConfigurationService passportConfigurationService) {
         this.dataStore = dataStore;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     public PassportSessionItem getPassportSession(String passportSessionId) {

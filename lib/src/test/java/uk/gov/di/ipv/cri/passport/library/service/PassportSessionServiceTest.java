@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.SecureTokenHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
@@ -22,14 +22,14 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PassportSessionServiceTest {
-    @Mock ConfigurationService configurationService;
+    @Mock PassportConfigurationService passportConfigurationService;
     @Mock DataStore<PassportSessionItem> mockDataStore;
 
     private PassportSessionService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new PassportSessionService(mockDataStore, configurationService);
+        underTest = new PassportSessionService(mockDataStore, passportConfigurationService);
     }
 
     @Test

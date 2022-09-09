@@ -14,7 +14,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
@@ -36,7 +36,7 @@ class DataStoreTest {
     @Mock private DynamoDbEnhancedClient mockDynamoDbEnhancedClient;
     @Mock private DynamoDbTable<AuthorizationCodeItem> mockDynamoDbTable;
     @Mock private PageIterable<AuthorizationCodeItem> mockPageIterable;
-    @Mock private ConfigurationService mockConfigurationService;
+    @Mock private PassportConfigurationService mockPassportConfigurationService;
 
     private AuthorizationCodeItem authorizationCodeItem;
     private DataStore<AuthorizationCodeItem> dataStore;
@@ -56,12 +56,12 @@ class DataStoreTest {
                         TEST_TABLE_NAME,
                         AuthorizationCodeItem.class,
                         mockDynamoDbEnhancedClient,
-                        mockConfigurationService);
+                        mockPassportConfigurationService);
     }
 
     @Test
     void shouldPutItemIntoDynamoDbTable() {
-        when(mockConfigurationService.getStackSsmParameter(SESSION_TTL)).thenReturn("100");
+        when(mockPassportConfigurationService.getStackSsmParameter(SESSION_TTL)).thenReturn("100");
 
         dataStore.create(authorizationCodeItem);
 

@@ -16,7 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
@@ -41,7 +41,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DC
 class PassportServiceTest {
     public static final String CHECK_PASSPORT_URI = "https://localhost/check/passport";
 
-    @Mock ConfigurationService configurationService;
+    @Mock PassportConfigurationService passportConfigurationService;
     @Mock DataStore<PassportCheckDao> dataStore;
     @Mock HttpClient httpClient;
     @Mock JWSObject jwsObject;
@@ -54,14 +54,14 @@ class PassportServiceTest {
 
     @BeforeEach
     void setUp() {
-        underTest = new PassportService(httpClient, configurationService, dataStore);
+        underTest = new PassportService(httpClient, passportConfigurationService, dataStore);
     }
 
     @Test
     void shouldPostToDcsEndpoint() throws IOException, EmptyDcsResponseException {
         String expectedPayload = "Test";
         HttpEntity httpEntity = new StringEntity(expectedPayload);
-        when(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
+        when(passportConfigurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(httpResponse.getEntity()).thenReturn(httpEntity);
@@ -84,7 +84,7 @@ class PassportServiceTest {
     @Test
     void shouldReturnAnErrorWhenDCSRespondsWithNon200() throws IOException {
         String expectedPayload = "Test";
-        when(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
+        when(passportConfigurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(500);
@@ -103,7 +103,7 @@ class PassportServiceTest {
 
     @Test
     void shouldReturnThrowExceptionWhenResponseFromDcsIsEmpty() throws IOException {
-        when(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
+        when(passportConfigurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         when(jwsObject.serialize()).thenReturn("Test");

@@ -19,7 +19,7 @@ import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -41,13 +41,13 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PA
 
 public class DcsCryptographyService {
 
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
     private final Gson gson = new Gson();
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new JavaTimeModule());
 
-    public DcsCryptographyService(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public DcsCryptographyService(PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     public JWSObject preparePayload(DcsPayload passportDetails)
@@ -85,7 +85,7 @@ public class DcsCryptographyService {
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     CertificateException {
 
-        Thumbprints thumbprints = configurationService.makeThumbprints();
+        Thumbprints thumbprints = passportConfigurationService.makeThumbprints();
 
         ProtectedHeader protectedHeader =
                 new ProtectedHeader(
@@ -106,7 +106,8 @@ public class DcsCryptographyService {
                         new Payload(stringToSign));
 
         jwsObject.sign(
-                new RSASSASigner(configurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY)));
+                new RSASSASigner(
+                        passportConfigurationService.getPrivateKey(PASSPORT_CRI_SIGNING_KEY)));
 
         return jwsObject;
     }
@@ -122,7 +123,7 @@ public class DcsCryptographyService {
         jwe.encrypt(
                 new RSAEncrypter(
                         (RSAPublicKey)
-                                configurationService
+                                passportConfigurationService
                                         .getCertificate(DCS_ENCRYPTION_CERT)
                                         .getPublicKey()));
 
@@ -138,7 +139,7 @@ public class DcsCryptographyService {
         RSASSAVerifier rsassaVerifier =
                 new RSASSAVerifier(
                         (RSAPublicKey)
-                                configurationService
+                                passportConfigurationService
                                         .getCertificate(DCS_SIGNING_CERT)
                                         .getPublicKey());
         return !jwsObject.verify(rsassaVerifier);
@@ -148,7 +149,8 @@ public class DcsCryptographyService {
         try {
             RSADecrypter rsaDecrypter =
                     new RSADecrypter(
-                            configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY));
+                            passportConfigurationService.getPrivateKey(
+                                    PASSPORT_CRI_ENCRYPTION_KEY));
             encrypted.decrypt(rsaDecrypter);
 
             return JWSObject.parse(encrypted.getPayload().toString());

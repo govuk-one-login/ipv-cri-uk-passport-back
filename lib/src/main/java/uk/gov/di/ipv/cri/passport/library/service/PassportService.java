@@ -9,8 +9,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.helpers.HttpClientSetUp;
@@ -30,38 +30,40 @@ public class PassportService {
     public static final String CONTENT_TYPE = "content-type";
     public static final String APPLICATION_JOSE = "application/jose";
     private static final Logger LOGGER = LoggerFactory.getLogger(PassportService.class);
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
     private final DataStore<PassportCheckDao> dataStore;
     private final HttpClient httpClient;
 
     public PassportService(
             HttpClient httpClient,
-            ConfigurationService configurationService,
+            PassportConfigurationService passportConfigurationService,
             DataStore<PassportCheckDao> dataStore) {
         this.httpClient = httpClient;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore = dataStore;
     }
 
-    public PassportService(ConfigurationService configurationService)
+    public PassportService(PassportConfigurationService passportConfigurationService)
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore =
                 new DataStore<>(
-                        this.configurationService.getEnvironmentVariable(
+                        this.passportConfigurationService.getEnvironmentVariable(
                                 EnvironmentVariable.DCS_RESPONSE_TABLE_NAME),
                         PassportCheckDao.class,
                         DataStore.getClient(
-                                this.configurationService.getDynamoDbEndpointOverride()),
-                        configurationService);
-        this.httpClient = HttpClientSetUp.generateHttpClient(this.configurationService);
+                                this.passportConfigurationService.getDynamoDbEndpointOverride()),
+                        passportConfigurationService);
+        this.httpClient = HttpClientSetUp.generateHttpClient(this.passportConfigurationService);
     }
 
     public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload)
             throws IOException, EmptyDcsResponseException {
         HttpPost request =
-                new HttpPost(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM));
+                new HttpPost(
+                        passportConfigurationService.getEnvironmentSsmParameter(
+                                DCS_POST_URL_PARAM));
         request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
         request.setEntity(new StringEntity(payload.serialize()));
 

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 
 import java.security.PublicKey;
 import java.text.ParseException;
@@ -24,9 +24,9 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.E
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_3;
 
 @ExtendWith(MockitoExtension.class)
-class ConfigurationServicePublicKeySelectorTest {
+class PassportConfigurationServicePublicKeySelectorTest {
 
-    @Mock ConfigurationService mockConfigurationService;
+    @Mock PassportConfigurationService mockPassportConfigurationService;
     @InjectMocks ConfigurationServicePublicKeySelector keySelector;
 
     @Test
@@ -38,11 +38,11 @@ class ConfigurationServicePublicKeySelectorTest {
 
     @Test
     void selectPublicKeysShouldReturnAListOfClientEcPublicKeys() throws Exception {
-        when(mockConfigurationService.getClientSigningPublicJwk("testClientId1"))
+        when(mockPassportConfigurationService.getClientSigningPublicJwk("testClientId1"))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getClientSigningPublicJwk("testClientId2"))
+        when(mockPassportConfigurationService.getClientSigningPublicJwk("testClientId2"))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_2));
-        when(mockConfigurationService.getClientSigningPublicJwk("testClientId3"))
+        when(mockPassportConfigurationService.getClientSigningPublicJwk("testClientId3"))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_3));
 
         List<? extends PublicKey> publicKeys2 =
@@ -65,7 +65,7 @@ class ConfigurationServicePublicKeySelectorTest {
     @Test
     void selectPublicKeysShouldThrowInvalidClientExceptionIfCanNotParsePublicJwk()
             throws Exception {
-        when(mockConfigurationService.getClientSigningPublicJwk("testClientId"))
+        when(mockPassportConfigurationService.getClientSigningPublicJwk("testClientId"))
                 .thenThrow(new ParseException("Not a JWK", 0));
 
         InvalidClientException exception =
@@ -82,7 +82,7 @@ class ConfigurationServicePublicKeySelectorTest {
             throws Exception {
         ECKey ecKeyMock = mock(ECKey.class);
         when(ecKeyMock.toECPublicKey()).thenThrow(new JOSEException("Something went wrong..."));
-        when(mockConfigurationService.getClientSigningPublicJwk("testClientId"))
+        when(mockPassportConfigurationService.getClientSigningPublicJwk("testClientId"))
                 .thenReturn(ecKeyMock);
 
         InvalidClientException exception =

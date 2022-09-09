@@ -17,7 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
@@ -40,19 +40,21 @@ import static uk.gov.di.ipv.cri.passport.library.service.AccessTokenService.DEFA
 class AccessTokenServiceTest {
 
     @Mock private DataStore<AccessTokenItem> mockDataStore;
-    @Mock private ConfigurationService mockConfigurationService;
+    @Mock private PassportConfigurationService mockPassportConfigurationService;
 
     private AccessTokenService accessTokenService;
 
     @BeforeEach
     void setUp() {
-        this.accessTokenService = new AccessTokenService(mockDataStore, mockConfigurationService);
+        this.accessTokenService =
+                new AccessTokenService(mockDataStore, mockPassportConfigurationService);
     }
 
     @Test
     void shouldReturnSuccessfulTokenResponseOnSuccessfulExchange() {
         long testTokenTtl = 2400L;
-        when(mockConfigurationService.getAccessTokenExpirySeconds()).thenReturn(testTokenTtl);
+        when(mockPassportConfigurationService.getAccessTokenExpirySeconds())
+                .thenReturn(testTokenTtl);
 
         TokenResponse response = accessTokenService.generateAccessToken();
 

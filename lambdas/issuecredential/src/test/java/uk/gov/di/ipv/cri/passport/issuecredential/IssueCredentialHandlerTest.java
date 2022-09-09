@@ -29,7 +29,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
@@ -91,7 +91,7 @@ class IssueCredentialHandlerTest {
     @Mock private DcsPassportCheckService mockDcsPassportCheckService;
     @Mock private AccessTokenService mockAccessTokenService;
     @Mock private AuditService mockAuditService;
-    @Mock private ConfigurationService mockConfigurationService;
+    @Mock private PassportConfigurationService mockPassportConfigurationService;
     @Mock private PassportSessionService mockPassportSessionService;
     @Spy private ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
     @InjectMocks private IssueCredentialHandler issueCredentialHandler;
@@ -193,9 +193,9 @@ class IssueCredentialHandlerTest {
     }
 
     private void mockConfigurationServiceCalls() {
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockPassportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("TEST");
-        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1000");
+        when(mockPassportConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1000");
     }
 
     @Test
@@ -217,9 +217,9 @@ class IssueCredentialHandlerTest {
                 .thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockPassportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test-issuer");
-        when(mockConfigurationService.getClientIssuer(clientId))
+        when(mockPassportConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
         mockConfigurationServiceCalls();
 
@@ -482,9 +482,9 @@ class IssueCredentialHandlerTest {
         when(mockAccessTokenService.getAccessTokenItem(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockPassportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test-issuer");
-        when(mockConfigurationService.getClientIssuer(clientId))
+        when(mockPassportConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
 
         doThrow(new IllegalArgumentException("Test error"))

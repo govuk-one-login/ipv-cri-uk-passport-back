@@ -17,7 +17,7 @@ import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientDetails;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
@@ -37,25 +37,25 @@ public class BuildClientOauthResponseHandler
     private final AuthorizationCodeService authorizationCodeService;
     private final PassportSessionService passportSessionService;
     private final AuditService auditService;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     public BuildClientOauthResponseHandler(
             AuthorizationCodeService authorizationCodeService,
             PassportSessionService passportSessionService,
             AuditService auditService,
-            ConfigurationService configurationService) {
+            PassportConfigurationService passportConfigurationService) {
         this.authorizationCodeService = authorizationCodeService;
         this.passportSessionService = passportSessionService;
         this.auditService = auditService;
-        this.configurationService = configurationService;
+        this.passportConfigurationService = passportConfigurationService;
     }
 
     public BuildClientOauthResponseHandler() {
-        this.configurationService = new ConfigurationService();
-        this.authorizationCodeService = new AuthorizationCodeService(configurationService);
-        this.passportSessionService = new PassportSessionService(configurationService);
+        this.passportConfigurationService = new PassportConfigurationService();
+        this.authorizationCodeService = new AuthorizationCodeService(passportConfigurationService);
+        this.passportSessionService = new PassportSessionService(passportConfigurationService);
         this.auditService =
-                new AuditService(AuditService.getDefaultSqsClient(), configurationService);
+                new AuditService(AuditService.getDefaultSqsClient(), passportConfigurationService);
     }
 
     @Override

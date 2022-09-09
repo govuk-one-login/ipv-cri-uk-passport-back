@@ -1,7 +1,7 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.ClientAuthJwtIdItem;
 
@@ -11,25 +11,26 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.CRI_
 
 public class ClientAuthJwtIdService {
     private final DataStore<ClientAuthJwtIdItem> dataStore;
-    private final ConfigurationService configurationService;
+    private final PassportConfigurationService passportConfigurationService;
 
     @ExcludeFromGeneratedCoverageReport
-    public ClientAuthJwtIdService(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public ClientAuthJwtIdService(PassportConfigurationService passportConfigurationService) {
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore =
                 new DataStore<>(
-                        this.configurationService.getEnvironmentVariable(
+                        this.passportConfigurationService.getEnvironmentVariable(
                                 CRI_PASSPORT_CLIENT_AUTH_JWT_IDS_TABLE_NAME),
                         ClientAuthJwtIdItem.class,
                         DataStore.getClient(
-                                this.configurationService.getDynamoDbEndpointOverride()),
-                        this.configurationService);
+                                this.passportConfigurationService.getDynamoDbEndpointOverride()),
+                        this.passportConfigurationService);
     }
 
     // For tests
     public ClientAuthJwtIdService(
-            ConfigurationService configurationService, DataStore<ClientAuthJwtIdItem> dataStore) {
-        this.configurationService = configurationService;
+            PassportConfigurationService passportConfigurationService,
+            DataStore<ClientAuthJwtIdItem> dataStore) {
+        this.passportConfigurationService = passportConfigurationService;
         this.dataStore = dataStore;
     }
 

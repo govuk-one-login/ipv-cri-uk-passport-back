@@ -19,7 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.ssm.model.SsmException;
-import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
@@ -56,7 +56,7 @@ import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.R
 @ExtendWith(MockitoExtension.class)
 class JarValidatorTest {
 
-    @Mock private ConfigurationService configurationService;
+    @Mock private PassportConfigurationService passportConfigurationService;
 
     @Mock private KmsRsaDecrypter kmsRsaDecrypter;
 
@@ -100,13 +100,13 @@ class JarValidatorTest {
     void shouldPassValidationChecksOnValidJARRequest()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
-        when(configurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1500");
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1500");
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
@@ -117,7 +117,7 @@ class JarValidatorTest {
     @Test
     void shouldFailValidationChecksOnInvalidClientId()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException {
-        when(configurationService.getClientIssuer(anyString()))
+        when(passportConfigurationService.getClientIssuer(anyString()))
                 .thenThrow(SsmException.builder().build());
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
@@ -163,7 +163,7 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidJWTSignature()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_2));
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
@@ -184,7 +184,7 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidPublicJwk()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenThrow(new ParseException("test-error", 0));
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
@@ -207,13 +207,13 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnMissingRequiredClaimWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
         ECDSASigner signer = new ECDSASigner(getPrivateKey());
 
@@ -249,13 +249,13 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidAudienceClaimWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
@@ -300,13 +300,13 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidIssuerClaimWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
@@ -352,13 +352,13 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidResponseTypeClaimWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
@@ -404,13 +404,13 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnExpiredJWTWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
@@ -454,13 +454,13 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnFutureNbfClaimWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
@@ -504,14 +504,14 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnExpiryClaimTooFarInFutureWithRecoverableError()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(passportConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
-        when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
-        when(configurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1500");
+        when(passportConfigurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
+        when(passportConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1500");
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
@@ -557,7 +557,7 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnMisMatchingClientIds()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
 
         Map<String, Object> validClaimsSetValues = getValidClaimsSetValues();
@@ -582,7 +582,7 @@ class JarValidatorTest {
     void shouldFailValidationChecksIfClientIdNotString()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
 
         Map<String, Object> validClaimsSetValues = getValidClaimsSetValues();
@@ -605,9 +605,9 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnInvalidRedirectUriClaim()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getClientRedirectUrls(anyString()))
+        when(passportConfigurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList("https://wrong.example.com"));
 
         SignedJWT signedJWT = generateJWT(getValidClaimsSetValues());
@@ -630,7 +630,7 @@ class JarValidatorTest {
     void shouldFailValidationChecksOnParseFailureOfRedirectUri()
             throws NoSuchAlgorithmException, InvalidKeySpecException, JOSEException,
                     ParseException {
-        when(configurationService.getClientSigningPublicJwk(anyString()))
+        when(passportConfigurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
 
         Map<String, Object> claims =
