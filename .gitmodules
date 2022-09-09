@@ -1,0 +1,3 @@
+[submodule "di-ipv-cri-lib"]
+	path = common-lib
+	url = git@github.com:alphagov/di-ipv-cri-lib.git
