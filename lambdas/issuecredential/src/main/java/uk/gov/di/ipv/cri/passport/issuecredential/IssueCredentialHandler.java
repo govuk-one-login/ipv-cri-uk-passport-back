@@ -17,6 +17,7 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
+import uk.gov.di.ipv.cri.common.library.util.KMSSigner;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -32,7 +33,6 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
-import uk.gov.di.ipv.cri.passport.library.helpers.KmsSigner;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
@@ -88,7 +88,7 @@ public class IssueCredentialHandler
                 new AuditService(AuditService.getDefaultSqsClient(), passportConfigurationService);
         this.passportSessionService = new PassportSessionService(passportConfigurationService);
         this.kmsSigner =
-                new KmsSigner(
+                new KMSSigner(
                         passportConfigurationService.getStackSsmParameter(
                                 VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID));
     }
