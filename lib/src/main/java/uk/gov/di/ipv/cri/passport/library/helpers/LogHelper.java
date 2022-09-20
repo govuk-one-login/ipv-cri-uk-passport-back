@@ -1,6 +1,6 @@
 package uk.gov.di.ipv.cri.passport.library.helpers;
 
-import com.amazonaws.util.StringUtils;
+import software.amazon.awssdk.utils.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.LoggingUtils;
@@ -50,7 +50,7 @@ public class LogHelper {
     }
 
     public static void attachGovukSigninJourneyIdToLogs(String govukSigninJourneyId) {
-        if (StringUtils.isNullOrEmpty(govukSigninJourneyId)) {
+        if (StringUtils.isEmpty(govukSigninJourneyId)) {
             attachFieldToLogs(
                     LogField.GOVUK_SIGNIN_JOURNEY_ID, GOVUK_SIGNIN_JOURNEY_ID_DEFAULT_VALUE);
         } else {
