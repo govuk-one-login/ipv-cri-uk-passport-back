@@ -54,6 +54,10 @@ Conditions:
 
 Globals:
   Function:
+    VpcConfig:
+      SecurityGroupIds:
+        - !ImportValue cri-vpc-LambdaSecurityGroup
+      SubnetIds: !Split [ ",", !ImportValue cri-vpc-PrivateSubnets ]
     CodeSigningConfigArn: !If
       - CreateDevResources
       - !Ref AWS::NoValue
