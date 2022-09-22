@@ -7,10 +7,6 @@ plugins {
 	id "jacoco"
 }
 
-repositories {
-	mavenCentral()
-}
-
 dependencies {
 
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:$rootProject.ext.dependencyVersions.awsJavaSdkDynamodb",
@@ -26,7 +22,8 @@ dependencies {
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
 			"software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging",
-			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters"
+			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
+			configurations.cri_common_lib
 
 	testImplementation "com.github.tomakehurst:wiremock-jre8:2.32.0",
 			"org.junit.jupiter:junit-jupiter:5.8.2",
@@ -38,10 +35,7 @@ dependencies {
 	annotationProcessor "org.projectlombok:lombok:$rootProject.ext.dependencyVersions.lombok"
 }
 
-java {
-	sourceCompatibility = JavaVersion.VERSION_11
-	targetCompatibility = JavaVersion.VERSION_11
-}
+
 
 tasks.named("jar") {
 	manifest {

@@ -7,7 +7,29 @@ plugins {
 }
 
 repositories {
-	mavenCentral()
+	maven {
+		url 'https://gds.jfrog.io/artifactory/di-allowed-repos'
+	}
+}
+
+ext {
+	dependencyVersions = [
+		awsJavaSdkDynamodb:'1.12.146',
+		awsJavaSdkSqs:'1.12.197',
+		awsLambdaJavaCore:'1.2.1',
+		awsLambdaJavaEvents:'3.11.0',
+		awsLambdaJavaLog4j2:'1.5.1',
+		dynamodbEnhanced:'2.17.116',
+		gson:'2.8.9',
+		jackson:'2.13.1',
+		log4j:'2.17.1',
+		lombok:'1.18.22',
+		nimbusJoseJwt:'9.16',
+		nimbusdsOauth2OidcSdk:'9.22.1',
+		powertoolsLogging:'1.12.2',
+		powertoolsParameters:'1.9.0',
+		cri_common_lib: "1.1.7"
+	]
 }
 
 sonarqube {
@@ -33,25 +55,28 @@ spotless {
 	}
 }
 
-ext {
-	dependencyVersions = [
-		awsJavaSdkDynamodb:'1.12.146',
-		awsJavaSdkSqs:'1.12.197',
-		awsLambdaJavaCore:'1.2.1',
-		awsLambdaJavaEvents:'3.11.0',
-		awsLambdaJavaLog4j2:'1.5.1',
-		dynamodbEnhanced:'2.17.116',
-		gson:'2.8.9',
-		jackson:'2.13.1',
-		log4j:'2.17.1',
-		lombok:'1.18.22',
-		nimbusJoseJwt:'9.16',
-		nimbusdsOauth2OidcSdk:'9.22.1',
-		powertoolsLogging:'1.12.2',
-		powertoolsParameters:'1.9.0'
-	]
-}
-
 subprojects {
+	configurations {
+		cri_common_lib
+	}
+
+	repositories {
+		maven {
+			url 'https://gds.jfrog.io/artifactory/di-allowed-repos'
+		}
+		//flatDir {
+		//	dirs '<Location of your projects absolute path>/di-ipv-cri-lib/build/libs'
+		//}
+	}
+	dependencies {
+		cri_common_lib "uk.gov.account:cri-common-lib:${dependencyVersions.cri_common_lib}"
+		//cri_common_lib name: "di-ipv-cri-common-library-1.1.3"
+	}
+
+	java {
+		sourceCompatibility = JavaVersion.VERSION_11
+		targetCompatibility = JavaVersion.VERSION_11
+	}
+
 	task allDeps(type: DependencyReportTask) {}
 }
