@@ -48,10 +48,33 @@ ext {
 		nimbusJoseJwt:'9.16',
 		nimbusdsOauth2OidcSdk:'9.22.1',
 		powertoolsLogging:'1.12.2',
-		powertoolsParameters:'1.9.0'
+		powertoolsParameters:'1.9.0',
+		cri_common_lib           : "1.1.2"
+
 	]
 }
 
 subprojects {
+	configurations {
+		cri_common_lib
+	}
+
+	repositories {
+		mavenCentral()
+		//flatDir {
+		//	dirs '<Location of your projects absolute path>/di-ipv-cri-lib/build/libs'
+		//}
+	}
+
+	dependencies {
+		cri_common_lib "uk.gov.account:cri-common-lib:${dependencyVersions.cri_common_lib}"
+		//cri_common_lib name: "di-ipv-cri-common-library-1.1.3"
+	}
+
+	java {
+		sourceCompatibility = JavaVersion.VERSION_11
+		targetCompatibility = JavaVersion.VERSION_11
+	}
+
 	task allDeps(type: DependencyReportTask) {}
 }
