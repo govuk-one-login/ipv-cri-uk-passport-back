@@ -218,6 +218,8 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
       Policies:
+        - KMSDecryptPolicy:
+            KeyId: !Ref DynamoDBKmsKey
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
@@ -307,6 +309,8 @@ Resources:
           PASSPORT_CRI_CLIENT_AUDIENCE: !Sub "/${Environment}/credentialIssuers/ukPassport/self/audienceForClients"
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
       Policies:
+        - KMSDecryptPolicy:
+            KeyId: !Ref DynamoDBKmsKey
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
         - DynamoDBCrudPolicy:
@@ -382,6 +386,8 @@ Resources:
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
       Policies:
+        - KMSDecryptPolicy:
+            KeyId: !Ref DynamoDBKmsKey
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
@@ -461,6 +467,8 @@ Resources:
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
+        - KMSDecryptPolicy:
+            KeyId: !Ref DynamoDBKmsKey
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportAuthCodesTable
         - DynamoDBCrudPolicy:
@@ -530,6 +538,8 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
       Policies:
+        - KMSDecryptPolicy:
+            KeyId: !Ref DynamoDBKmsKey
         - DynamoDBCrudPolicy:
             TableName: !Ref CRIPassportBackSessionsTable
         - SSMParameterReadPolicy:
@@ -608,9 +618,9 @@ Resources:
         AttributeName: "ttl"
         Enabled: true
       SSESpecification:
-        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+        KMSMasterKeyId: !GetAtt DynamoDBKmsKey.Arn
 
   CRIPassportAuthCodesTable:
     Type: AWS::DynamoDB::Table
@@ -628,9 +638,9 @@ Resources:
         AttributeName: "ttl"
         Enabled: true
       SSESpecification:
-        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+        KMSMasterKeyId: !GetAtt DynamoDBKmsKey.Arn
 
   CRIPassportAccessTokensTable:
     Type: AWS::DynamoDB::Table
@@ -648,9 +658,9 @@ Resources:
         AttributeName: "ttl"
         Enabled: true
       SSESpecification:
-        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+        KMSMasterKeyId: !GetAtt DynamoDBKmsKey.Arn
 
   CRIPassportClientAuthJwtIdsTable:
     Type: AWS::DynamoDB::Table
@@ -668,9 +678,9 @@ Resources:
         AttributeName: "ttl"
         Enabled: true
       SSESpecification:
-        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+        KMSMasterKeyId: !GetAtt DynamoDBKmsKey.Arn
 
   CRIPassportBackSessionsTable:
     Type: AWS::DynamoDB::Table
@@ -688,9 +698,9 @@ Resources:
         AttributeName: "ttl"
         Enabled: true
       SSESpecification:
-        # checkov:skip=CKV_AWS_119: Implement Customer Managed Keys in PYIC-1391
         SSEEnabled: true
         SSEType: KMS
+        KMSMasterKeyId: !GetAtt DynamoDBKmsKey.Arn
 
   LoggingKmsKey:
     Type: AWS::KMS::Key
@@ -719,6 +729,35 @@ Resources:
               ArnLike:
                 "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
 
+  DynamoDBKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: "dynamodb.amazonaws.com"
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "kms:CallerAccount": !Sub "${AWS::AccountId}"
+                "kms:ViaService":
+                  - "dynamodb.amazonaws.com"
+                  - !Sub "lambda.${AWS::Region}.amazonaws.com"
 Outputs:
   IPVCriUkPassportBackAPIGatewayID:
     Description: CRI UK Passport API Gateway ID
