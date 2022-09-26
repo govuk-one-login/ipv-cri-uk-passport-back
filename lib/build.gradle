@@ -5,37 +5,28 @@ plugins {
 	id "java-library"
 	id "idea"
 	id "jacoco"
-}
-
-repositories {
-	mavenCentral()
+	id 'io.freefair.aspectj.post-compile-weaving' version '6.3.0'
 }
 
 dependencies {
+	implementation project(":common-lib"),
+			configurations.aws,
+			configurations.aws_enc_sdk,
+			configurations.lambda,
+			configurations.nimbus,
+			configurations.dynamodb,
+			configurations.jackson,
+			configurations.sqs,
+			configurations.apache_http_client,
+			configurations.gson
 
-	implementation "com.amazonaws:aws-java-sdk-dynamodb:$rootProject.ext.dependencyVersions.awsJavaSdkDynamodb",
-			"com.amazonaws:aws-java-sdk-sqs:$rootProject.ext.dependencyVersions.awsJavaSdkSqs",
-			"com.amazonaws:aws-lambda-java-core:$rootProject.ext.dependencyVersions.awsLambdaJavaCore",
-			"com.amazonaws:aws-lambda-java-events:$rootProject.ext.dependencyVersions.awsLambdaJavaEvents",
-			"com.fasterxml.jackson.core:jackson-annotations:$rootProject.ext.dependencyVersions.jackson",
-			"com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
-			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",
-			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$rootProject.ext.dependencyVersions.jackson",
-			"com.google.code.gson:gson:$rootProject.ext.dependencyVersions.gson",
-			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
-			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
-			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
-			"software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging",
-			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters"
+	aspect configurations.powertools
 
-	testImplementation "com.github.tomakehurst:wiremock-jre8:2.32.0",
-			"org.junit.jupiter:junit-jupiter:5.8.2",
-			"org.mockito:mockito-core:4.2.0",
-			"org.mockito:mockito-junit-jupiter:4.2.0",
-			"uk.org.webcompere:system-stubs-jupiter:1.2.0"
+	testImplementation configurations.tests
+	testRuntimeOnly configurations.test_runtime
 
-	compileOnly "org.projectlombok:lombok:$rootProject.ext.dependencyVersions.lombok"
-	annotationProcessor "org.projectlombok:lombok:$rootProject.ext.dependencyVersions.lombok"
+	compileOnly configurations.lombok
+	annotationProcessor configurations.lombok
 }
 
 java {
