@@ -62,7 +62,7 @@ class ConfigurationServiceTest {
         environmentVariables.set("ENVIRONMENT", "dev");
         when(ssmProvider.withDecryption()).thenReturn(ssmProviderWithDecryption);
         when(ssmProviderWithDecryption.get(
-                        "/dev/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"))
+                        "/dev/credentialIssuers/ukpassport/DCS/EncryptionKeyForPassportToDecrypt"))
                 .thenReturn(TEST_PRIVATE_KEY);
 
         PrivateKey underTest = configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY);

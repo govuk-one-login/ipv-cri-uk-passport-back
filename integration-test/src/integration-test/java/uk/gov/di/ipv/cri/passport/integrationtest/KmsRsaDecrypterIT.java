@@ -43,8 +43,8 @@ class KmsRsaDecrypterIT {
                     "The environment variable 'JAR_KMS_PUBLIC_KEY_PARAM' must be provided to run this test");
         }
 
-        String kmsId = configurationService.getSsmParameter(JAR_ENCRYPTION_KEY_ID);
-        String pubKey = configurationService.getSsmParameter(JAR_KMS_PUBLIC_KEY);
+        String kmsId = configurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID);
+        String pubKey = configurationService.getEnvironmentSsmParameter(JAR_KMS_PUBLIC_KEY);
 
         var header =
                 new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)

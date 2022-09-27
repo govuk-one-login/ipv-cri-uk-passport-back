@@ -61,7 +61,7 @@ class PassportServiceTest {
     void shouldPostToDcsEndpoint() throws IOException, EmptyDcsResponseException {
         String expectedPayload = "Test";
         HttpEntity httpEntity = new StringEntity(expectedPayload);
-        when(configurationService.getSsmParameter(DCS_POST_URL_PARAM))
+        when(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(httpResponse.getEntity()).thenReturn(httpEntity);
@@ -84,7 +84,7 @@ class PassportServiceTest {
     @Test
     void shouldReturnAnErrorWhenDCSRespondsWithNon200() throws IOException {
         String expectedPayload = "Test";
-        when(configurationService.getSsmParameter(DCS_POST_URL_PARAM))
+        when(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(500);
@@ -103,7 +103,7 @@ class PassportServiceTest {
 
     @Test
     void shouldReturnThrowExceptionWhenResponseFromDcsIsEmpty() throws IOException {
-        when(configurationService.getSsmParameter(DCS_POST_URL_PARAM))
+        when(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM))
                 .thenReturn(CHECK_PASSPORT_URI);
         when(httpClient.execute(any(HttpPost.class))).thenReturn(null);
         when(jwsObject.serialize()).thenReturn("Test");
