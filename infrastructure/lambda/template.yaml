@@ -1119,7 +1119,7 @@ Outputs:
     Description: CRI UK Passport API Gateway ID
     Value: !Sub "${PublicUKPassportAPI}"
     Export:
-      Name: !Sub ${AWS::StackName}-PublicUKPassportAPIGatewayID
+      Name: !Sub PassportBackAPIGatewayID-${AWS::StackName}
 
   PublicUKPassportApiBaseUrl:
     Description: "Base url of the Public UK Passport API Gateway"
@@ -1131,7 +1131,7 @@ Outputs:
     Description: CRI UK Passport Private API Gateway ID
     Value: !Sub "${PrivateUKPassportAPI}"
     Export:
-      Name: !Sub ${AWS::StackName}-PrivateUKPassportAPIGatewayID
+      Name: !Sub IPVCriUkPassportPrivateAPIGatewayID-${AWS::StackName}
 
   PrivateUKPassportApiBaseUrl:
     Description: "Base url of the Private UK Passport API Gateway"
