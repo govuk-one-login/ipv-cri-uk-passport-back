@@ -46,13 +46,14 @@ jobs:
           role-to-assume: ${{ secrets.ACTIONS_ROLE_ARN }}
           aws-region: eu-west-2
 
-      - name: Integration tests
-        env:
-          DCS_RESPONSE_TABLE_NAME: dcs-response-passport-cri-api
-          JAR_ENCRYPTION_KEY_ID_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
-          JAR_KMS_PUBLIC_KEY_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
-          ENVIRONMENT: build
-        run: ./gradlew intTest
+# To be re-enabled after env updated with common-cri template.
+#      - name: Integration tests
+#        env:
+#          DCS_RESPONSE_TABLE_NAME: dcs-response-passport-cri-api
+#          JAR_ENCRYPTION_KEY_ID_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
+#          JAR_KMS_PUBLIC_KEY_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+#          ENVIRONMENT: build
+#        run: ./gradlew intTest
 
       - name: Set up AWS creds For Pipeline
         uses: aws-actions/configure-aws-credentials@v1
@@ -60,19 +61,22 @@ jobs:
           role-to-assume: ${{ secrets.GH_ACTIONS_ROLE_ARN }}
           aws-region: eu-west-2
 
+      - name: Gradle build
+        run: ./gradlew clean buildZip
+
       - name: Generate code signing config
         id: signing
         uses: rusty-actions/sam-code-signing-config@39f63740a9f8622eb9b6755413a31a6013a62a86
         with:
-          template: ./deploy/template.yaml
+          template: ./infrastructure/lambda/template.yaml
           profile: ${{ secrets.SIGNING_PROFILE_NAME }}
 
       - name: SAM validate
-        working-directory: ./deploy
+        working-directory: ./infrastructure/lambda
         run: sam validate --region ${{ env.AWS_REGION }}
 
       - name: SAM build and test
-        working-directory: ./deploy
+        working-directory: ./infrastructure/lambda
         run: sam build
 
       - name: Deploy SAM app
@@ -80,5 +84,5 @@ jobs:
         with:
             artifact-bucket-name: ${{ secrets.ARTIFACT_BUCKET_NAME }}
             signing-profile-name: ${{ secrets.SIGNING_PROFILE_NAME }}
-            working-directory: ./deploy
+            working-directory: ./infrastructure/lambda
             template-file: template.yaml
