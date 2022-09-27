@@ -193,9 +193,9 @@ class IssueCredentialHandlerTest {
     }
 
     private void mockConfigurationServiceCalls() {
-        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("TEST");
-        when(mockConfigurationService.getSsmParameter(MAX_JWT_TTL)).thenReturn("1000");
+        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1000");
     }
 
     @Test
@@ -217,7 +217,7 @@ class IssueCredentialHandlerTest {
                 .thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test-issuer");
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
@@ -482,7 +482,7 @@ class IssueCredentialHandlerTest {
         when(mockAccessTokenService.getAccessTokenItem(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test-issuer");
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");

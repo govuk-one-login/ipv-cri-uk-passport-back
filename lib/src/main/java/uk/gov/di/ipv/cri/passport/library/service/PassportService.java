@@ -60,7 +60,8 @@ public class PassportService {
 
     public DcsSignedEncryptedResponse dcsPassportCheck(JWSObject payload)
             throws IOException, EmptyDcsResponseException {
-        HttpPost request = new HttpPost(configurationService.getSsmParameter(DCS_POST_URL_PARAM));
+        HttpPost request =
+                new HttpPost(configurationService.getEnvironmentSsmParameter(DCS_POST_URL_PARAM));
         request.addHeader(CONTENT_TYPE, APPLICATION_JOSE);
         request.setEntity(new StringEntity(payload.serialize()));
 
