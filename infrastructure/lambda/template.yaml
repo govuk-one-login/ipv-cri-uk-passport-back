@@ -214,6 +214,8 @@ Resources:
       TracingEnabled: true
       Auth:
         ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
       AccessLogSetting:
         DestinationArn: !GetAtt PublicUKPassportAPILogGroup.Arn
         Format: >-
@@ -353,7 +355,7 @@ Resources:
               Effect: Allow
               Action:
                 - 'kms:sign'
-              Resource: !ImportValue core-infrastructure-CriVcSigningKey1Arn
+              Resource: !ImportValue PassportCriVcSigningKeyArn
             - Sid: auditEventQueueKmsEncryptionKeyPermission
               Effect: Allow
               Action:
@@ -680,8 +682,16 @@ Resources:
             ParameterName: !Sub "${AWS::StackName}/clients"
         - SQSSendMessagePolicy:
             QueueName: !ImportValue AuditEventQueueName
-        - KMSDecryptPolicy:
-            KeyId: !ImportValue core-infrastructure-CriDecryptionKey1Id
+##        - KMSDecryptPolicy:
+##            KeyId: !ImportValue core-infrastructure-CriDecryptionKey1Id
+        - Statement:
+            - Sid: jarKmsEncryptionKeyPermission
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue PassportCriEncryptionKeyArn
         - Statement:
             - Sid: auditEventQueueKmsEncryptionKeyPermission
               Effect: Allow
@@ -847,51 +857,51 @@ Resources:
   #                                                                  #
   ####################################################################
 
-  PublicUKPassportAPIUsagePlan:
-    Type: AWS::ApiGateway::UsagePlan
-    DependsOn:
-      - PublicUKPassportAPIStage
-    Properties:
-      ApiStages:
-        - ApiId: !Ref PublicUKPassportAPI
-          Stage: !Ref Environment
-      Quota:
-        Limit: 500000
-        Period: DAY
-      Throttle:
-        BurstLimit: 100 # requests the API can handle concurrently
-        RateLimit: 50 # allowed requests per second
-
-  PrivateUKPassportAPIUsagePlan:
-    Type: AWS::ApiGateway::UsagePlan
-    DependsOn:
-      - PrivateUKPassportAPIStage
-    Properties:
-      ApiStages:
-        - ApiId: !Ref PrivateUKPassportAPI
-          Stage: !Ref Environment
-      Quota:
-        Limit: 500000
-        Period: DAY
-      Throttle:
-        BurstLimit: 100 # requests the API can handle concurrently
-        RateLimit: 50 # allowed requests per second
-
-  LinkUsagePlanApiKey1:
-    #Condition: IsNotDevEnvironment
-    Type: AWS::ApiGateway::UsagePlanKey
-    Properties:
-      KeyId: !ImportValue core-infrastructure-ApiKey1
-      KeyType: API_KEY
-      UsagePlanId: !Ref PublicUKPassportAPIUsagePlan
-
-  LinkUsagePlanApiKey2:
-    #Condition: IsNotDevEnvironment
-    Type: AWS::ApiGateway::UsagePlanKey
-    Properties:
-      KeyId: !ImportValue core-infrastructure-ApiKey2
-      KeyType: API_KEY
-      UsagePlanId: !Ref PublicUKPassportAPIUsagePlan
+#  PublicUKPassportAPIUsagePlan:
+#    Type: AWS::ApiGateway::UsagePlan
+#    DependsOn:
+#      - PublicUKPassportAPIStage
+#    Properties:
+#      ApiStages:
+#        - ApiId: !Ref PublicUKPassportAPI
+#          Stage: !Ref Environment
+#      Quota:
+#        Limit: 500000
+#        Period: DAY
+#      Throttle:
+#        BurstLimit: 100 # requests the API can handle concurrently
+#        RateLimit: 50 # allowed requests per second
+#
+#  PrivateUKPassportAPIUsagePlan:
+#    Type: AWS::ApiGateway::UsagePlan
+#    DependsOn:
+#      - PrivateUKPassportAPIStage
+#    Properties:
+#      ApiStages:
+#        - ApiId: !Ref PrivateUKPassportAPI
+#          Stage: !Ref Environment
+#      Quota:
+#        Limit: 500000
+#        Period: DAY
+#      Throttle:
+#        BurstLimit: 100 # requests the API can handle concurrently
+#        RateLimit: 50 # allowed requests per second
+#
+#  LinkUsagePlanApiKey1:
+#    #Condition: IsNotDevEnvironment
+#    Type: AWS::ApiGateway::UsagePlanKey
+#    Properties:
+#      KeyId: !ImportValue core-infrastructure-ApiKey1
+#      KeyType: API_KEY
+#      UsagePlanId: !Ref PublicUKPassportAPIUsagePlan
+#
+#  LinkUsagePlanApiKey2:
+#    #Condition: IsNotDevEnvironment
+#    Type: AWS::ApiGateway::UsagePlanKey
+#    Properties:
+#      KeyId: !ImportValue core-infrastructure-ApiKey2
+#      KeyType: API_KEY
+#      UsagePlanId: !Ref PublicUKPassportAPIUsagePlan
 
 ####################################################################
 #                                                                  #
@@ -1064,7 +1074,8 @@ Resources:
     Properties:
       Name: !Sub "/${AWS::StackName}/AuthRequestKmsEncryptionKeyId"
       Type: String
-      Value: !ImportValue core-infrastructure-CriDecryptionKey1Id
+#      Value: !ImportValue core-infrastructure-CriDecryptionKey1Id
+      Value: !ImportValue PassportCriEncryptionKeyArn
       Description: The (KMS) encryption key identifier for decrypting authorisation requests
 
   VerifiableCredentialIssuerParameter:
@@ -1080,7 +1091,8 @@ Resources:
     Properties:
       Name: !Sub "/${AWS::StackName}/verifiableCredentialKmsSigningKeyId"
       Type: String
-      Value: !ImportValue core-infrastructure-CriVcSigningKey1Id
+#      Value: !ImportValue core-infrastructure-CriVcSigningKey1Id
+      Value: !ImportValue PassportCriVcSigningKeyArn
       Description: Verifiable Credential Key Id
 
   LoggingKmsKey:
