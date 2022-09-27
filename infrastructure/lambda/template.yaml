@@ -324,7 +324,7 @@ Resources:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Ref Environment
-          DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
+          DCS_RESPONSE_TABLE_NAME: "dcs-response-table-issue-credential"
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
@@ -506,7 +506,7 @@ Resources:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           ENVIRONMENT: !Ref Environment
-          DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
+          DCS_RESPONSE_TABLE_NAME: "dcs-response-table-check-passport"
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt AccessTokenTable.Arn]]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
