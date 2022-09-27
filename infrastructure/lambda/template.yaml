@@ -1151,6 +1151,6 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-PrivateUKPassportApiBaseUrl
 
-  IpvCoreBackApiKeyId:
-    Description: The key id of the api key used by IPV Core to access passport back external api gateway
-    Value: !Ref LinkUsagePlanApiKey1
+#  IpvCoreBackApiKeyId:
+#    Description: The key id of the api key used by IPV Core to access passport back external api gateway
+#    Value: !Ref LinkUsagePlanApiKey1
