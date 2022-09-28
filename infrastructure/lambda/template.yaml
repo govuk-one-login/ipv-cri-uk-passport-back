@@ -21,6 +21,10 @@ Parameters:
       - "integration"
       - "production"
     ConstraintDescription: must be dev, build, staging, integration or production
+  PermissionsBoundary:
+    Description: "The ARN of the permissions boundary to apply when creating IAM roles"
+    Type: String
+    Default: "none"
 
 Conditions:
   EnforceCodeSigning: !Equals
@@ -46,7 +50,11 @@ Conditions:
     - dev
   IsNotDevEnvironment: !Not
     - Condition: IsDevEnvironment
-
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+        - !Ref PermissionsBoundary
+        - "none"
   AddProvisionedConcurrency: !Not
     - !Equals
       - !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
@@ -63,6 +71,10 @@ Globals:
       - CreateDevResources
       - !Ref AWS::NoValue
       - !Ref CodeSigningConfigArn
+    PermissionsBoundary: !If
+      - UsePermissionsBoundary
+      - !Ref PermissionsBoundary
+      - !Ref AWS::NoValue
     Timeout: 40
     MemorySize: !FindInMap [ MemorySizeMapping, Environment, !Ref 'Environment' ]
     Architectures:
