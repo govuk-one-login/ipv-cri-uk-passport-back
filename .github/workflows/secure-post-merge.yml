@@ -40,19 +40,19 @@ jobs:
       - name: Set up SAM cli
         uses: aws-actions/setup-sam@v1
 
-      - name: Set up AWS creds For Integration Tests
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.ACTIONS_ROLE_ARN }}
-          aws-region: eu-west-2
+#      - name: Set up AWS creds For Integration Tests
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          role-to-assume: ${{ secrets.ACTIONS_ROLE_ARN }}
+#          aws-region: eu-west-2
 
-      - name: Integration tests
-        env:
-          DCS_RESPONSE_TABLE_NAME: dcs-response-build
-          JAR_ENCRYPTION_KEY_ID_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
-          JAR_KMS_PUBLIC_KEY_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
-          ENVIRONMENT: build
-        run: ./gradlew intTest
+#      - name: Integration tests
+#        env:
+#          DCS_RESPONSE_TABLE_NAME: dcs-response-build
+#          JAR_ENCRYPTION_KEY_ID_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionKeyId
+#          JAR_KMS_PUBLIC_KEY_PARAM: /build/credentialIssuers/ukPassport/self/jarKmsEncryptionPublicKey
+#          ENVIRONMENT: build
+#        run: ./gradlew intTest
 
       - name: Set up AWS creds For Pipeline
         uses: aws-actions/configure-aws-credentials@v1
