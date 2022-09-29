@@ -26,8 +26,8 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUDIENCE;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUTH_MAX_TTL;
 
 public class JarValidator {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarValidator.class);
@@ -148,8 +148,7 @@ public class JarValidator {
     private JWTClaimsSet getValidatedClaimSet(SignedJWT signedJWT, String clientId)
             throws JarValidationException {
 
-        String criAudience =
-                configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE);
+        String criAudience = configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE);
         String clientIssuer = configurationService.getClientIssuer(clientId);
 
         DefaultJWTClaimsVerifier<?> verifier =
@@ -179,7 +178,8 @@ public class JarValidator {
     }
 
     private void validateMaxAllowedJarTtl(JWTClaimsSet claimsSet) throws JarValidationException {
-        String maxAllowedTtl = configurationService.getStackSsmParameter(MAX_JWT_TTL);
+        String maxAllowedTtl =
+                configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL);
         LocalDateTime maximumExpirationTime =
                 LocalDateTime.now().plusSeconds(Long.parseLong(maxAllowedTtl));
         LocalDateTime expirationTime =

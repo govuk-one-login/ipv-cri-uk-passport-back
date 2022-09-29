@@ -192,9 +192,9 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(0);
-        when(mockConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
+        when(mockConfigurationService.getSsmParameter(MAXIMUM_ATTEMPT_COUNT))
                 .thenReturn(String.valueOf(2));
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test");
 
         APIGatewayProxyRequestEvent event =
@@ -212,9 +212,9 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(2);
-        when(mockConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
+        when(mockConfigurationService.getSsmParameter(MAXIMUM_ATTEMPT_COUNT))
                 .thenReturn(String.valueOf(2));
-        when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("test");
 
         APIGatewayProxyRequestEvent event =

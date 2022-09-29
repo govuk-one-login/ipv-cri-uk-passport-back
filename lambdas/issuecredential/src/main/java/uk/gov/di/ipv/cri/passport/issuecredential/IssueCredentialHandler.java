@@ -89,8 +89,7 @@ public class IssueCredentialHandler
         this.passportSessionService = new PassportSessionService(configurationService);
         this.kmsSigner =
                 new KmsSigner(
-                        configurationService.getStackSsmParameter(
-                                VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID));
+                        configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID));
     }
 
     @Override
@@ -202,8 +201,7 @@ public class IssueCredentialHandler
 
     private AuditEvent createAuditEvent(VerifiableCredential vc, AuditEventUser user) {
         CredentialSubject credentialSubject = vc.getCredentialSubject();
-        String componentId =
-                configurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
+        String componentId = configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
         AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_VC_ISSUED;
         AuditRestricted restricted =
                 new AuditRestrictedVcCredentialSubject(
@@ -212,7 +210,7 @@ public class IssueCredentialHandler
                         credentialSubject.getPassport());
         AuditExtensions extensions =
                 new AuditExtensionsVcEvidence(
-                        configurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER),
+                        configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER),
                         vc.getEvidence());
         return new AuditEvent(eventType, componentId, user, restricted, extensions);
     }
@@ -224,9 +222,7 @@ public class IssueCredentialHandler
         JWTClaimsSet claimsSet =
                 new JWTClaimsSet.Builder()
                         .subject(passportCheck.getUserId())
-                        .issuer(
-                                configurationService.getStackSsmParameter(
-                                        VERIFIABLE_CREDENTIAL_ISSUER))
+                        .issuer(configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                         .audience(configurationService.getClientIssuer(passportCheck.getClientId()))
                         .notBeforeTime(new Date(now.toEpochMilli()))
                         .expirationTime(
@@ -234,7 +230,7 @@ public class IssueCredentialHandler
                                         now.plusSeconds(
                                                         Long.parseLong(
                                                                 configurationService
-                                                                        .getStackSsmParameter(
+                                                                        .getSsmParameter(
                                                                                 MAX_JWT_TTL)))
                                                 .toEpochMilli()))
                         .claim(VC_CLAIM, verifiableCredential)
