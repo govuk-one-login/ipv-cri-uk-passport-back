@@ -67,8 +67,7 @@ public class InitialiseSessionHandler
     public InitialiseSessionHandler() {
         this.configurationService = new ConfigurationService();
         this.kmsRsaDecrypter =
-                new KmsRsaDecrypter(
-                        configurationService.getStackSsmParameter(JAR_ENCRYPTION_KEY_ID));
+                new KmsRsaDecrypter(configurationService.getSsmParameter(JAR_ENCRYPTION_KEY_ID));
         this.jarValidator = new JarValidator(kmsRsaDecrypter, configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);

@@ -40,8 +40,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUDIENCE;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUTH_MAX_TTL;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 
@@ -59,7 +59,7 @@ class TokenRequestValidatorTest {
 
     @BeforeEach
     void setUp() {
-        when(mockConfigurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audience);
         validator = new TokenRequestValidator(mockConfigurationService, mockClientAuthJwtIdService);
     }
@@ -68,7 +68,8 @@ class TokenRequestValidatorTest {
     void shouldNotThrowForValidJwt() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("2400");
+        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("2400");
 
         var validQueryParams =
                 getValidQueryParams(generateClientAssertion(getValidClaimsSetValues()));
@@ -79,7 +80,8 @@ class TokenRequestValidatorTest {
     void shouldNotThrowForValidJwtWithDerSignature() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("2400");
+        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("2400");
 
         SignedJWT signedJWT = SignedJWT.parse(generateClientAssertion(getValidClaimsSetValues()));
         Base64URL derSignature =
@@ -183,7 +185,8 @@ class TokenRequestValidatorTest {
     void shouldFailWhenCLientJWTContainsExpiryClaimTooFarInFuture() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("2400");
+        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("2400");
         var expiredClaimsSetValues = new HashMap<>(getValidClaimsSetValues());
         expiredClaimsSetValues.put(
                 JWTClaimNames.EXPIRATION_TIME,
@@ -236,7 +239,8 @@ class TokenRequestValidatorTest {
     void shouldThrowIfMissingJwtId() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("2400");
+        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("2400");
         Map<String, Object> claimsSetValues = getClaimsSetValuesMissingJwtId();
         String clientAssertion = generateClientAssertion(claimsSetValues);
 
@@ -254,7 +258,8 @@ class TokenRequestValidatorTest {
     void shouldThrowIfJwtIdHasAlreadyBeenUsed() throws Exception {
         when(mockConfigurationService.getClientSigningPublicJwk(clientId))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(mockConfigurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("2400");
+        when(mockConfigurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("2400");
         Map<String, Object> claimsSetValues = getValidClaimsSetValues();
         String clientAssertion = generateClientAssertion(claimsSetValues);
 

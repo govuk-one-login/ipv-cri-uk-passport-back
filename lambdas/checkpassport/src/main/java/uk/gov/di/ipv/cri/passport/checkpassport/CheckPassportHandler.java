@@ -219,7 +219,7 @@ public class CheckPassportHandler
         if (unwrappedDcsResponse.isValid()
                 || attemptCount
                         >= Integer.parseInt(
-                                configurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))) {
+                                configurationService.getSsmParameter(MAXIMUM_ATTEMPT_COUNT))) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, Map.of(RESULT, RESULT_FINISH));
         }
@@ -242,8 +242,7 @@ public class CheckPassportHandler
         VerifiableCredential vc = VerifiableCredential.fromPassportCheckDao(passportCheckDao);
 
         CredentialSubject credentialSubject = vc.getCredentialSubject();
-        String componentId =
-                configurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
+        String componentId = configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
         AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT;
         AuditEventUser user = AuditEventUser.fromPassportSessionItem(passportSessionItem);
         AuditRestricted restricted =
@@ -253,8 +252,7 @@ public class CheckPassportHandler
                         credentialSubject.getPassport());
         AuditExtensions extensions =
                 new AuditExtensionsVcEvidence(
-                        configurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER),
-                        null);
+                        configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER), null);
         return new AuditEvent(eventType, componentId, user, restricted, extensions);
     }
 

@@ -45,8 +45,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUDIENCE;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_AUTH_MAX_TTL;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_2;
@@ -102,10 +102,11 @@ class JarValidatorTest {
                     ParseException {
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
-        when(configurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1500");
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("1500");
         when(configurationService.getClientRedirectUrls(anyString()))
                 .thenReturn(Collections.singletonList(redirectUriClaim));
 
@@ -211,7 +212,7 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
@@ -253,7 +254,7 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
@@ -304,7 +305,7 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
@@ -356,7 +357,7 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
@@ -408,7 +409,7 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
@@ -458,7 +459,7 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
 
@@ -508,10 +509,11 @@ class JarValidatorTest {
                 .thenReturn(Collections.singletonList(redirectUriClaim));
         when(configurationService.getClientSigningPublicJwk(anyString()))
                 .thenReturn(ECKey.parse(EC_PUBLIC_JWK_1));
-        when(configurationService.getStackSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUDIENCE))
                 .thenReturn(audienceClaim);
         when(configurationService.getClientIssuer(anyString())).thenReturn(issuerClaim);
-        when(configurationService.getStackSsmParameter(MAX_JWT_TTL)).thenReturn("1500");
+        when(configurationService.getSsmParameter(PASSPORT_CRI_CLIENT_AUTH_MAX_TTL))
+                .thenReturn("1500");
 
         Map<String, Object> invalidAudienceClaims =
                 Map.of(
