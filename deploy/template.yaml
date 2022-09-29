@@ -134,13 +134,13 @@ Resources:
           "responseLatency":"$context.responseLatency",
           "responseLength":"$context.responseLength"
           }
-# Disabled to overcome re-deployment issue
-#  IPVCriUKPassportPrivateAPILogGroup:
-#    Type: AWS::Logs::LogGroup
-#    Properties:
-#      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-PassportBackPrivate-API-GW-AccessLogs
-#      RetentionInDays: 14
-#      KmsKeyId: !GetAtt LoggingKmsKey.Arn
+
+  IPVCriUKPassportPrivateAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-PassportBackPrivate-API-GW-AccessLogs
+      RetentionInDays: 14
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportPrivateAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
@@ -176,13 +176,13 @@ Resources:
           "responseLatency":"$context.responseLatency",
           "responseLength":"$context.responseLength"
           }
-# Disabled to overcome re-deployment issue
-#  IPVCriUKPassportAPILogGroup:
-#    Type: AWS::Logs::LogGroup
-#    Properties:
-#      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
-#      RetentionInDays: 14
-#      KmsKeyId: !GetAtt LoggingKmsKey.Arn
+
+  IPVCriUKPassportAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
+      RetentionInDays: 14
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
   IPVCriUKPassportAPILogGroupSubscriptionFilter:
     Type: AWS::Logs::SubscriptionFilter
