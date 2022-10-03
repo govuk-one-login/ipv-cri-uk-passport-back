@@ -14,9 +14,9 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
 import java.util.stream.Stream;
 
@@ -34,27 +34,26 @@ class DataStoreTest {
     private static final String TEST_TABLE_NAME = "test-auth-code-table";
 
     @Mock private DynamoDbEnhancedClient mockDynamoDbEnhancedClient;
-    @Mock private DynamoDbTable<AuthorizationCodeItem> mockDynamoDbTable;
-    @Mock private PageIterable<AuthorizationCodeItem> mockPageIterable;
+    @Mock private DynamoDbTable<SessionItem> mockDynamoDbTable;
+    @Mock private PageIterable<SessionItem> mockPageIterable;
     @Mock private ConfigurationService mockConfigurationService;
 
-    private AuthorizationCodeItem authorizationCodeItem;
-    private DataStore<AuthorizationCodeItem> dataStore;
+    private SessionItem SessionItem;
+    private DataStore<SessionItem> dataStore;
 
     @BeforeEach
     void setUp() {
         when(mockDynamoDbEnhancedClient.table(
-                        anyString(), ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any()))
+                        anyString(), ArgumentMatchers.<TableSchema<SessionItem>>any()))
                 .thenReturn(mockDynamoDbTable);
 
-        authorizationCodeItem = new AuthorizationCodeItem();
-        authorizationCodeItem.setAuthCode(new AuthorizationCode().getValue());
-        authorizationCodeItem.setResourceId("test-resource-12345");
+        SessionItem = new SessionItem();
+        SessionItem.setAuthorizationCode(new AuthorizationCode().getValue());
 
         dataStore =
                 new DataStore<>(
                         TEST_TABLE_NAME,
-                        AuthorizationCodeItem.class,
+                        SessionItem.class,
                         mockDynamoDbEnhancedClient,
                         mockConfigurationService);
     }
@@ -63,22 +62,19 @@ class DataStoreTest {
     void shouldPutItemIntoDynamoDbTable() {
         when(mockConfigurationService.getSsmParameter(BACKEND_SESSION_TTL)).thenReturn("100");
 
-        dataStore.create(authorizationCodeItem);
+        dataStore.create(SessionItem);
 
-        ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
-                ArgumentCaptor.forClass(AuthorizationCodeItem.class);
+        ArgumentCaptor<SessionItem> SessionItemArgumentCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
 
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
-        verify(mockDynamoDbTable).putItem(authorizationCodeItemArgumentCaptor.capture());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
+        verify(mockDynamoDbTable).putItem(SessionItemArgumentCaptor.capture());
         assertEquals(
-                authorizationCodeItem.getAuthCode(),
-                authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
-        assertEquals(
-                authorizationCodeItem.getResourceId(),
-                authorizationCodeItemArgumentCaptor.getValue().getResourceId());
+                SessionItem.getAuthorizationCode(),
+                SessionItemArgumentCaptor.getValue().getAuthorizationCode());
     }
 
     @Test
@@ -90,7 +86,7 @@ class DataStoreTest {
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
         verify(mockDynamoDbTable).getItem(keyCaptor.capture());
         assertEquals("partition-key-12345", keyCaptor.getValue().partitionKeyValue().s());
         assertEquals("sort-key-12345", keyCaptor.getValue().sortKeyValue().get().s());
@@ -105,7 +101,7 @@ class DataStoreTest {
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
         verify(mockDynamoDbTable).getItem(keyCaptor.capture());
         assertEquals("partition-key-12345", keyCaptor.getValue().partitionKeyValue().s());
         assertTrue(keyCaptor.getValue().sortKeyValue().isEmpty());
@@ -121,28 +117,25 @@ class DataStoreTest {
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
         verify(mockDynamoDbTable).query(any(QueryConditional.class));
     }
 
     @Test
     void shouldUpdateItemInDynamoDbTable() {
-        dataStore.update(authorizationCodeItem);
+        dataStore.update(SessionItem);
 
-        ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
-                ArgumentCaptor.forClass(AuthorizationCodeItem.class);
+        ArgumentCaptor<SessionItem> SessionItemArgumentCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
 
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
-        verify(mockDynamoDbTable).updateItem(authorizationCodeItemArgumentCaptor.capture());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
+        verify(mockDynamoDbTable).updateItem(SessionItemArgumentCaptor.capture());
         assertEquals(
-                authorizationCodeItem.getAuthCode(),
-                authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
-        assertEquals(
-                authorizationCodeItem.getResourceId(),
-                authorizationCodeItemArgumentCaptor.getValue().getResourceId());
+                SessionItem.getAuthorizationCode(),
+                SessionItemArgumentCaptor.getValue().getAuthorizationCode());
     }
 
     @Test
@@ -154,7 +147,7 @@ class DataStoreTest {
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
         verify(mockDynamoDbTable).deleteItem(keyCaptor.capture());
         assertEquals("partition-key-12345", keyCaptor.getValue().partitionKeyValue().s());
         assertEquals("sort-key-12345", keyCaptor.getValue().sortKeyValue().get().s());
@@ -169,7 +162,7 @@ class DataStoreTest {
         verify(mockDynamoDbEnhancedClient)
                 .table(
                         eq(TEST_TABLE_NAME),
-                        ArgumentMatchers.<TableSchema<AuthorizationCodeItem>>any());
+                        ArgumentMatchers.<TableSchema<SessionItem>>any());
         verify(mockDynamoDbTable).deleteItem(keyCaptor.capture());
         assertEquals("partition-key-12345", keyCaptor.getValue().partitionKeyValue().s());
         assertTrue(keyCaptor.getValue().sortKeyValue().isEmpty());

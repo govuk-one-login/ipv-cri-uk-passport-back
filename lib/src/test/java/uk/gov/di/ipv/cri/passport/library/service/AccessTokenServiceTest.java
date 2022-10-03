@@ -17,9 +17,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.time.Instant;
@@ -39,7 +39,7 @@ import static uk.gov.di.ipv.cri.passport.library.service.AccessTokenService.DEFA
 @ExtendWith(MockitoExtension.class)
 class AccessTokenServiceTest {
 
-    @Mock private DataStore<AccessTokenItem> mockDataStore;
+    @Mock private DataStore<SessionItem> mockDataStore;
     @Mock private ConfigurationService mockConfigurationService;
 
     private AccessTokenService accessTokenService;
@@ -79,51 +79,47 @@ class AccessTokenServiceTest {
 
     @Test
     void shouldPersistAccessToken() {
-        String testResourceId = UUID.randomUUID().toString();
-        String testPassportSessionId = UUID.randomUUID().toString();
         AccessToken accessToken = new BearerAccessToken(3600L, null);
         AccessTokenResponse accessTokenResponse =
                 new AccessTokenResponse(new Tokens(accessToken, null));
-        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
-                ArgumentCaptor.forClass(AccessTokenItem.class);
+        ArgumentCaptor<SessionItem> SessionItemArgCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
 
-        accessTokenService.persistAccessToken(
-                accessTokenResponse, testResourceId, testPassportSessionId);
+        SessionItem sessionItem = new SessionItem();
+        accessTokenService.persistAccessToken(sessionItem,
+                accessTokenResponse);
 
-        verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
-        AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
-        assertNotNull(capturedAccessTokenItem);
-        assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
-        assertEquals(testPassportSessionId, capturedAccessTokenItem.getPassportSessionId());
+        verify(mockDataStore).update(SessionItemArgCaptor.capture());
+        SessionItem capturedSessionItem = SessionItemArgCaptor.getValue();
+        assertNotNull(capturedSessionItem);
+        assertEquals(sessionItem.getSessionId(), capturedSessionItem.getSessionId());
         assertEquals(
                 DigestUtils.sha256Hex(
                         accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
-                capturedAccessTokenItem.getAccessToken());
-        assertEquals(testResourceId, capturedAccessTokenItem.getResourceId());
-        assertNotNull(capturedAccessTokenItem.getAccessTokenExpiryDateTime());
+                capturedSessionItem.getAccessToken());
+        assertNotNull(capturedSessionItem.getAccessTokenExpiryDate());
     }
 
     @Test
     void shouldPersistAccessTokenWhenResourceIdNull() {
-        String testPassportSessionId = UUID.randomUUID().toString();
         AccessToken accessToken = new BearerAccessToken(3600L, null);
         AccessTokenResponse accessTokenResponse =
                 new AccessTokenResponse(new Tokens(accessToken, null));
-        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
-                ArgumentCaptor.forClass(AccessTokenItem.class);
+        ArgumentCaptor<SessionItem> SessionItemArgCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
 
-        accessTokenService.persistAccessToken(accessTokenResponse, null, testPassportSessionId);
+        SessionItem sessionItem = new SessionItem();
+        accessTokenService.persistAccessToken(sessionItem, accessTokenResponse);
 
-        verify(mockDataStore).create(accessTokenItemArgCaptor.capture());
-        AccessTokenItem capturedAccessTokenItem = accessTokenItemArgCaptor.getValue();
-        assertNotNull(capturedAccessTokenItem);
-        assertNull(capturedAccessTokenItem.getResourceId());
-        assertEquals(testPassportSessionId, capturedAccessTokenItem.getPassportSessionId());
+        verify(mockDataStore).update(SessionItemArgCaptor.capture());
+        SessionItem capturedSessionItem = SessionItemArgCaptor.getValue();
+        assertNotNull(capturedSessionItem);
+        assertEquals(sessionItem.getSessionId(), capturedSessionItem.getSessionId());
         assertEquals(
                 DigestUtils.sha256Hex(
                         accessTokenResponse.getTokens().getBearerAccessToken().getValue()),
-                capturedAccessTokenItem.getAccessToken());
-        assertNotNull(capturedAccessTokenItem.getAccessTokenExpiryDateTime());
+                capturedSessionItem.getAccessToken());
+        assertNotNull(capturedSessionItem.getAccessTokenExpiryDate());
     }
 
     @Test
@@ -133,22 +129,15 @@ class AccessTokenServiceTest {
         String accessTokenValue = accessToken.toAuthorizationHeader();
         String testPassportSessionId = UUID.randomUUID().toString();
 
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        DigestUtils.sha256Hex(accessTokenValue),
-                        testResourceId,
-                        Instant.now().toString(),
-                        testPassportSessionId);
-        accessTokenItem.setResourceId(testResourceId);
+        SessionItem SessionItem =
+                new SessionItem();
         when(mockDataStore.getItem(DigestUtils.sha256Hex(accessTokenValue)))
-                .thenReturn(accessTokenItem);
+                .thenReturn(SessionItem);
 
-        AccessTokenItem result = accessTokenService.getAccessTokenItem(accessTokenValue);
+        SessionItem result = accessTokenService.getSessionByAccessToken(accessTokenValue);
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessTokenValue));
 
-        assertNotNull(result.getResourceId());
-        assertEquals(testResourceId, result.getResourceId());
     }
 
     @Test
@@ -157,47 +146,39 @@ class AccessTokenServiceTest {
 
         when(mockDataStore.getItem(DigestUtils.sha256Hex(accessToken))).thenReturn(null);
 
-        AccessTokenItem accessTokenItem = accessTokenService.getAccessTokenItem(accessToken);
+        SessionItem SessionItem = accessTokenService.getSessionByAccessToken(accessToken);
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(accessToken));
-        assertNull(accessTokenItem);
+        assertNull(SessionItem);
     }
 
     @Test
     void shouldRevokeAccessToken() {
         String accessToken = "test-access-token";
 
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken,
-                        UUID.randomUUID().toString(),
-                        Instant.now().toString(),
-                        UUID.randomUUID().toString());
+        SessionItem SessionItem =
+                new SessionItem();
 
-        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+        when(mockDataStore.getItem(accessToken)).thenReturn(SessionItem);
 
         accessTokenService.revokeAccessToken(accessToken);
 
-        ArgumentCaptor<AccessTokenItem> accessTokenItemArgCaptor =
-                ArgumentCaptor.forClass(AccessTokenItem.class);
+        ArgumentCaptor<SessionItem> SessionItemArgCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
 
-        verify(mockDataStore).update(accessTokenItemArgCaptor.capture());
-        assertNotNull(accessTokenItemArgCaptor.getValue().getRevokedAtDateTime());
+        verify(mockDataStore).update(SessionItemArgCaptor.capture());
+        assertNotNull(SessionItemArgCaptor.getValue().getAccessTokenRevokedAtDateTime());
     }
 
     @Test
     void shouldNotAttemptUpdateIfAccessTokenIsAlreadyRevoked() {
         String accessToken = "test-access-token";
 
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken,
-                        UUID.randomUUID().toString(),
-                        Instant.now().toString(),
-                        UUID.randomUUID().toString());
-        accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+        SessionItem SessionItem =
+                new SessionItem();
+        SessionItem.setAccessTokenRevokedAtDateTime(Instant.now().toString());
 
-        when(mockDataStore.getItem(accessToken)).thenReturn(accessTokenItem);
+        when(mockDataStore.getItem(accessToken)).thenReturn(SessionItem);
 
         accessTokenService.revokeAccessToken(accessToken);
 

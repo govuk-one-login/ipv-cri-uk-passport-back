@@ -17,11 +17,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -30,7 +30,6 @@ import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
@@ -113,7 +112,7 @@ class CheckPassportHandlerTest {
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException, SqsException {
         mockDcsResponse(validDcsResponse);
-        mockPassportSessionItem(0);
+        SessionItem sessionItem = mockPassportSessionItem(0);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
@@ -135,7 +134,7 @@ class CheckPassportHandlerTest {
                 .sendAuditEvent(
                         AuditEventTypes.IPV_PASSPORT_CRI_END,
                         new AuditEventUser(
-                                "test-user-id", "test-session-id", "test-govuk-signin-journey-id"));
+                                "test-user-id", sessionItem.getSessionId().toString(), "test-govuk-signin-journey-id"));
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
@@ -369,16 +368,15 @@ class CheckPassportHandlerTest {
                 .thenReturn(validDcsResponse);
     }
 
-    private void mockPassportSessionItem(int attemptCount) {
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
+    private SessionItem mockPassportSessionItem(int attemptCount) {
+        SessionItem passportSessionItem = new SessionItem();
         passportSessionItem.setAttemptCount(attemptCount);
-        passportSessionItem.setUserId("test-user-id");
-        passportSessionItem.setPassportSessionId("test-session-id");
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
-        passportSessionItem.setAuthParams(
-                new AuthParams("code", "12345", "read", "https://example.com"));
+        passportSessionItem.setSubject("test-user-id");
+        passportSessionItem.setSessionId(passportSessionItem.getSessionId());
+        passportSessionItem.setClientSessionId("test-govuk-signin-journey-id");
 
         when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
                 .thenReturn(passportSessionItem);
+        return passportSessionItem;
     }
 }

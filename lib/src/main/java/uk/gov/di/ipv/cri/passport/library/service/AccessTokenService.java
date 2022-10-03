@@ -12,11 +12,11 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.time.Instant;
@@ -26,7 +26,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.CRI_
 
 public class AccessTokenService {
     protected static final Scope DEFAULT_SCOPE = new Scope("user-credentials");
-    private final DataStore<AccessTokenItem> dataStore;
+    private final DataStore<SessionItem> dataStore;
     private final ConfigurationService configurationService;
 
     @ExcludeFromGeneratedCoverageReport
@@ -36,14 +36,14 @@ public class AccessTokenService {
                 new DataStore<>(
                         this.configurationService.getEnvironmentVariable(
                                 CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME),
-                        AccessTokenItem.class,
+                        SessionItem.class,
                         DataStore.getClient(
                                 this.configurationService.getDynamoDbEndpointOverride()),
                         this.configurationService);
     }
 
     public AccessTokenService(
-            DataStore<AccessTokenItem> dataStore, ConfigurationService configurationService) {
+            DataStore<SessionItem> dataStore, ConfigurationService configurationService) {
         this.dataStore = dataStore;
         this.configurationService = configurationService;
     }
@@ -62,31 +62,28 @@ public class AccessTokenService {
         return ValidationResult.createValidResult();
     }
 
-    public AccessTokenItem getAccessTokenItem(String accessToken) {
-        AccessTokenItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
+    public SessionItem getSessionByAccessToken(String accessToken) {
+        SessionItem accessTokenItem = dataStore.getItem(DigestUtils.sha256Hex(accessToken));
         if (accessTokenItem != null) {
-            LogHelper.attachPassportSessionIdToLogs(accessTokenItem.getPassportSessionId());
+            LogHelper.attachPassportSessionIdToLogs(accessTokenItem.getSessionId().toString());
         }
         return accessTokenItem;
     }
 
     public void persistAccessToken(
-            AccessTokenResponse tokenResponse, String resourceId, String passportSessionId) {
+            SessionItem sessionItem, AccessTokenResponse tokenResponse) {
         BearerAccessToken accessToken = tokenResponse.getTokens().getBearerAccessToken();
-        dataStore.create(
-                new AccessTokenItem(
-                        DigestUtils.sha256Hex(accessToken.getValue()),
-                        resourceId,
-                        toExpiryDateTime(accessToken.getLifetime()),
-                        passportSessionId));
+        sessionItem.setAccessToken(DigestUtils.sha256Hex(accessToken.getValue()));
+        sessionItem.setAccessTokenExpiryDate(toExpiryDateTime(accessToken.getLifetime()));
+        dataStore.update(sessionItem);
     }
 
     public void revokeAccessToken(String accessToken) throws IllegalArgumentException {
-        AccessTokenItem accessTokenItem = dataStore.getItem(accessToken);
+        SessionItem accessTokenItem = dataStore.getItem(accessToken);
 
         if (Objects.nonNull(accessTokenItem)) {
-            if (StringUtils.isBlank(accessTokenItem.getRevokedAtDateTime())) {
-                accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+            if (StringUtils.isBlank(accessTokenItem.getAccessTokenRevokedAtDateTime())) {
+                accessTokenItem.setAccessTokenRevokedAtDateTime(Instant.now().toString());
                 dataStore.update(accessTokenItem);
             }
         } else {
@@ -95,7 +92,7 @@ public class AccessTokenService {
         }
     }
 
-    private String toExpiryDateTime(long expirySeconds) {
-        return Instant.now().plusSeconds(expirySeconds).toString();
+    private long toExpiryDateTime(long expirySeconds) {
+        return Instant.now().plusSeconds(expirySeconds).getEpochSecond();
     }
 }

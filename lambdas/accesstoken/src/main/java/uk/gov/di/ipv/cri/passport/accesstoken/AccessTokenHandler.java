@@ -15,14 +15,13 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.ClientAuthJwtIdService;
@@ -89,32 +88,29 @@ public class AccessTokenHandler
                         validationResult.getError().toJSONObject());
             }
 
-            AuthorizationCodeItem authorizationCodeItem =
-                    authorizationCodeService.getAuthCodeItem(
+            SessionItem authorizationCodeItem =
+                    authorizationCodeService.getSessionByAuthCode(
                             authorizationGrant.getAuthorizationCode().getValue());
 
-            if (authorizationCodeItem == null) {
+            String authorizationCode = authorizationCodeItem.getAuthorizationCode();
+            if (authorizationCode == null) {
                 LOGGER.error(
                         "Access Token could not be issued. The supplied authorization code was not found in the database.");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
                         OAuth2Error.INVALID_GRANT.toJSONObject());
             }
-            LogHelper.attachPassportSessionIdToLogs(authorizationCodeItem.getPassportSessionId());
-
-            PassportSessionItem passportSessionItem =
-                    passportSessionService.getPassportSession(
-                            authorizationCodeItem.getPassportSessionId());
+            LogHelper.attachPassportSessionIdToLogs(authorizationCodeItem.getSessionId().toString());
 
             LogHelper.attachGovukSigninJourneyIdToLogs(
-                    passportSessionItem.getGovukSigninJourneyId());
+                    authorizationCodeItem.getClientSessionId());
 
-            if (authorizationCodeItem.getIssuedAccessToken() != null) {
+            if (authorizationCodeItem.getAccessToken() != null) {
                 LOGGER.error(
                         "Auth code has been used multiple times. Auth code was exchanged for an access token at: {}",
-                        authorizationCodeItem.getExchangeDateTime());
+                        authorizationCodeItem.getAccessTokenExchangedDateTime());
 
-                ErrorObject error = revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
+                ErrorObject error = revokeAccessToken(authorizationCodeItem.getAccessToken());
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
@@ -122,17 +118,17 @@ public class AccessTokenHandler
             if (authorizationCodeService.isExpired(authorizationCodeItem)) {
                 LOGGER.error(
                         "Access Token could not be issued. The supplied authorization code has expired. Created at: {}",
-                        authorizationCodeItem.getCreationDateTime());
+                        authorizationCodeItem.getAuthCodeCreatedDateTime());
                 ErrorObject error =
                         OAuth2Error.INVALID_GRANT.setDescription("Authorization code expired");
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
 
-            if (redirectUrlsDoNotMatch(passportSessionItem, authorizationGrant)) {
+            if (redirectUrlsDoNotMatch(authorizationCodeItem, authorizationGrant)) {
                 LOGGER.error(
                         "Redirect URL in token request does not match that received in auth code request. Resource ID: {}",
-                        authorizationCodeItem.getResourceId());
+                        authorizationCodeItem.getSessionId());
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
                         OAuth2Error.INVALID_GRANT.toJSONObject());
@@ -141,13 +137,11 @@ public class AccessTokenHandler
             AccessTokenResponse accessTokenResponse =
                     accessTokenService.generateAccessToken().toSuccessResponse();
 
-            accessTokenService.persistAccessToken(
-                    accessTokenResponse,
-                    authorizationCodeItem.getResourceId(),
-                    authorizationCodeItem.getPassportSessionId());
+            accessTokenService.persistAccessToken(authorizationCodeItem,
+                    accessTokenResponse);
 
             authorizationCodeService.setIssuedAccessToken(
-                    authorizationCodeItem.getAuthCode(),
+                    authorizationCodeItem,
                     accessTokenResponse.getTokens().getBearerAccessToken().getValue());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -175,14 +169,14 @@ public class AccessTokenHandler
     }
 
     private boolean redirectUrlsDoNotMatch(
-            PassportSessionItem passportSessionItem, AuthorizationCodeGrant authorizationGrant) {
+            SessionItem passportSessionItem, AuthorizationCodeGrant authorizationGrant) {
 
-        if (Objects.isNull(passportSessionItem.getAuthParams().getRedirectUri())
+        if (Objects.isNull(passportSessionItem.getRedirectUri())
                 && Objects.isNull(authorizationGrant.getRedirectionURI())) {
             return false;
         }
 
-        if (Objects.isNull(passportSessionItem.getAuthParams().getRedirectUri())
+        if (Objects.isNull(passportSessionItem.getRedirectUri())
                 || Objects.isNull(authorizationGrant.getRedirectionURI())) {
             return true;
         }
@@ -190,7 +184,7 @@ public class AccessTokenHandler
         return !authorizationGrant
                 .getRedirectionURI()
                 .toString()
-                .equals(passportSessionItem.getAuthParams().getRedirectUri());
+                .equals(passportSessionItem.getRedirectUri().toString());
     }
 
     private ErrorObject revokeAccessToken(String accessToken) {

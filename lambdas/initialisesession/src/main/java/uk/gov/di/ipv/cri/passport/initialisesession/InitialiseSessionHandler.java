@@ -12,6 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -25,13 +26,13 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.KmsRsaDecrypter;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
 
 import java.text.ParseException;
+import java.util.UUID;
 
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.JAR_ENCRYPTION_KEY_ID;
 
@@ -97,7 +98,7 @@ public class InitialiseSessionHandler
 
             JWTClaimsSet claimsSet = jarValidator.validateRequestJwt(signedJWT, clientId);
 
-            PassportSessionItem passportSessionItem =
+            SessionItem passportSessionItem =
                     passportSessionService.generatePassportSession(claimsSet);
 
             this.auditService.sendAuditEvent(
@@ -105,7 +106,7 @@ public class InitialiseSessionHandler
                     AuditEventUser.fromPassportSessionItem(passportSessionItem));
 
             JarResponse response =
-                    generateJarResponse(claimsSet, passportSessionItem.getPassportSessionId());
+                    generateJarResponse(claimsSet, passportSessionItem.getSessionId());
 
             return ApiGatewayResponseGenerator.proxyJsonResponse(OK, response);
         } catch (RecoverableJarValidationException e) {
@@ -131,8 +132,8 @@ public class InitialiseSessionHandler
         }
     }
 
-    private JarResponse generateJarResponse(JWTClaimsSet claimsSet, String passportSessionId)
+    private JarResponse generateJarResponse(JWTClaimsSet claimsSet, UUID passportSessionId)
             throws ParseException {
-        return new JarResponse(claimsSet.getJSONObjectClaim(SHARED_CLAIMS), passportSessionId);
+        return new JarResponse(claimsSet.getJSONObjectClaim(SHARED_CLAIMS), passportSessionId.toString());
     }
 }

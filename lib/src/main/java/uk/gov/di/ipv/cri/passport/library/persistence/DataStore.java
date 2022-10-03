@@ -9,8 +9,8 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
+import uk.gov.di.ipv.cri.common.library.persistence.DynamodbItem;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.DynamodbItem;
 
 import java.net.URI;
 import java.time.Instant;

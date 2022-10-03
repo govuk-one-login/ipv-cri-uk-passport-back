@@ -22,12 +22,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.JarValidator;
@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -107,10 +108,9 @@ class InitialiseSessionHandlerTest {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setUserId("test-user-id");
-        passportSessionItem.setPassportSessionId("test-session-id");
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-id");
+        SessionItem passportSessionItem = new SessionItem();
+        passportSessionItem.setSubject("test-user-id");
+        passportSessionItem.setClientId("test-govuk-id");
         when(passportSessionService.generatePassportSession(any())).thenReturn(passportSessionItem);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -131,7 +131,7 @@ class InitialiseSessionHandlerTest {
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
         when(passportSessionService.generatePassportSession(any()))
-                .thenReturn(new PassportSessionItem());
+                .thenReturn(new SessionItem());
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);
@@ -198,7 +198,7 @@ class InitialiseSessionHandlerTest {
                 .thenThrow(new ParseException("Failed to parse jwt claim set", 0));
         when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(myMock);
         when(passportSessionService.generatePassportSession(any()))
-                .thenReturn(new PassportSessionItem());
+                .thenReturn(new SessionItem());
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);

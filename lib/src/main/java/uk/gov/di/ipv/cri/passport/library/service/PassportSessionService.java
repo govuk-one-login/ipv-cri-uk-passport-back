@@ -1,14 +1,13 @@
 package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.jwt.JWTClaimsSet;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
-import uk.gov.di.ipv.cri.passport.library.helpers.SecureTokenHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 
+import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
 
@@ -21,7 +20,7 @@ public class PassportSessionService {
     private static final String REDIRECT_URI = "redirect_uri";
     private static final String GOVUK_SIGNIN_JOURNEY_ID = "govuk_signin_journey_id";
 
-    private final DataStore<PassportSessionItem> dataStore;
+    private final DataStore<SessionItem> dataStore;
     private final ConfigurationService configurationService;
 
     @ExcludeFromGeneratedCoverageReport
@@ -31,45 +30,39 @@ public class PassportSessionService {
                 new DataStore<>(
                         this.configurationService.getEnvironmentVariable(
                                 PASSPORT_BACK_SESSIONS_TABLE_NAME),
-                        PassportSessionItem.class,
+                        SessionItem.class,
                         DataStore.getClient(
                                 this.configurationService.getDynamoDbEndpointOverride()),
                         this.configurationService);
     }
 
     public PassportSessionService(
-            DataStore<PassportSessionItem> dataStore, ConfigurationService configurationService) {
+            DataStore<SessionItem> dataStore, ConfigurationService configurationService) {
         this.dataStore = dataStore;
         this.configurationService = configurationService;
     }
 
-    public PassportSessionItem getPassportSession(String passportSessionId) {
+    public SessionItem getPassportSession(String passportSessionId) {
         return dataStore.getItem(passportSessionId);
     }
 
-    public PassportSessionItem generatePassportSession(JWTClaimsSet jwtClaimsSet)
+    public SessionItem generatePassportSession(JWTClaimsSet jwtClaimsSet)
             throws ParseException {
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setPassportSessionId(SecureTokenHelper.generate());
+        SessionItem passportSessionItem = new SessionItem();
 
-        LogHelper.attachPassportSessionIdToLogs(passportSessionItem.getPassportSessionId());
+        LogHelper.attachPassportSessionIdToLogs(passportSessionItem.getSessionId().toString());
 
-        passportSessionItem.setCreationDateTime(Instant.now().toString());
+        passportSessionItem.setCreatedDate(Instant.now().getEpochSecond());
         passportSessionItem.setAttemptCount(0);
-        passportSessionItem.setUserId(jwtClaimsSet.getSubject());
+        passportSessionItem.setSubject(jwtClaimsSet.getSubject());
 
         String govukSigninJourneyId = jwtClaimsSet.getStringClaim(GOVUK_SIGNIN_JOURNEY_ID);
-        passportSessionItem.setGovukSigninJourneyId(govukSigninJourneyId);
+        passportSessionItem.setClientSessionId(govukSigninJourneyId);
         LogHelper.attachGovukSigninJourneyIdToLogs(govukSigninJourneyId);
 
-        AuthParams authParams =
-                new AuthParams(
-                        jwtClaimsSet.getStringClaim(RESPONSE_TYPE),
-                        jwtClaimsSet.getStringClaim(CLIENT_ID),
-                        jwtClaimsSet.getStringClaim(STATE),
-                        jwtClaimsSet.getStringClaim(REDIRECT_URI));
-
-        passportSessionItem.setAuthParams(authParams);
+        passportSessionItem.setClientId(jwtClaimsSet.getStringClaim(CLIENT_ID));
+        passportSessionItem.setState(jwtClaimsSet.getStringClaim(STATE));
+        passportSessionItem.setRedirectUri(URI.create(jwtClaimsSet.getStringClaim(REDIRECT_URI)));
 
         dataStore.create(passportSessionItem);
 
@@ -77,13 +70,13 @@ public class PassportSessionService {
     }
 
     public void setLatestDcsResponseResourceId(String passportSessionID, String resourceId) {
-        PassportSessionItem passportSessionItem = dataStore.getItem(passportSessionID);
+        SessionItem passportSessionItem = dataStore.getItem(passportSessionID);
         passportSessionItem.setLatestDcsResponseResourceId(resourceId);
         dataStore.update(passportSessionItem);
     }
 
     public void incrementAttemptCount(String passportSessionID) {
-        PassportSessionItem passportSessionItem = dataStore.getItem(passportSessionID);
+        SessionItem passportSessionItem = dataStore.getItem(passportSessionID);
         passportSessionItem.setAttemptCount(passportSessionItem.getAttemptCount() + 1);
         dataStore.update(passportSessionItem);
     }

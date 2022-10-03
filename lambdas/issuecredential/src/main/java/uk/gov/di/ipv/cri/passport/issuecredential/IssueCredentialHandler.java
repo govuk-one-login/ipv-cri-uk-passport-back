@@ -17,6 +17,7 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -35,9 +36,7 @@ import uk.gov.di.ipv.cri.passport.library.helpers.JwtHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.KmsSigner;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
@@ -104,8 +103,8 @@ public class IssueCredentialHandler
                                     input.getHeaders(), AUTHORIZATION_HEADER_KEY),
                             AccessTokenType.BEARER);
 
-            AccessTokenItem accessTokenItem =
-                    accessTokenService.getAccessTokenItem(accessToken.getValue());
+            SessionItem accessTokenItem =
+                    accessTokenService.getSessionByAccessToken(accessToken.getValue());
 
             if (accessTokenItem == null) {
                 LOGGER.error(
@@ -118,18 +117,14 @@ public class IssueCredentialHandler
                                 .toJSONObject());
             }
 
-            PassportSessionItem passportSessionItem =
-                    passportSessionService.getPassportSession(
-                            accessTokenItem.getPassportSessionId());
-
             LogHelper.attachGovukSigninJourneyIdToLogs(
-                    passportSessionItem.getGovukSigninJourneyId());
+                    accessTokenItem.getClientSessionId());
 
-            String accessTokenExpiryDateTime = accessTokenItem.getAccessTokenExpiryDateTime();
-            if (Instant.now().isAfter(Instant.parse(accessTokenExpiryDateTime))) {
+            long accessTokenExpiryDate = accessTokenItem.getAccessTokenExpiryDate();
+            if (Instant.now().isAfter(Instant.ofEpochSecond(accessTokenExpiryDate))) {
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token expired at: {}",
-                        accessTokenExpiryDateTime);
+                        accessTokenExpiryDate);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
                         OAuth2Error.ACCESS_DENIED
@@ -137,10 +132,10 @@ public class IssueCredentialHandler
                                 .toJSONObject());
             }
 
-            if (StringUtils.isNotBlank(accessTokenItem.getRevokedAtDateTime())) {
+            if (StringUtils.isNotBlank(accessTokenItem.getAccessTokenRevokedAtDateTime())) {
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token has been revoked at: {}",
-                        accessTokenItem.getRevokedAtDateTime());
+                        accessTokenItem.getAccessTokenRevokedAtDateTime());
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
                         OAuth2Error.ACCESS_DENIED
@@ -152,7 +147,7 @@ public class IssueCredentialHandler
 
             PassportCheckDao passportCheck =
                     dcsPassportCheckService.getDcsPassportCheck(
-                            getPassportCheckResourceId(accessTokenItem, passportSessionItem));
+                            getPassportCheckResourceId(accessTokenItem));
             LogHelper.attachClientIdToLogs(passportCheck.getClientId());
 
             VerifiableCredential verifiableCredential =
@@ -164,7 +159,7 @@ public class IssueCredentialHandler
             auditService.sendAuditEvent(
                     createAuditEvent(
                             verifiableCredential,
-                            AuditEventUser.fromPassportSessionItem(passportSessionItem)));
+                            AuditEventUser.fromPassportSessionItem(accessTokenItem)));
 
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
@@ -193,9 +188,9 @@ public class IssueCredentialHandler
     }
 
     private String getPassportCheckResourceId(
-            AccessTokenItem accessTokenItem, PassportSessionItem passportSessionItem) {
+            SessionItem accessTokenItem) {
         return StringUtils.isBlank(accessTokenItem.getResourceId())
-                ? passportSessionItem.getLatestDcsResponseResourceId()
+                ? accessTokenItem.getLatestDcsResponseResourceId()
                 : accessTokenItem.getResourceId();
     }
 

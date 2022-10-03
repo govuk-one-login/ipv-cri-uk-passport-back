@@ -27,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
@@ -37,9 +38,7 @@ import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AccessTokenItem;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsPassportCheckService;
@@ -118,28 +117,20 @@ class IssueCredentialHandlerTest {
     void shouldReturn200OnSuccessfulDcsCredentialRequest() throws SqsException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken.getValue(),
-                        TEST_RESOURCE_ID,
-                        Instant.now().plusSeconds(3600).toString(),
-                        UUID.randomUUID().toString());
+        SessionItem accessTokenItem = new SessionItem();
+        accessTokenItem.setAccessTokenExpiryDate(Instant.now().plusSeconds(3600).getEpochSecond());
+        accessTokenItem.setResourceId("12345");
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+        when(mockAccessTokenService.getSessionByAccessToken(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
 
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
-
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
 
         mockConfigurationServiceCalls();
 
@@ -159,25 +150,19 @@ class IssueCredentialHandlerTest {
     void shouldReturn200WhenResourceIdInSessionDcsCredentialRequest() throws Exception {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken.getValue(),
-                        null,
-                        Instant.now().plusSeconds(3600).toString(),
-                        TEST_PASSPORT_SESSION_ID);
+        SessionItem accessTokenItem = new SessionItem();
+        accessTokenItem.setAccessTokenExpiryDate(Instant.now().plusSeconds(3600).getEpochSecond());
+        accessTokenItem.setResourceId(TEST_RESOURCE_ID);
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+        when(mockAccessTokenService.getSessionByAccessToken(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        SessionItem passportSessionItem = new SessionItem();
         passportSessionItem.setLatestDcsResponseResourceId(TEST_RESOURCE_ID);
-
-        when(mockPassportSessionService.getPassportSession(TEST_PASSPORT_SESSION_ID))
-                .thenReturn(passportSessionItem);
 
         when(mockDcsPassportCheckService.getDcsPassportCheck(TEST_RESOURCE_ID))
                 .thenReturn(passportCheckDao);
@@ -203,17 +188,14 @@ class IssueCredentialHandlerTest {
             throws JsonProcessingException, ParseException, JOSEException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken.getValue(),
-                        TEST_RESOURCE_ID,
-                        Instant.now().plusSeconds(3600).toString(),
-                        UUID.randomUUID().toString());
+        SessionItem accessTokenItem = new SessionItem();
+        accessTokenItem.setAccessTokenExpiryDate(Instant.now().plusSeconds(3600).getEpochSecond());
+        accessTokenItem.setResourceId("12345");
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
-        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+        when(mockAccessTokenService.getSessionByAccessToken(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
@@ -222,11 +204,6 @@ class IssueCredentialHandlerTest {
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
         mockConfigurationServiceCalls();
-
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -375,7 +352,7 @@ class IssueCredentialHandlerTest {
         event.setHeaders(headers);
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue())).thenReturn(null);
+        when(mockAccessTokenService.getSessionByAccessToken(accessToken.getValue())).thenReturn(null);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -401,21 +378,12 @@ class IssueCredentialHandlerTest {
         event.setHeaders(headers);
         setRequestBodyAsPlainJWT(event);
 
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken.getValue(),
-                        TEST_RESOURCE_ID,
-                        Instant.now().plusSeconds(60).toString(),
-                        UUID.randomUUID().toString());
-        accessTokenItem.setRevokedAtDateTime(Instant.now().toString());
+        SessionItem accessTokenItem = new SessionItem();
+        accessTokenItem.setAccessTokenExpiryDate(Instant.now().plusSeconds(60).getEpochSecond());
+        accessTokenItem.setAccessTokenRevokedAtDateTime(Instant.now().toString());
 
-        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+        when(mockAccessTokenService.getSessionByAccessToken(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
-
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -435,24 +403,17 @@ class IssueCredentialHandlerTest {
     void shouldReturnErrorResponseWhenExpiredAccessTokenProvided() throws JsonProcessingException {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
         AccessToken accessToken = new BearerAccessToken();
-        AccessTokenItem accessTokenItem =
-                new AccessTokenItem(
-                        accessToken.getValue(),
-                        TEST_RESOURCE_ID,
-                        Instant.now().minusSeconds(5).toString(),
-                        UUID.randomUUID().toString());
+        SessionItem accessTokenItem = new SessionItem();
         Map<String, String> headers =
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
         setRequestBodyAsPlainJWT(event);
 
-        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+        when(mockAccessTokenService.getSessionByAccessToken(accessToken.getValue()))
                 .thenReturn(accessTokenItem);
 
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
+        SessionItem passportSessionItem = new SessionItem();
+        passportSessionItem.setClientId("test-govuk-signin-journey-id");
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
@@ -475,11 +436,11 @@ class IssueCredentialHandlerTest {
                 Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
         event.setHeaders(headers);
 
-        AccessTokenItem accessTokenItem = new AccessTokenItem();
+        SessionItem accessTokenItem = new SessionItem();
         accessTokenItem.setResourceId(TEST_RESOURCE_ID);
         accessTokenItem.setAccessToken(accessToken.toAuthorizationHeader());
 
-        when(mockAccessTokenService.getAccessTokenItem(anyString())).thenReturn(accessTokenItem);
+        when(mockAccessTokenService.getSessionByAccessToken(anyString())).thenReturn(accessTokenItem);
         when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
                 .thenReturn(passportCheckDao);
         when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))

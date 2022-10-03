@@ -2,6 +2,7 @@ package uk.gov.di.ipv.cri.passport.library.persistence.item;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import uk.gov.di.ipv.cri.common.library.persistence.DynamodbItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;

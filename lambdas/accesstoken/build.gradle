@@ -28,8 +28,7 @@ dependencies {
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
-			project(":lib"),
-			configurations.cri_common_lib
+			project(path: ':lib', configuration: 'default')
 
 	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
 

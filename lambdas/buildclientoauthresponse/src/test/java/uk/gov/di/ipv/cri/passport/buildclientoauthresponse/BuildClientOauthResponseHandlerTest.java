@@ -15,21 +15,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,8 +76,9 @@ class BuildClientOauthResponseHandlerTest {
             throws JsonProcessingException, SqsException, URISyntaxException {
         when(mockAuthorizationCodeService.generateAuthorizationCode())
                 .thenReturn(authorizationCode);
+        SessionItem sessionItem = generatePassportSessionItem();
         when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(generatePassportSessionItem());
+                .thenReturn(sessionItem);
 
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
 
@@ -91,15 +93,15 @@ class BuildClientOauthResponseHandlerTest {
 
         verify(mockAuthorizationCodeService)
                 .persistAuthorizationCode(
-                        authorizationCode.getValue(),
-                        TEST_EVENT_HEADERS.get(PASSPORT_SESSION_ID_HEADER_NAME));
+                        eq(authorizationCode.getValue()),
+                        any(SessionItem.class));
 
         verify(mockAuditService)
                 .sendAuditEvent(
                         AuditEventTypes.IPV_PASSPORT_CRI_END,
                         new AuditEventUser(
                                 TEST_USER_ID,
-                                TEST_PASSPORT_SESSION_ID,
+                                sessionItem.getSessionId().toString(),
                                 TEST_GOVUK_SIGNIN_JOURNEY_ID));
 
         String expectedRedirectUrl =
@@ -117,8 +119,8 @@ class BuildClientOauthResponseHandlerTest {
         when(mockAuthorizationCodeService.generateAuthorizationCode())
                 .thenReturn(authorizationCode);
 
-        PassportSessionItem passportSessionItem = generatePassportSessionItem();
-        passportSessionItem.getAuthParams().setState(null);
+        SessionItem passportSessionItem = generatePassportSessionItem();
+        passportSessionItem.setState(null);
         when(mockPassportSessionService.getPassportSession(anyString()))
                 .thenReturn(passportSessionItem);
 
@@ -184,29 +186,9 @@ class BuildClientOauthResponseHandlerTest {
     }
 
     @Test
-    void shouldReturn500OnInvalidUriStringForRedirectUri() throws JsonProcessingException {
-        when(mockAuthorizationCodeService.generateAuthorizationCode())
-                .thenReturn(authorizationCode);
-        PassportSessionItem passportSessionItem = generatePassportSessionItem();
-        passportSessionItem.getAuthParams().setRedirectUri("https://inv^alid.com");
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
-
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
-
-        event.setHeaders(TEST_EVENT_HEADERS);
-
-        APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
-
-        objectMapper.readValue(response.getBody(), new TypeReference<>() {});
-
-        assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
-    }
-
-    @Test
     void shouldReturnAccessDeniedResponseIfNoPassportAttemptHasBeenMade()
             throws JsonProcessingException, SqsException, URISyntaxException {
-        PassportSessionItem passportSessionItem = generatePassportSessionItem();
+        SessionItem passportSessionItem = generatePassportSessionItem();
         passportSessionItem.setAttemptCount(0);
         when(mockPassportSessionService.getPassportSession(anyString()))
                 .thenReturn(passportSessionItem);
@@ -234,18 +216,18 @@ class BuildClientOauthResponseHandlerTest {
         assertEquals(expectedRedirectUrl, responseBody.getClient().getRedirectUrl());
     }
 
-    private PassportSessionItem generatePassportSessionItem() {
-        PassportSessionItem item = new PassportSessionItem();
+    private SessionItem generatePassportSessionItem() {
+        SessionItem item = new SessionItem();
 
-        AuthParams authParams =
-                new AuthParams("code", "ipv-core", "test-state", "https://example.com");
-
-        item.setAuthParams(authParams);
-        item.setPassportSessionId(TEST_PASSPORT_SESSION_ID);
-        item.setGovukSigninJourneyId(TEST_GOVUK_SIGNIN_JOURNEY_ID);
-        item.setCreationDateTime(new Date().toString());
-        item.setUserId(TEST_USER_ID);
+        item.setAccessToken("code");
+        item.setRedirectUri(URI.create( "https://example.com"));
+        item.setState("test-state");
+        item.setSessionId(item.getSessionId());
+        item.setClientId(TEST_GOVUK_SIGNIN_JOURNEY_ID);
+        item.setCreatedDate(Instant.now().getEpochSecond());
+        item.setSubject(TEST_USER_ID);
         item.setAttemptCount(1);
+        item.setClientSessionId("test-govuk-signin-journey-id");
 
         return item;
     }

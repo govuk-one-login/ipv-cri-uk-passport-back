@@ -13,6 +13,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientDetails;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -23,7 +24,6 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
@@ -67,13 +67,13 @@ public class BuildClientOauthResponseHandler
         try {
             String passportSessionId = RequestHelper.getPassportSessionId(input);
 
-            PassportSessionItem passportSessionItem =
+            SessionItem passportSessionItem =
                     passportSessionService.getPassportSession(passportSessionId);
             AuditEventUser auditEventUser =
                     AuditEventUser.fromPassportSessionItem(passportSessionItem);
 
             LogHelper.attachGovukSigninJourneyIdToLogs(
-                    passportSessionItem.getGovukSigninJourneyId());
+                    passportSessionItem.getClientSessionId());
 
             if (passportSessionItem.getAttemptCount() == 0) {
                 LOGGER.info(
@@ -91,7 +91,7 @@ public class BuildClientOauthResponseHandler
                     authorizationCodeService.generateAuthorizationCode();
 
             authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), passportSessionId);
+                    authorizationCode.getValue(), passportSessionItem);
 
             ClientResponse clientResponse =
                     generateClientSuccessResponse(
@@ -121,28 +121,28 @@ public class BuildClientOauthResponseHandler
     }
 
     private ClientResponse generateClientSuccessResponse(
-            PassportSessionItem passportSessionItem, String authorizationCode)
+            SessionItem passportSessionItem, String authorizationCode)
             throws URISyntaxException {
         URIBuilder redirectUri =
-                new URIBuilder(passportSessionItem.getAuthParams().getRedirectUri())
+                new URIBuilder(passportSessionItem.getRedirectUri())
                         .addParameter("code", authorizationCode);
 
-        if (StringUtils.isNotBlank(passportSessionItem.getAuthParams().getState())) {
-            redirectUri.addParameter("state", passportSessionItem.getAuthParams().getState());
+        if (StringUtils.isNotBlank(passportSessionItem.getState())) {
+            redirectUri.addParameter("state", passportSessionItem.getState());
         }
 
         return new ClientResponse(new ClientDetails(redirectUri.build().toString()));
     }
 
-    private ClientResponse generateClientErrorResponse(PassportSessionItem passportSessionItem)
+    private ClientResponse generateClientErrorResponse(SessionItem passportSessionItem)
             throws URISyntaxException {
         URIBuilder redirectUri =
-                new URIBuilder(passportSessionItem.getAuthParams().getRedirectUri())
+                new URIBuilder(passportSessionItem.getRedirectUri())
                         .addParameter("error", OAuth2Error.ACCESS_DENIED.getCode())
                         .addParameter(
                                 "error_description", OAuth2Error.ACCESS_DENIED.getDescription());
-        if (StringUtils.isNotBlank(passportSessionItem.getAuthParams().getState())) {
-            redirectUri.addParameter("state", passportSessionItem.getAuthParams().getState());
+        if (StringUtils.isNotBlank(passportSessionItem.getState())) {
+            redirectUri.addParameter("state", passportSessionItem.getState());
         }
 
         return new ClientResponse(new ClientDetails(redirectUri.build().toString()));

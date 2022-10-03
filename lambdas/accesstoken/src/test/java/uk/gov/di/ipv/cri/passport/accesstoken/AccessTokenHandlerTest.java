@@ -18,21 +18,22 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
 import org.apache.http.HttpStatus;
+import org.aspectj.lang.annotation.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AccessTokenService;
 import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -47,14 +48,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AccessTokenHandlerTest {
 
-    public static final String PASSPORT_SESSION_ID = UUID.randomUUID().toString();
-    private static final AuthorizationCodeItem TEST_AUTH_CODE_ITEM =
-            new AuthorizationCodeItem(
-                    new AuthorizationCode().toString(),
-                    UUID.randomUUID().toString(),
-                    "http://example.com",
-                    Instant.now().toString(),
-                    PASSPORT_SESSION_ID);
+    public static final UUID PASSPORT_SESSION_ID = UUID.randomUUID();
+    private static SessionItem TEST_AUTH_CODE_ITEM = new SessionItem();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mock private Context context;
@@ -63,6 +58,12 @@ class AccessTokenHandlerTest {
     @Mock private PassportSessionService mockPassportSessionService;
     @Mock private TokenRequestValidator mockTokenRequestValidator;
     @InjectMocks private AccessTokenHandler handler;
+
+    @BeforeEach
+    public void setup() {
+        TEST_AUTH_CODE_ITEM.setAuthorizationCode("12345");
+        TEST_AUTH_CODE_ITEM.setRedirectUri(URI.create("http://example.com"));
+    }
 
     @Test
     void shouldReturnAccessTokenOnSuccessfulExchange() throws Exception {
@@ -75,11 +76,10 @@ class AccessTokenHandlerTest {
         TokenResponse tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
         when(mockAccessTokenService.generateAccessToken()).thenReturn(tokenResponse);
 
-        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
+        when(mockAuthorizationCodeService.getSessionByAuthCode("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
-        mockSessionItem();
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -104,20 +104,18 @@ class AccessTokenHandlerTest {
         TokenResponse tokenResponse = new AccessTokenResponse(new Tokens(accessToken, null));
         when(mockAccessTokenService.generateAccessToken()).thenReturn(tokenResponse);
 
-        AuthorizationCodeItem authorizationCodeItemWithNoResourceId =
-                new AuthorizationCodeItem(
-                        new AuthorizationCode().toString(),
-                        null,
-                        "http://example.com",
-                        Instant.now().toString(),
-                        PASSPORT_SESSION_ID);
+        SessionItem authorizationCodeItemWithNoResourceId = new SessionItem();
 
-        when(mockAuthorizationCodeService.getAuthCodeItem("12345"))
+        authorizationCodeItemWithNoResourceId.setAuthorizationCode(new AuthorizationCode().toString());
+        authorizationCodeItemWithNoResourceId.setRedirectUri(URI.create("http://example.com"));
+        authorizationCodeItemWithNoResourceId.setCreatedDate(Instant.now().getEpochSecond());
+        authorizationCodeItemWithNoResourceId.setSessionId(PASSPORT_SESSION_ID);
+
+        when(mockAuthorizationCodeService.getSessionByAuthCode("12345"))
                 .thenReturn(authorizationCodeItemWithNoResourceId);
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
-        mockSessionItem();
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -198,7 +196,7 @@ class AccessTokenHandlerTest {
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
-        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(null);
+        when(mockAuthorizationCodeService.getSessionByAuthCode("12345")).thenReturn(new SessionItem());
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -219,13 +217,11 @@ class AccessTokenHandlerTest {
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
-        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
+        when(mockAuthorizationCodeService.getSessionByAuthCode("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
         when(mockAuthorizationCodeService.isExpired(TEST_AUTH_CODE_ITEM)).thenReturn(true);
 
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId(UUID.randomUUID().toString());
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
+        SessionItem passportSessionItem = new SessionItem();
+        passportSessionItem.setClientId(UUID.randomUUID().toString());
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
@@ -243,8 +239,7 @@ class AccessTokenHandlerTest {
                 "code=12345&redirect_uri=http://invalid-uri.com&grant_type=authorization_code&client_id=test_client_id";
         event.setBody(tokenRequestBody);
 
-        when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
-        mockSessionItem();
+        when(mockAuthorizationCodeService.getSessionByAuthCode("12345")).thenReturn(TEST_AUTH_CODE_ITEM);
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
@@ -255,15 +250,6 @@ class AccessTokenHandlerTest {
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getCode(), errorResponse.getCode());
         assertEquals(OAuth2Error.INVALID_GRANT.getDescription(), errorResponse.getDescription());
-    }
-
-    private void mockSessionItem() {
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setAuthParams(
-                new AuthParams(
-                        "responseType", "12345", "read", TEST_AUTH_CODE_ITEM.getRedirectUrl()));
-        when(mockPassportSessionService.getPassportSession(PASSPORT_SESSION_ID))
-                .thenReturn(passportSessionItem);
     }
 
     @Test
@@ -293,32 +279,29 @@ class AccessTokenHandlerTest {
                 "code=12345&redirect_uri=http://example.com&grant_type=authorization_code&client_id=test_client_id";
         event.setBody(tokenRequestBody);
 
-        AuthorizationCodeItem authorizationCodeItem =
-                new AuthorizationCodeItem(
-                        new AuthorizationCode().toString(),
-                        UUID.randomUUID().toString(),
-                        "http://example.com",
-                        Instant.now().toString(),
-                        UUID.randomUUID().toString());
+        SessionItem authorizationCodeItem = new SessionItem();
 
-        authorizationCodeItem.setIssuedAccessToken("test-access-token");
-        authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
+        authorizationCodeItem.setAuthorizationCode(new AuthorizationCode().toString());
+        authorizationCodeItem.setRedirectUri(URI.create("http://example.com"));
+        authorizationCodeItem.setCreatedDate(Instant.now().getEpochSecond());
+        authorizationCodeItem.setSessionId(PASSPORT_SESSION_ID);
 
-        when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
+        authorizationCodeItem.setAccessToken("test-access-token");
+        authorizationCodeItem.setAccessTokenExchangedDateTime(Instant.now().toString());
+
+        when(mockAuthorizationCodeService.getSessionByAuthCode(anyString()))
                 .thenReturn(authorizationCodeItem);
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
 
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId(UUID.randomUUID().toString());
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
+        SessionItem passportSessionItem = new SessionItem();
+        passportSessionItem.setClientId(UUID.randomUUID().toString());
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
         verify(mockAccessTokenService)
-                .revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
+                .revokeAccessToken(authorizationCodeItem.getAccessToken());
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
@@ -334,18 +317,17 @@ class AccessTokenHandlerTest {
                 "code=12345&redirect_uri=http://example.com&grant_type=authorization_code&client_id=test_client_id";
         event.setBody(tokenRequestBody);
 
-        AuthorizationCodeItem authorizationCodeItem =
-                new AuthorizationCodeItem(
-                        new AuthorizationCode().toString(),
-                        UUID.randomUUID().toString(),
-                        "http://example.com",
-                        Instant.now().toString(),
-                        UUID.randomUUID().toString());
+        SessionItem authorizationCodeItem = new SessionItem();
 
-        authorizationCodeItem.setIssuedAccessToken("test-access-token");
-        authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
+        authorizationCodeItem.setAuthorizationCode(new AuthorizationCode().toString());
+        authorizationCodeItem.setRedirectUri(URI.create("http://example.com"));
+        authorizationCodeItem.setCreatedDate(Instant.now().getEpochSecond());
+        authorizationCodeItem.setSessionId(PASSPORT_SESSION_ID);
 
-        when(mockAuthorizationCodeService.getAuthCodeItem(anyString()))
+        authorizationCodeItem.setAccessToken("test-access-token");
+        authorizationCodeItem.setAccessTokenExchangedDateTime(Instant.now().toString());
+
+        when(mockAuthorizationCodeService.getSessionByAuthCode(anyString()))
                 .thenReturn(authorizationCodeItem);
 
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
@@ -356,15 +338,13 @@ class AccessTokenHandlerTest {
                 .when(mockAccessTokenService)
                 .revokeAccessToken(any());
 
-        PassportSessionItem passportSessionItem = new PassportSessionItem();
-        passportSessionItem.setGovukSigninJourneyId(UUID.randomUUID().toString());
-        when(mockPassportSessionService.getPassportSession(anyString()))
-                .thenReturn(passportSessionItem);
+        SessionItem passportSessionItem = new SessionItem();
+        passportSessionItem.setClientId(UUID.randomUUID().toString());
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
         verify(mockAccessTokenService)
-                .revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
+                .revokeAccessToken(authorizationCodeItem.getAccessToken());
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 

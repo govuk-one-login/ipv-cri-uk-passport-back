@@ -24,8 +24,7 @@ dependencies {
 			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
-			project(":lib"),
-			configurations.cri_common_lib
+			project(path: ':lib', configuration: 'default')
 
 	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
 

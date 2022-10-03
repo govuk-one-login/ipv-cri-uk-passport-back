@@ -8,10 +8,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -27,7 +28,7 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.AU
 @ExtendWith(MockitoExtension.class)
 class AuthorizationCodeServiceTest {
 
-    @Mock private DataStore<AuthorizationCodeItem> mockDataStore;
+    @Mock private DataStore<SessionItem> mockDataStore;
     @Mock private ConfigurationService configurationService;
     @InjectMocks AuthorizationCodeService authorizationCodeService;
 
@@ -43,21 +44,22 @@ class AuthorizationCodeServiceTest {
         AuthorizationCode testCode = new AuthorizationCode();
         String resourceId = "resource-12345";
         String redirectUrl = "http://example.com";
-        String testPassportSessionId = "testPassportSessionId";
-        authorizationCodeService.persistAuthorizationCode(
-                testCode.getValue(), resourceId, redirectUrl, testPassportSessionId);
+        SessionItem passportSessionItem = new SessionItem();
+        passportSessionItem.setRedirectUri(URI.create("http://example.com"));
 
-        ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
-                ArgumentCaptor.forClass(AuthorizationCodeItem.class);
-        verify(mockDataStore).create(authorizationCodeItemArgumentCaptor.capture());
-        assertEquals(resourceId, authorizationCodeItemArgumentCaptor.getValue().getResourceId());
+        authorizationCodeService.persistAuthorizationCode(
+                testCode.getValue(), passportSessionItem);
+
+        ArgumentCaptor<SessionItem> authorizationCodeItemArgumentCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
+        verify(mockDataStore).update(authorizationCodeItemArgumentCaptor.capture());
         assertEquals(
-                testPassportSessionId,
-                authorizationCodeItemArgumentCaptor.getValue().getPassportSessionId());
+                passportSessionItem.getSessionId(),
+                authorizationCodeItemArgumentCaptor.getValue().getSessionId());
         assertEquals(
                 DigestUtils.sha256Hex(testCode.getValue()),
-                authorizationCodeItemArgumentCaptor.getValue().getAuthCode());
-        assertEquals(redirectUrl, authorizationCodeItemArgumentCaptor.getValue().getRedirectUrl());
+                authorizationCodeItemArgumentCaptor.getValue().getAuthorizationCode());
+        assertEquals(redirectUrl, authorizationCodeItemArgumentCaptor.getValue().getRedirectUri().toString());
     }
 
     @Test
@@ -65,20 +67,18 @@ class AuthorizationCodeServiceTest {
         AuthorizationCode testCode = new AuthorizationCode();
         String resourceId = "resource-12345";
 
-        AuthorizationCodeItem testItem = new AuthorizationCodeItem();
-        testItem.setResourceId(resourceId);
-        testItem.setAuthCode(new AuthorizationCode().getValue());
-        testItem.setRedirectUrl("http://example.com");
+        SessionItem testItem = new SessionItem();
+        testItem.setAuthorizationCode(new AuthorizationCode().getValue());
+        testItem.setRedirectUri(URI.create("http://example.com"));
         when(mockDataStore.getItem(DigestUtils.sha256Hex(testCode.getValue())))
                 .thenReturn(testItem);
 
-        AuthorizationCodeItem resultAuthCodeItem =
-                authorizationCodeService.getAuthCodeItem(testCode.getValue());
+        SessionItem resultAuthCodeItem =
+                authorizationCodeService.getSessionByAuthCode(testCode.getValue());
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(testCode.getValue()));
-        assertEquals(resourceId, resultAuthCodeItem.getResourceId());
-        assertEquals(testItem.getAuthCode(), resultAuthCodeItem.getAuthCode());
-        assertEquals(testItem.getRedirectUrl(), resultAuthCodeItem.getRedirectUrl());
+        assertEquals(testItem.getAuthorizationCode(), resultAuthCodeItem.getAuthorizationCode());
+        assertEquals(testItem.getRedirectUri(), resultAuthCodeItem.getRedirectUri());
     }
 
     @Test
@@ -87,8 +87,8 @@ class AuthorizationCodeServiceTest {
 
         when(mockDataStore.getItem(DigestUtils.sha256Hex(testCode.getValue()))).thenReturn(null);
 
-        AuthorizationCodeItem resultAuthCodeItem =
-                authorizationCodeService.getAuthCodeItem(testCode.getValue());
+        SessionItem resultAuthCodeItem =
+                authorizationCodeService.getSessionByAuthCode(testCode.getValue());
 
         verify(mockDataStore).getItem(DigestUtils.sha256Hex(testCode.getValue()));
         assertNull(resultAuthCodeItem);
@@ -97,34 +97,26 @@ class AuthorizationCodeServiceTest {
     @Test
     void shouldCallUpdateWithIssuedAccessTokenValue() {
         AuthorizationCode testCode = new AuthorizationCode();
-        AuthorizationCodeItem authorizationCodeItem =
-                new AuthorizationCodeItem(
-                        testCode.getValue(),
-                        "test-resource",
-                        "http://example.com",
-                        Instant.now().toString(),
-                        UUID.randomUUID().toString());
+        SessionItem authorizationCodeItem =
+                new SessionItem();
 
-        when(mockDataStore.getItem(testCode.getValue())).thenReturn(authorizationCodeItem);
-        authorizationCodeService.setIssuedAccessToken(testCode.getValue(), "test-access-token");
+        authorizationCodeService.setIssuedAccessToken(authorizationCodeItem, "test-access-token");
 
-        ArgumentCaptor<AuthorizationCodeItem> authorizationCodeItemArgumentCaptor =
-                ArgumentCaptor.forClass(AuthorizationCodeItem.class);
+        ArgumentCaptor<SessionItem> authorizationCodeItemArgumentCaptor =
+                ArgumentCaptor.forClass(SessionItem.class);
         verify(mockDataStore).update(authorizationCodeItemArgumentCaptor.capture());
 
-        assertNotNull(authorizationCodeItemArgumentCaptor.getValue().getExchangeDateTime());
+        assertNotNull(authorizationCodeItemArgumentCaptor.getValue().getAccessTokenExchangedDateTime());
     }
 
     @Test
     void isExpiredReturnsTrueIfAuthCodeItemHasExpired() {
         when(configurationService.getSsmParameter(AUTH_CODE_EXPIRY_CODE_SECONDS)).thenReturn("600");
-        AuthorizationCodeItem expiredAuthCodeItem =
-                new AuthorizationCodeItem(
-                        "auth-code",
-                        "resource-id",
-                        "redirect-url",
-                        Instant.now().minusSeconds(601).toString(),
-                        "passport-session-id");
+        SessionItem expiredAuthCodeItem =
+                new SessionItem();
+        expiredAuthCodeItem.setAuthorizationCode("auth-code");
+        expiredAuthCodeItem.setRedirectUri(URI.create("http://example.com"));
+        expiredAuthCodeItem.setAuthCodeCreatedDateTime(Instant.now().minusSeconds(601).toString());
 
         assertTrue(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }
@@ -132,13 +124,11 @@ class AuthorizationCodeServiceTest {
     @Test
     void isExpiredReturnsFalseIfAuthCodeItemHasNotExpired() {
         when(configurationService.getSsmParameter(AUTH_CODE_EXPIRY_CODE_SECONDS)).thenReturn("600");
-        AuthorizationCodeItem expiredAuthCodeItem =
-                new AuthorizationCodeItem(
-                        "auth-code",
-                        "resource-id",
-                        "redirect-url",
-                        Instant.now().minusSeconds(599).toString(),
-                        "passport-session-id");
+        SessionItem expiredAuthCodeItem =
+                new SessionItem();
+        expiredAuthCodeItem.setAuthorizationCode("auth-code");
+        expiredAuthCodeItem.setRedirectUri(URI.create("http://example.com"));
+        expiredAuthCodeItem.setAuthCodeCreatedDateTime(Instant.now().minusSeconds(599).toString());
 
         assertFalse(authorizationCodeService.isExpired(expiredAuthCodeItem));
     }

@@ -2,18 +2,19 @@ package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import org.apache.commons.codec.digest.DigestUtils;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.persistence.DataStore;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.AuthorizationCodeItem;
 
+import java.net.URI;
 import java.time.Instant;
 
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.AUTH_CODE_EXPIRY_CODE_SECONDS;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.CRI_PASSPORT_AUTH_CODES_TABLE_NAME;
 
 public class AuthorizationCodeService {
-    private final DataStore<AuthorizationCodeItem> dataStore;
+    private final DataStore<SessionItem> dataStore;
     private final ConfigurationService configurationService;
 
     @ExcludeFromGeneratedCoverageReport
@@ -23,13 +24,13 @@ public class AuthorizationCodeService {
                 new DataStore<>(
                         configurationService.getEnvironmentVariable(
                                 CRI_PASSPORT_AUTH_CODES_TABLE_NAME),
-                        AuthorizationCodeItem.class,
+                        SessionItem.class,
                         DataStore.getClient(configurationService.getDynamoDbEndpointOverride()),
                         configurationService);
     }
 
     public AuthorizationCodeService(
-            DataStore<AuthorizationCodeItem> dataStore, ConfigurationService configurationService) {
+            DataStore<SessionItem> dataStore, ConfigurationService configurationService) {
         this.configurationService = configurationService;
         this.dataStore = dataStore;
     }
@@ -38,7 +39,7 @@ public class AuthorizationCodeService {
         return new AuthorizationCode();
     }
 
-    public AuthorizationCodeItem getAuthCodeItem(String authorizationCode) {
+    public SessionItem getSessionByAuthCode(String authorizationCode) {
         return dataStore.getItem(DigestUtils.sha256Hex(authorizationCode));
     }
 
@@ -46,34 +47,28 @@ public class AuthorizationCodeService {
             String authorizationCode,
             String resourceId,
             String redirectUrl,
-            String passportSessionId) {
-        dataStore.create(
-                new AuthorizationCodeItem(
-                        DigestUtils.sha256Hex(authorizationCode),
-                        resourceId,
-                        redirectUrl,
-                        Instant.now().toString(),
-                        passportSessionId));
+            SessionItem passportSessionItem) {
+        passportSessionItem.setRedirectUri(URI.create(redirectUrl));
+        passportSessionItem.setAuthorizationCode(DigestUtils.sha256Hex(authorizationCode));
+        passportSessionItem.setAuthCodeCreatedDateTime(Instant.now().toString());
+        dataStore.update(passportSessionItem);
     }
 
-    public void persistAuthorizationCode(String authorizationCode, String passportSessionId) {
-        dataStore.create(
-                new AuthorizationCodeItem(
-                        DigestUtils.sha256Hex(authorizationCode),
-                        Instant.now().toString(),
-                        passportSessionId));
+    public void persistAuthorizationCode(String authorizationCode, SessionItem passportSessionItem) {
+        passportSessionItem.setAuthorizationCode(DigestUtils.sha256Hex(authorizationCode));
+        passportSessionItem.setAuthCodeCreatedDateTime(Instant.now().toString());
+        dataStore.update(passportSessionItem);
     }
 
-    public void setIssuedAccessToken(String authorizationCode, String accessToken) {
-        AuthorizationCodeItem authorizationCodeItem = dataStore.getItem(authorizationCode);
-        authorizationCodeItem.setIssuedAccessToken(DigestUtils.sha256Hex(accessToken));
-        authorizationCodeItem.setExchangeDateTime(Instant.now().toString());
+    public void setIssuedAccessToken(SessionItem authorizationCodeItem, String accessToken) {
+        authorizationCodeItem.setAccessToken(DigestUtils.sha256Hex(accessToken));
+        authorizationCodeItem.setAccessTokenExchangedDateTime(Instant.now().toString());
 
         dataStore.update(authorizationCodeItem);
     }
 
-    public boolean isExpired(AuthorizationCodeItem authCodeItem) {
-        return Instant.parse(authCodeItem.getCreationDateTime())
+    public boolean isExpired(SessionItem authCodeItem) {
+        return Instant.parse(authCodeItem.getAuthCodeCreatedDateTime())
                 .isBefore(
                         Instant.now()
                                 .minusSeconds(

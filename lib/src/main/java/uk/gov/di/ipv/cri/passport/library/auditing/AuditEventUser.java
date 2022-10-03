@@ -2,8 +2,8 @@ package uk.gov.di.ipv.cri.passport.library.auditing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 
 @ExcludeFromGeneratedCoverageReport
 @Data
@@ -27,10 +27,10 @@ public class AuditEventUser {
         this.govukSigninJourneyId = govukSigninJourneyId;
     }
 
-    public static AuditEventUser fromPassportSessionItem(PassportSessionItem passportSessionItem) {
+    public static AuditEventUser fromPassportSessionItem(SessionItem passportSessionItem) {
         return new AuditEventUser(
-                passportSessionItem.getUserId(),
-                passportSessionItem.getPassportSessionId(),
-                passportSessionItem.getGovukSigninJourneyId());
+                passportSessionItem.getSubject(),
+                passportSessionItem.getSessionId().toString(),
+                passportSessionItem.getClientSessionId());
     }
 }

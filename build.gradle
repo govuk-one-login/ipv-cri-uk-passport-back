@@ -61,14 +61,14 @@ subprojects {
 
 	repositories {
 		mavenCentral()
-		//flatDir {
-		//	dirs '<Location of your projects absolute path>/di-ipv-cri-lib/build/libs'
-		//}
+		flatDir {
+			dirs '/Users/jbentham/Documents/Projects/GDS/di-ipv-cri-lib/build/libs'
+		}
 	}
 
 	dependencies {
-		cri_common_lib "uk.gov.account:cri-common-lib:${dependencyVersions.cri_common_lib}"
-		//cri_common_lib name: "di-ipv-cri-common-library-1.1.3"
+		//cri_common_lib "uk.gov.account:cri-common-lib:${dependencyVersions.cri_common_lib}"
+		cri_common_lib name: "di-ipv-cri-common-library-1.1.3"
 	}
 
 	java {
