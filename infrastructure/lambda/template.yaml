@@ -509,7 +509,10 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref AuthCodesTable
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AuthCodesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
