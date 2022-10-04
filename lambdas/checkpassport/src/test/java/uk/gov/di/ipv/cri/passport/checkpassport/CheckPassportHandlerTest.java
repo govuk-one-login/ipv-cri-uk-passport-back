@@ -9,14 +9,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.utils.URIBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.passport.checkpassport.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -32,11 +35,13 @@ import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
 import uk.gov.di.ipv.cri.passport.library.service.AuditService;
+import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
@@ -57,9 +62,14 @@ import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VE
 
 @ExtendWith(MockitoExtension.class)
 class CheckPassportHandlerTest {
+    private static final String PASSPORT_SESSION_ID_HEADER_NAME = "passport_session_id";
     public static final String PASSPORT_SESSION_ID = "test-passport-session-id";
+    public static final String TEST_PASSPORT_SESSION_ID = "test-passport-session-id";
+
+    public static final String TEST_USER_ID = "test-user-id";
+    public static final String TEST_GOVUK_SIGNIN_JOURNEY_ID = "test-govuk-signin-journey-id";
     private static final Map<String, String> TEST_EVENT_HEADERS =
-            Map.of("passport_session_id", PASSPORT_SESSION_ID, "user_id", "test-user-id");
+            Map.of(PASSPORT_SESSION_ID_HEADER_NAME, PASSPORT_SESSION_ID, "user_id", TEST_USER_ID);
     public static final String PASSPORT_NUMBER = "1234567890";
     public static final String SURNAME = "Tattsyrup";
     public static final List<String> FORENAMES = List.of("Tubbs");
@@ -90,20 +100,25 @@ class CheckPassportHandlerTest {
     @Mock PassportService passportService;
     @Mock ConfigurationService mockConfigurationService;
     @Mock DcsCryptographyService dcsCryptographyService;
+    @Mock AuthorizationCodeService mockAuthorizationCodeService;
     @Mock PassportSessionService passportSessionService;
-    @Mock AuditService auditService;
+    @Mock AuditService mockAuditService;
     @Mock JWSObject jwsObject;
+
+    private AuthorizationCode authorizationCode;
 
     private CheckPassportHandler underTest;
 
     @BeforeEach
     void setUp() {
+        authorizationCode = new AuthorizationCode();
         underTest =
                 new CheckPassportHandler(
+                        mockAuthorizationCodeService,
                         passportService,
                         mockConfigurationService,
                         dcsCryptographyService,
-                        auditService,
+                        mockAuditService,
                         passportSessionService);
     }
 
@@ -114,6 +129,8 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException, SqsException {
         mockDcsResponse(validDcsResponse);
         mockPassportSessionItem(0);
+        when(mockAuthorizationCodeService.generateAuthorizationCode())
+                .thenReturn(authorizationCode);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
@@ -122,7 +139,7 @@ class CheckPassportHandlerTest {
         var response = underTest.handleRequest(event, context);
 
         ArgumentCaptor<AuditEvent> argumentCaptor = ArgumentCaptor.forClass(AuditEvent.class);
-        verify(auditService, times(2)).sendAuditEvent(argumentCaptor.capture());
+        verify(mockAuditService, times(2)).sendAuditEvent(argumentCaptor.capture());
         List<AuditEvent> capturedValues = argumentCaptor.getAllValues();
         assertEquals(
                 AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT,
@@ -131,11 +148,18 @@ class CheckPassportHandlerTest {
                 AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED,
                 capturedValues.get(1).getEventName());
 
-        verify(auditService)
+        verify(mockAuthorizationCodeService)
+                .persistAuthorizationCode(
+                        authorizationCode.getValue(),
+                        TEST_EVENT_HEADERS.get(PASSPORT_SESSION_ID_HEADER_NAME));
+
+        verify(mockAuditService)
                 .sendAuditEvent(
                         AuditEventTypes.IPV_PASSPORT_CRI_END,
                         new AuditEventUser(
-                                "test-user-id", "test-session-id", "test-govuk-signin-journey-id"));
+                                TEST_USER_ID,
+                                TEST_PASSPORT_SESSION_ID,
+                                TEST_GOVUK_SIGNIN_JOURNEY_ID));
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
@@ -146,6 +170,9 @@ class CheckPassportHandlerTest {
                     EmptyDcsResponseException {
         mockDcsResponse(validDcsResponse);
         mockPassportSessionItem(0);
+
+        when(mockAuthorizationCodeService.generateAuthorizationCode())
+                .thenReturn(authorizationCode);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
@@ -170,19 +197,58 @@ class CheckPassportHandlerTest {
     }
 
     @Test
-    void shouldReturnFinishOnValidDCSResponseAndBelowAttemptCountLimit()
+    void shouldReturn200OnValidDCSResponseAndBelowAttemptCountLimit()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
-                    EmptyDcsResponseException {
+                    EmptyDcsResponseException, SqsException, URISyntaxException {
         mockDcsResponse(validDcsResponse);
         mockPassportSessionItem(0);
+        when(mockAuthorizationCodeService.generateAuthorizationCode())
+                .thenReturn(authorizationCode);
 
         APIGatewayProxyRequestEvent event =
                 getApiGatewayProxyRequestEvent(
                         "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
 
-        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
-        assertEquals("finish", responseBody.get("result"));
+        APIGatewayProxyResponseEvent response = underTest.handleRequest(event, context);
+
+        ClientResponse responseBody =
+                objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        assertEquals(HttpStatus.SC_OK, response.getStatusCode());
+
+        ArgumentCaptor<AuditEvent> argumentCaptor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(mockAuditService, times(2)).sendAuditEvent(argumentCaptor.capture());
+        List<AuditEvent> capturedValues = argumentCaptor.getAllValues();
+        assertEquals(
+                AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT,
+                capturedValues.get(0).getEventName());
+        assertEquals(
+                AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED,
+                capturedValues.get(1).getEventName());
+
+        verify(mockAuthorizationCodeService)
+                .persistAuthorizationCode(
+                        authorizationCode.getValue(),
+                        TEST_EVENT_HEADERS.get(PASSPORT_SESSION_ID_HEADER_NAME));
+
+        verify(mockAuditService)
+                .sendAuditEvent(
+                        AuditEventTypes.IPV_PASSPORT_CRI_END,
+                        new AuditEventUser(
+                                TEST_USER_ID,
+                                TEST_PASSPORT_SESSION_ID,
+                                TEST_GOVUK_SIGNIN_JOURNEY_ID));
+
+        String expectedRedirectUrl =
+                new URIBuilder("https://example.com")
+                        .addParameter("code", authorizationCode.toString())
+                        .addParameter("state", "test-state")
+                        .build()
+                        .toString();
+
+        assertEquals(expectedRedirectUrl, responseBody.getClient().getRedirectUrl());
+        assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
     @Test
@@ -206,12 +272,14 @@ class CheckPassportHandlerTest {
     }
 
     @Test
-    void shouldReturnFinishOnInvalidDCSResponseAndAttemptCountLimitReached()
+    void shouldReturn200OnInvalidDCSResponseAndAttemptCountLimitReached()
             throws IOException, CertificateException, NoSuchAlgorithmException,
                     InvalidKeySpecException, JOSEException, ParseException,
                     EmptyDcsResponseException {
         mockDcsResponse(invalidDcsResponse);
         mockPassportSessionItem(2);
+        when(mockAuthorizationCodeService.generateAuthorizationCode())
+                .thenReturn(authorizationCode);
         when(mockConfigurationService.getStackSsmParameter(MAXIMUM_ATTEMPT_COUNT))
                 .thenReturn(String.valueOf(2));
         when(mockConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
@@ -221,8 +289,8 @@ class CheckPassportHandlerTest {
                 getApiGatewayProxyRequestEvent(
                         "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
 
-        Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
-        assertEquals("finish", responseBody.get("result"));
+        var response = underTest.handleRequest(event, context);
+        assertEquals(HttpStatus.SC_OK, response.getStatusCode());
     }
 
     @Test
@@ -372,11 +440,11 @@ class CheckPassportHandlerTest {
     private void mockPassportSessionItem(int attemptCount) {
         PassportSessionItem passportSessionItem = new PassportSessionItem();
         passportSessionItem.setAttemptCount(attemptCount);
-        passportSessionItem.setUserId("test-user-id");
-        passportSessionItem.setPassportSessionId("test-session-id");
-        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        passportSessionItem.setUserId(TEST_USER_ID);
+        passportSessionItem.setPassportSessionId(TEST_PASSPORT_SESSION_ID);
+        passportSessionItem.setGovukSigninJourneyId(TEST_GOVUK_SIGNIN_JOURNEY_ID);
         passportSessionItem.setAuthParams(
-                new AuthParams("code", "12345", "read", "https://example.com"));
+                new AuthParams("code", "12345", "test-state", "https://example.com"));
 
         when(passportSessionService.getPassportSession(PASSPORT_SESSION_ID))
                 .thenReturn(passportSessionItem);

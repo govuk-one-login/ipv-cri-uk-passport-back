@@ -509,7 +509,10 @@ Resources:
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${AWS::StackName}"
           SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
+          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref AuthCodesTable
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AuthCodesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref DCSResponseTable
         - DynamoDBCrudPolicy:
@@ -576,78 +579,6 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt CheckPassportFunction.Arn
-      Principal: apigateway.amazonaws.com
-
-  BuildClientOauthResponseFunction:
-    Type: AWS::Serverless::Function
-    DependsOn:
-      - "BuildClientOauthResponseFunctionLogGroup"
-    Properties:
-      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
-      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
-      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
-      Handler: uk.gov.di.ipv.cri.passport.buildclientoauthresponse.BuildClientOauthResponseHandler::handleRequest
-      Runtime: java11
-      PackageType: Zip
-      CodeUri: ../../dist/buildclientoauthresponse.zip
-      Environment:
-        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
-        Variables:
-          ENVIRONMENT: !Ref Environment
-          CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref AuthCodesTable
-          PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref SessionTable
-          SQS_AUDIT_EVENT_QUEUE_URL: !ImportValue AuditEventQueueUrl
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref AuthCodesTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref SessionTable
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub "${AWS::StackName}/SessionTtl"
-        - SQSSendMessagePolicy:
-            QueueName: !ImportValue AuditEventQueueName
-        - Statement:
-            - Sid: auditEventQueueKmsEncryptionKeyPermission
-              Effect: Allow
-              Action:
-                - 'kms:Decrypt'
-                - 'kms:GenerateDataKey'
-              Resource:
-                - !ImportValue AuditEventQueueEncryptionKeyArn
-      Events:
-        PrivateUKPassportAPI:
-          Type: Api
-          Properties:
-            RestApiId: !Ref PrivateUKPassportAPI
-            Path: /build-client-oauth-response
-            Method: POST
-      AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        !If
-        - AddProvisionedConcurrency
-        - ProvisionedConcurrentExecutions: !FindInMap [ProvisionedConcurrency, Environment, !Ref 'Environment']
-        - !Ref AWS::NoValue
-
-  BuildClientOauthResponseFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      RetentionInDays: 14
-      LogGroupName: !Sub "/aws/lambda/ipv-passport-build-client-oauth-response-${AWS::StackName}"
-      KmsKeyId: !GetAtt LoggingKmsKey.Arn
-
-  BuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref BuildClientOauthResponseFunctionLogGroup
-
-  BuildClientOauthResponseFunctionPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt BuildClientOauthResponseFunction.Arn
       Principal: apigateway.amazonaws.com
 
   InitialiseSessionFunction:
