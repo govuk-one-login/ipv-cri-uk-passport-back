@@ -787,6 +787,9 @@ Outputs:
       Name: !Sub "IPVCriUkPassportPrivateAPIGatewayID-${Environment}"
     Value: !Ref IPVCriUKPassportPrivateAPI
   IpvCoreBackApiKeyId:
+    # This !Ref isn't set explicitly in this template, it is generated as a result of PER_API in the UsagePlan of IPVCriUKPassportAPI.
+    # See https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-api-apiusageplan.html for details
     Description: >
       The key id of the api key used by IPV Core to access passport back external api gateway
-    Value: !Ref IPVCriUKPassportAPIApiKey
+    Value: !Ref IPVCriUKPassportAPIApiKey 
+    
