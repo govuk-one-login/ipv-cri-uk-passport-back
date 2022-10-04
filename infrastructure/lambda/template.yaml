@@ -242,7 +242,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref PublicUKPassportAPILogGroup
 
@@ -302,7 +302,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref PrivateUKPassportAPILogGroup
 
@@ -390,7 +390,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref IssueCredentialFunctionLogGroup
 
@@ -477,7 +477,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref AccessTokenFunctionLogGroup
 
@@ -567,7 +567,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref CheckPassportFunctionLogGroup
 
@@ -639,7 +639,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref BuildClientOauthResponseFunctionLogGroup
 
@@ -723,7 +723,7 @@ Resources:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref InitialiseSessionFunctionLogGroup
 
