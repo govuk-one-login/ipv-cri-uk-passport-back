@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.library.service;
+/*package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -81,3 +81,4 @@ class AuditServiceTest {
                 "someGovUkId", messageBody.get("user").get("govuk_signin_journey_id").asText());
     }
 }
+*/

@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.library.helpers;
+/*package uk.gov.di.ipv.cri.passport.library.helpers;
 
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
@@ -71,3 +71,4 @@ public class KmsSigner implements JWSSigner {
         return jcaContext;
     }
 }
+*/

@@ -173,7 +173,7 @@ public class CheckPassportHandler
 
             passportService.persistDcsResponse(passportCheckDao);
 
-            // DCS Response RID saving (temp location)
+            // TODO DCS Response RID saving (temp location)
             sessionItem.setResponseResourceId(passportCheckDao.getResourceId());
             sessionService.updateSession(sessionItem);
 

@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.library.service;
+/*package uk.gov.di.ipv.cri.passport.library.service;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -49,3 +49,4 @@ public class AuditService {
         }
     }
 }
+*/
