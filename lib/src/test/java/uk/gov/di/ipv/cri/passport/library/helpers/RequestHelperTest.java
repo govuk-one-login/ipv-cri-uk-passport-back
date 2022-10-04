@@ -29,22 +29,22 @@ class RequestHelperTest {
     }
 
     @Test
-    void getPassportSessionIdShouldReturnSessionIdFromHeaders() throws Exception {
+    void getSessionIdShouldReturnSessionIdFromHeaders() throws Exception {
         var event = new APIGatewayProxyRequestEvent();
-        event.setHeaders(Map.of("passport_session_id", "qwertyuiop"));
+        event.setHeaders(Map.of("session_id", "qwertyuiop"));
 
-        assertEquals("qwertyuiop", RequestHelper.getPassportSessionId(event));
+        assertEquals("qwertyuiop", RequestHelper.getSessionId(event));
     }
 
     @Test
-    void getPassportSessionIdShouldThrowIfSessionIdNotFound() {
+    void getSessionIdShouldThrowIfSessionIdNotFound() {
         var event = new APIGatewayProxyRequestEvent();
-        event.setHeaders(Map.of("passport_session_id", ""));
+        event.setHeaders(Map.of("session_id", ""));
 
         var exception =
                 assertThrows(
                         HttpResponseExceptionWithErrorBody.class,
-                        () -> RequestHelper.getPassportSessionId(event));
+                        () -> RequestHelper.getSessionId(event));
 
         assertEquals(
                 ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER, exception.getErrorResponse());

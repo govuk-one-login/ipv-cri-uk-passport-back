@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class RequestHelper {
 
-    public static final String PASSPORT_SESSION_ID_HEADER = "passport_session_id";
+    public static final String PASSPORT_SESSION_ID_HEADER = "session_id";
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestHelper.class);
 
     private RequestHelper() {}
@@ -51,7 +51,7 @@ public class RequestHelper {
         return queryPairs;
     }
 
-    public static String getPassportSessionId(APIGatewayProxyRequestEvent event)
+    public static String getSessionId(APIGatewayProxyRequestEvent event)
             throws HttpResponseExceptionWithErrorBody {
         String ipvSessionId =
                 RequestHelper.getHeaderByKey(event.getHeaders(), PASSPORT_SESSION_ID_HEADER);

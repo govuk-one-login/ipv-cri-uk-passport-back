@@ -9,51 +9,44 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSObject;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationRequest;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.lambda.powertools.logging.Logging;
+import uk.gov.di.ipv.cri.common.library.annotations.ExcludeFromGeneratedCoverageReport;
+import uk.gov.di.ipv.cri.common.library.domain.AuditEventContext;
+import uk.gov.di.ipv.cri.common.library.domain.AuditEventType;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.BirthDate;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.Name;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.NamePart;
+import uk.gov.di.ipv.cri.common.library.domain.personidentity.PersonIdentityDetailed;
+import uk.gov.di.ipv.cri.common.library.exception.SqsException;
+import uk.gov.di.ipv.cri.common.library.persistence.item.SessionItem;
+import uk.gov.di.ipv.cri.common.library.service.AuditService;
+import uk.gov.di.ipv.cri.common.library.service.SessionService;
+import uk.gov.di.ipv.cri.common.library.util.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.checkpassport.domain.ClientDetails;
 import uk.gov.di.ipv.cri.passport.checkpassport.domain.ClientResponse;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensions;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
-import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.config.PassportConfigurationService;
-import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.CredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
-import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.EmptyDcsResponseException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpResponseExceptionWithErrorBody;
 import uk.gov.di.ipv.cri.passport.library.exceptions.IpvCryptoException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.OAuthHttpResponseExceptionWithErrorBody;
-import uk.gov.di.ipv.cri.passport.library.exceptions.SqsException;
-import uk.gov.di.ipv.cri.passport.library.helpers.ApiGatewayResponseGenerator;
 import uk.gov.di.ipv.cri.passport.library.helpers.LogHelper;
 import uk.gov.di.ipv.cri.passport.library.helpers.RequestHelper;
 import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportCheckDao;
-import uk.gov.di.ipv.cri.passport.library.persistence.item.PassportSessionItem;
-import uk.gov.di.ipv.cri.passport.library.service.AuditService;
-import uk.gov.di.ipv.cri.passport.library.service.AuthorizationCodeService;
 import uk.gov.di.ipv.cri.passport.library.service.DcsCryptographyService;
 import uk.gov.di.ipv.cri.passport.library.service.PassportService;
-import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 import uk.gov.di.ipv.cri.passport.library.service.ServiceFactory;
 
 import java.io.IOException;
@@ -63,14 +56,13 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAXIMUM_ATTEMPT_COUNT;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 
 public class CheckPassportHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -81,52 +73,43 @@ public class CheckPassportHandler
     private static final int MAX_PASSPORT_GPG45_STRENGTH_VALUE = 4;
     private static final int MAX_PASSPORT_GPG45_VALIDITY_VALUE = 2;
     private static final int MIN_PASSPORT_GPG45_VALUE = 0;
-
-    public static final String CLIENT_ID_PARAM = "client_id";
-    public static final String REDIRECT_URI_PARAM = "redirect_uri";
-    public static final String RESPONSE_TYPE_PARAM = "response_type";
     public static final String STATE_PARAM = "state";
+    public static final String AUTH_CODE_PARAM = "code";
 
     public static final String RESULT = "result";
-    public static final String RESULT_FINISH = "finish";
     public static final String RESULT_RETRY = "retry";
 
     private final PassportService passportService;
     private final PassportConfigurationService passportConfigurationService;
     private final DcsCryptographyService dcsCryptographyService;
     private final AuditService auditService;
-
-    private final AuthorizationCodeService authorizationCodeService;
-    private final PassportSessionService passportSessionService;
+    private final SessionService sessionService;
 
     public CheckPassportHandler(
-            AuthorizationCodeService authorizationCodeService,
             PassportService passportService,
             PassportConfigurationService passportConfigurationService,
             DcsCryptographyService dcsCryptographyService,
             AuditService auditService,
-            PassportSessionService passportSessionService) {
-        this.authorizationCodeService = authorizationCodeService;
+            SessionService sessionService) {
         this.passportService = passportService;
         this.passportConfigurationService = passportConfigurationService;
         this.dcsCryptographyService = dcsCryptographyService;
         this.auditService = auditService;
-        this.passportSessionService = passportSessionService;
+        this.sessionService = sessionService;
     }
 
+    @ExcludeFromGeneratedCoverageReport
     public CheckPassportHandler()
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
-            KeyStoreException, IOException, InvalidKeyException {
-        //this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        ServiceFactory serviceFactory = new ServiceFactory(new ObjectMapper());
+                    KeyStoreException, IOException, InvalidKeyException {
+
+        ServiceFactory serviceFactory = new ServiceFactory(objectMapper);
 
         this.passportConfigurationService = serviceFactory.getPassportConfigurationService();
         this.passportService = serviceFactory.getPassportService();
-        // TODO
-        this.auditService = new AuditService(AuditService.getDefaultSqsClient(), passportConfigurationService);
+        this.auditService = serviceFactory.getAuditService();
         this.dcsCryptographyService = serviceFactory.getDcsCryptographyService();
-        this.authorizationCodeService = serviceFactory.getAuthorizationCodeService();
-        this.passportSessionService = serviceFactory.getPassportSessionService();
+        this.sessionService = serviceFactory.getSessionService();
     }
 
     @Override
@@ -135,12 +118,16 @@ public class CheckPassportHandler
             APIGatewayProxyRequestEvent input, Context context) {
         LogHelper.attachComponentIdToLogs();
         try {
-            String passportSessionId = RequestHelper.getPassportSessionId(input);
+            LOGGER.info(
+                    "Initiating lambda {} version {}",
+                    context.getFunctionName(),
+                    context.getFunctionVersion());
+            final String sessionId = RequestHelper.getSessionId(input);
 
-            PassportSessionItem passportSessionItem =
-                    passportSessionService.getPassportSession(passportSessionId);
+            LOGGER.info("Extracting session from header ID {}", sessionId);
+            var sessionItem = sessionService.validateSessionId(sessionId);
 
-            if (passportSessionItem == null) {
+            if (sessionItem == null) {
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_BAD_REQUEST,
                         new ErrorObject(
@@ -149,42 +136,28 @@ public class CheckPassportHandler
                                 .toJSONObject());
             }
 
-            LogHelper.attachGovukSigninJourneyIdToLogs(
-                    passportSessionItem.getGovukSigninJourneyId());
+            LogHelper.attachGovukSigninJourneyIdToLogs(sessionItem.getClientSessionId());
 
-            passportSessionService.incrementAttemptCount(passportSessionId);
+            sessionService.incrementAttemptCount(sessionItem);
 
-            String userId = passportSessionItem.getUserId();
-            var authParams = passportSessionItem.getAuthParams();
-
-            AuthorizationRequest authorizationRequest =
-                    AuthorizationRequest.parse(getAuthParamsAsMap(authParams));
-
-            LogHelper.attachClientIdToLogs(authorizationRequest.getClientID().getValue());
+            LogHelper.attachClientIdToLogs(sessionItem.getClientId());
 
             DcsPayload dcsPayload = parsePassportFormRequest(input.getBody());
             JWSObject preparedDcsPayload = preparePayload(dcsPayload);
 
-            //auditService.sendAuditEvent(AuditEventType.REQUEST_SENT,new AuditEventContext(PersonIdentityDetailed personIdentity,
-            //        input.getHeaders(),
-            //        sessionItem)));
-
             auditService.sendAuditEvent(
-                    createAuditEventRequestSent(
-                            passportSessionItem,
-                            dcsPayload,
-                            authorizationRequest.getClientID().getValue()));
-
-
+                    AuditEventType.REQUEST_SENT,
+                    new AuditEventContext(
+                            personIdentityDetailedFromDCSPayload(dcsPayload),
+                            input.getHeaders(),
+                            sessionItem));
 
             DcsSignedEncryptedResponse dcsResponse = doPassportCheck(preparedDcsPayload);
 
-
-
-
-            AuditEventUser auditEventUser =
-                    AuditEventUser.fromPassportSessionItem(passportSessionItem);
-            auditService.sendAuditEvent(createAuditEventResponseReceived(auditEventUser));
+            auditService.sendAuditEvent(
+                    AuditEventType.THIRD_PARTY_REQUEST_ENDED,
+                    new AuditEventContext(input.getHeaders(), sessionItem),
+                    null);
 
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
 
@@ -195,14 +168,16 @@ public class CheckPassportHandler
                             UUID.randomUUID().toString(),
                             dcsPayload,
                             generateGpg45Score(unwrappedDcsResponse),
-                            userId,
-                            authorizationRequest.getClientID().getValue());
+                            sessionItem.getUserId(),
+                            sessionItem.getClientId());
+
             passportService.persistDcsResponse(passportCheckDao);
 
-            passportSessionService.setLatestDcsResponseResourceId(
-                    passportSessionId, passportCheckDao.getResourceId());
+            // DCS Response RID saving (temp location)
+            sessionItem.setResponseResourceId(passportCheckDao.getResourceId());
+            sessionService.updateSession(sessionItem);
 
-            return validateResponseAndAttemptCount(passportSessionItem, unwrappedDcsResponse);
+            return validateResponseAndAttemptCount(sessionItem, unwrappedDcsResponse);
         } catch (OAuthHttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(),
@@ -211,15 +186,6 @@ public class CheckPassportHandler
         } catch (HttpResponseExceptionWithErrorBody e) {
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(), e.getErrorResponse());
-        } catch (ParseException e) {
-            LOGGER.error("Authentication request could not be parsed", e);
-            return ApiGatewayResponseGenerator.proxyJsonResponse(
-                    HttpStatus.SC_BAD_REQUEST,
-                    new ErrorObject(
-                                    OAuth2Error.SERVER_ERROR_CODE,
-                                    ErrorResponse.FAILED_TO_PARSE_OAUTH_QUERY_STRING_PARAMETERS
-                                            .getMessage())
-                            .toJSONObject());
         } catch (SqsException e) {
             LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
             return ApiGatewayResponseGenerator.proxyJsonResponse(
@@ -236,93 +202,39 @@ public class CheckPassportHandler
         }
     }
 
-    private ClientResponse generateClientSuccessResponse(
-            PassportSessionItem passportSessionItem, String authorizationCode)
+    private ClientResponse generateClientSuccessResponse(SessionItem sessionItem)
             throws URISyntaxException {
         URIBuilder redirectUri =
-                new URIBuilder(passportSessionItem.getAuthParams().getRedirectUri())
-                        .addParameter("code", authorizationCode);
+                new URIBuilder(sessionItem.getRedirectUri())
+                        .addParameter(AUTH_CODE_PARAM, sessionItem.getAuthorizationCode());
 
-        if (StringUtils.isNotBlank(passportSessionItem.getAuthParams().getState())) {
-            redirectUri.addParameter("state", passportSessionItem.getAuthParams().getState());
+        if (StringUtils.isNotBlank(sessionItem.getState())) {
+            redirectUri.addParameter(STATE_PARAM, sessionItem.getState());
         }
 
         return new ClientResponse(new ClientDetails(redirectUri.build().toString()));
     }
 
     private APIGatewayProxyResponseEvent validateResponseAndAttemptCount(
-            PassportSessionItem passportSessionItem, DcsResponse unwrappedDcsResponse)
-            throws URISyntaxException, SqsException {
+            SessionItem sessionItem, DcsResponse unwrappedDcsResponse) throws URISyntaxException {
 
-        AuditEventUser auditEventUser = AuditEventUser.fromPassportSessionItem(passportSessionItem);
-
-        int attemptCount = passportSessionItem.getAttemptCount();
+        int attemptCount = sessionItem.getAttemptCount();
 
         if (unwrappedDcsResponse.isValid()
                 || attemptCount
                         >= Integer.parseInt(
                                 passportConfigurationService.getStackSsmParameter(
                                         MAXIMUM_ATTEMPT_COUNT))) {
-
-            AuthorizationCode authorizationCode =
-                    authorizationCodeService.generateAuthorizationCode();
-
-            authorizationCodeService.persistAuthorizationCode(
-                    authorizationCode.getValue(), passportSessionItem.getPassportSessionId());
-
-            ClientResponse clientResponse =
-                    generateClientSuccessResponse(
-                            passportSessionItem, authorizationCode.getValue());
-
-            auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, auditEventUser);
-
             LOGGER.info("Passport sequence finished with {} attempts", attemptCount);
 
-            return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, clientResponse);
+            return ApiGatewayResponseGenerator.proxyJsonResponse(
+                    HttpStatus.SC_OK, generateClientSuccessResponse(sessionItem));
         }
 
         LOGGER.info("DCS response is not valid requesting retry");
 
         return ApiGatewayResponseGenerator.proxyJsonResponse(
                 HttpStatus.SC_OK, Map.of(RESULT, RESULT_RETRY));
-    }
-
-
-
-    private AuditEvent createAuditEventRequestSent(
-            PassportSessionItem passportSessionItem, DcsPayload dcsPayload, String clientId) {
-
-        PassportCheckDao passportCheckDao =
-                new PassportCheckDao(
-                        UUID.randomUUID().toString(),
-                        dcsPayload,
-                        null,
-                        passportSessionItem.getUserId(),
-                        clientId);
-
-        VerifiableCredential vc = VerifiableCredential.fromPassportCheckDao(passportCheckDao);
-
-        CredentialSubject credentialSubject = vc.getCredentialSubject();
-        String componentId =
-                passportConfigurationService.getStackSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER);
-        AuditEventTypes eventType = AuditEventTypes.IPV_PASSPORT_CRI_REQUEST_SENT;
-        AuditEventUser user = AuditEventUser.fromPassportSessionItem(passportSessionItem);
-        AuditRestricted restricted =
-                new AuditRestrictedVcCredentialSubject(
-                        credentialSubject.getName(),
-                        credentialSubject.getBirthDate(),
-                        credentialSubject.getPassport());
-        AuditExtensions extensions =
-                new AuditExtensionsVcEvidence(
-                        passportConfigurationService.getStackSsmParameter(
-                                VERIFIABLE_CREDENTIAL_ISSUER),
-                        null);
-        return new AuditEvent(eventType, componentId, user, restricted, extensions);
-    }
-
-    private AuditEvent createAuditEventResponseReceived(AuditEventUser user) {
-        return new AuditEvent(
-                AuditEventTypes.IPV_PASSPORT_CRI_RESPONSE_RECEIVED, null, user, null, null);
     }
 
     private void validateDcsResponse(DcsResponse dcsResponse)
@@ -408,18 +320,34 @@ public class CheckPassportHandler
         return dcsResponse.isValid() ? null : List.of(ContraIndicators.D02);
     }
 
-    private Map<String, List<String>> getAuthParamsAsMap(AuthParams params) {
-        if (params != null) {
-            Map<String, List<String>> authParams = new HashMap<>();
-            authParams.put(
-                    RESPONSE_TYPE_PARAM, Collections.singletonList(params.getResponseType()));
-            authParams.put(CLIENT_ID_PARAM, Collections.singletonList(params.getClientId()));
-            authParams.put(REDIRECT_URI_PARAM, Collections.singletonList(params.getRedirectUri()));
-            authParams.put(STATE_PARAM, Collections.singletonList(params.getState()));
+    private PersonIdentityDetailed personIdentityDetailedFromDCSPayload(DcsPayload dcsPayload) {
 
-            return authParams;
+        List<NamePart> nameParts = new ArrayList<>();
+
+        // The front has combined firstnames and middle names in one list
+        for (String foreName : dcsPayload.getForenames()) {
+            if (Objects.nonNull(foreName)) {
+                nameParts.add(getNamePart(foreName, "GivenName"));
+            }
         }
 
-        return Collections.emptyMap();
+        if (Objects.nonNull(dcsPayload.getSurname())) {
+            nameParts.add(getNamePart(dcsPayload.getSurname(), "FamilyName"));
+        }
+
+        Name personsName = new Name();
+        personsName.setNameParts(nameParts);
+
+        BirthDate birthDate = new BirthDate();
+        birthDate.setValue(dcsPayload.getDateOfBirth());
+
+        return new PersonIdentityDetailed(List.of(personsName), List.of(birthDate), null);
+    }
+
+    private NamePart getNamePart(String value, String type) {
+        NamePart namePart = new NamePart();
+        namePart.setValue(value);
+        namePart.setType(type);
+        return namePart;
     }
 }
