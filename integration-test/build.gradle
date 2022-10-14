@@ -9,10 +9,6 @@ plugins {
 	id "com.diffplug.spotless"
 }
 
-repositories {
-	mavenCentral()
-}
-
 dependencies {
 
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:$rootProject.ext.dependencyVersions.awsJavaSdkDynamodb",
@@ -29,7 +25,8 @@ dependencies {
 			"org.apache.logging.log4j:log4j-core:$rootProject.ext.dependencyVersions.log4j",
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
-			project(":lib")
+			project(":lib"),
+			configurations.cri_common_lib
 
 	testImplementation "com.github.tomakehurst:wiremock-jre8:2.31.0",
 			"org.junit.jupiter:junit-jupiter:5.8.2",

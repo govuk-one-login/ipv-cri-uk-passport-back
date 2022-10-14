@@ -8,10 +8,6 @@ plugins {
 	id 'io.freefair.aspectj.post-compile-weaving' version '6.3.0'
 }
 
-repositories {
-	mavenCentral()
-}
-
 dependencies {
 
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:$rootProject.ext.dependencyVersions.awsJavaSdkDynamodb",
@@ -28,7 +24,8 @@ dependencies {
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
 			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
-			project(":lib")
+			project(":lib"),
+			configurations.cri_common_lib
 
 	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
 
