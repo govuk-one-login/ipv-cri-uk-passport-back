@@ -142,14 +142,6 @@ Resources:
       RetentionInDays: 14
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportPrivateAPILogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportPrivateAPILogGroup
-
   IPVCriUKPassportPrivateAPILogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevelopmentEnvironment
@@ -191,14 +183,6 @@ Resources:
       LogGroupName: !Sub /aws/apigateway/${AWS::StackName}-CriPassport-API-GW-AccessLogs
       RetentionInDays: 14
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
-
-  IPVCriUKPassportAPILogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportAPILogGroup
 
   IPVCriUKPassportAPILogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
@@ -287,14 +271,6 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/ipv-passport-issue-credential-${Environment}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportIssueCredentialFunctionLogGroup
-
   IPVCriUKPassportIssueCredentialFunctionLogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevelopmentEnvironment
@@ -371,14 +347,6 @@ Resources:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-token-${Environment}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
-
-  IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportAccessTokenFunctionLogGroup
 
   IPVCriUKPassportAccessTokenFunctionLogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
@@ -461,14 +429,6 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/ipv-passport-check-passport-${Environment}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
 
-  IPVCriUKPassportCheckPassportFunctionLogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportCheckPassportFunctionLogGroup
-
   IPVCriUKPassportCheckPassportFunctionLogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsNotDevelopmentEnvironment
@@ -537,14 +497,6 @@ Resources:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-build-client-oauth-response-${Environment}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
-
-  IPVCriUKPassportBuildClientOauthResponseFunctionLogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup
 
   IPVCriUKPassportBuildClientOauthResponseFunctionLogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
@@ -631,14 +583,6 @@ Resources:
       RetentionInDays: 14
       LogGroupName: !Sub "/aws/lambda/ipv-passport-initialise-session-${Environment}"
       KmsKeyId: !GetAtt LoggingKmsKey.Arn
-
-  IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilter:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsNotDevelopmentEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prod"
-      FilterPattern: ""
-      LogGroupName: !Ref IPVCriUKPassportInitialiseSessionFunctionLogGroup
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroupSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
