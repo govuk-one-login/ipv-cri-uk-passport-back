@@ -88,6 +88,9 @@ Conditions:
       - Fn::Equals:
           - !Ref PermissionsBoundary
           - "none"
+  IsProdEnvironment: !Equals
+    - !Ref Environment
+    - production
 
 Resources:
   IPVCriUKPassportPrivateAPI:
@@ -95,6 +98,7 @@ Resources:
     Properties:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
       Name: !Sub IPV Passport Back Private API Gateway ${Environment}
+      Description: Private Passport CRI API with metrics
       EndpointConfiguration:
         Type: PRIVATE
       Auth:
@@ -119,6 +123,15 @@ Resources:
                         !Sub "${VpcStackName}-ApiGatewayVpcEndpointId"
       StageName: !Sub ${Environment}
       TracingEnabled: true
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: '/*'
+          HttpMethod: '*'
+          # Disable data trace in production to avoid logging customer sensitive information
+          DataTraceEnabled: !If [ IsProdEnvironment, false, true ]
+          MetricsEnabled: true
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
       AccessLogSetting:
         DestinationArn: !GetAtt IPVCriUKPassportPrivateAPILogGroup.Arn
         Format: >-
@@ -155,12 +168,22 @@ Resources:
     Properties:
       # checkov:skip=CKV_AWS_120: We are not implementing API Gateway caching at the time.
       Name: !Sub IPV CRI UK Passport API Gateway ${Environment}
+      Description: Public Passport CRI API with metrics
       StageName: !Sub ${Environment}
       TracingEnabled: true
       Auth:
         ApiKeyRequired: true
         UsagePlan:
           CreateUsagePlan: PER_API
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: '/*'
+          HttpMethod: '*'
+          # Disable data trace in production to avoid logging customer sensitive information
+          DataTraceEnabled: !If [ IsProdEnvironment, false, true ]
+          MetricsEnabled: true
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
       AccessLogSetting:
         DestinationArn: !GetAtt IPVCriUKPassportAPILogGroup.Arn
         Format: >-
@@ -718,6 +741,163 @@ Resources:
             Condition:
               ArnLike:
                 "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+  ####################################################################
+  #                                                                  #
+  # Alerts                                                           #
+  #                                                                  #
+  ####################################################################
+
+  PassportLambdaErrors:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub Passport ${Environment} lambda errors
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmTopicPassport
+      OKActions:
+        - !Ref AlarmTopicPassport
+      InsufficientDataActions: []
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Dimensions: []
+      Period: 300
+      DatapointsToAlarm: 3
+      EvaluationPeriods: 3
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  PassportAPIGW5XXErrors:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub Passport ${Environment} API Gateway 5XX errors
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmTopicPassport
+      OKActions:
+        - !Ref AlarmTopicPassport
+      InsufficientDataActions: []
+      Dimensions: []
+      DatapointsToAlarm: 3
+      EvaluationPeriods: 3
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: e1
+          Label: Expression1
+          ReturnData: true
+          Expression: SUM(METRICS())
+        - Id: m1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 5XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "IPV CRI UK Passport API Gateway ${Environment}"
+            Period: 300
+            Stat: Sum
+        - Id: m2
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 5XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "IPV Passport Back Private API Gateway ${Environment}"
+            Period: 300
+            Stat: Sum
+
+  PassportAPIGW4XXErrors:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub Passport ${Environment} API Gateway 4XX errors
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmTopicPassport
+      OKActions:
+        - !Ref AlarmTopicPassport
+      InsufficientDataActions: []
+      Dimensions: []
+      DatapointsToAlarm: 3
+      EvaluationPeriods: 3
+      Threshold: 2
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: e1
+          Label: Expression1
+          ReturnData: true
+          Expression: SUM(METRICS())
+        - Id: m1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 4XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "IPV CRI UK Passport API Gateway ${Environment}"
+            Period: 300
+            Stat: Sum
+        - Id: m2
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 4XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "IPV Passport Back Private API Gateway ${Environment}"
+            Period: 300
+            Stat: Sum
+
+  ####################################################################
+  #                                                                  #
+  # Alarm setup                                                      #
+  #                                                                  #
+  ####################################################################
+
+  AlarmTopicPassport:
+    Type: AWS::SNS::Topic
+    # checkov:skip=CKV_AWS_26: We will update this once basic alerting is available
+    Metadata:
+      SamResourceId: AlarmTopicPassport
+  AlarmTopicSubscriptionPagerDutyPassport:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: AlarmTopicPassport
+      Endpoint:
+        Fn::Sub: '{{resolve:ssm:/alerting/pagerduty-passport/url}}'
+      Protocol: https
+    Metadata:
+      SamResourceId: AlarmTopicSubscriptionPagerDutyPassport
+  AlarmPublishToTopicPolicyPassport:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - Ref: AlarmTopicPassport
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sns:Publish
+            Resource:
+              Ref: AlarmTopicPassport
+            Principal:
+              Service: cloudwatch.amazonaws.com
+            Condition:
+              ArnLike:
+                AWS:SourceArn:
+                  Fn::Sub: arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:*
+    Metadata:
+      SamResourceId: AlarmPublishToTopicPolicyPassport
 
 Outputs:
   IPVCriUkPassportBackAPIGatewayID:
