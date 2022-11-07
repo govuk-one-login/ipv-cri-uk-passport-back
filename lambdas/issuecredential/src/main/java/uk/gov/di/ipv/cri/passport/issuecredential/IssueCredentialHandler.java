@@ -16,7 +16,10 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.lambda.powertools.logging.CorrelationIdPathConstants;
 import software.amazon.lambda.powertools.logging.Logging;
+import software.amazon.lambda.powertools.metrics.Metrics;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -26,6 +29,7 @@ import uk.gov.di.ipv.cri.passport.library.auditing.AuditExtensionsVcEvidence;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestricted;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditRestrictedVcCredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.CredentialSubject;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredential;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
@@ -45,11 +49,15 @@ import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VC_CLAIM;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.PASSPORT_CI_PREFIX;
 
 public class IssueCredentialHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -63,6 +71,7 @@ public class IssueCredentialHandler
     private final AuditService auditService;
     private final PassportSessionService passportSessionService;
     private final JWSSigner kmsSigner;
+    private final EventProbe eventProbe;
 
     public IssueCredentialHandler(
             DcsPassportCheckService dcsPassportCheckService,
@@ -70,13 +79,15 @@ public class IssueCredentialHandler
             ConfigurationService configurationService,
             AuditService auditService,
             PassportSessionService passportSessionService,
-            JWSSigner kmsSigner) {
+            JWSSigner kmsSigner,
+            EventProbe eventProbe) {
         this.configurationService = configurationService;
         this.dcsPassportCheckService = dcsPassportCheckService;
         this.accessTokenService = accessTokenService;
         this.auditService = auditService;
         this.passportSessionService = passportSessionService;
         this.kmsSigner = kmsSigner;
+        this.eventProbe = eventProbe;
     }
 
     @ExcludeFromGeneratedCoverageReport
@@ -90,10 +101,12 @@ public class IssueCredentialHandler
         this.kmsSigner =
                 new KmsSigner(
                         configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID));
+        this.eventProbe = new EventProbe();
     }
 
     @Override
-    @Logging(clearState = true)
+    @Logging(clearState = true, correlationIdPath = CorrelationIdPathConstants.API_GATEWAY_REST)
+    @Metrics(captureColdStart = true)
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
         LogHelper.attachComponentIdToLogs();
@@ -110,6 +123,7 @@ public class IssueCredentialHandler
             if (accessTokenItem == null) {
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token was not found in the database.");
+                eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
                         OAuth2Error.ACCESS_DENIED
@@ -130,6 +144,7 @@ public class IssueCredentialHandler
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token expired at: {}",
                         accessTokenExpiryDateTime);
+                eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
                         OAuth2Error.ACCESS_DENIED
@@ -141,6 +156,7 @@ public class IssueCredentialHandler
                 LOGGER.error(
                         "User credential could not be retrieved. The supplied access token has been revoked at: {}",
                         accessTokenItem.getRevokedAtDateTime());
+                eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.ACCESS_DENIED.getHTTPStatusCode(),
                         OAuth2Error.ACCESS_DENIED
@@ -166,14 +182,22 @@ public class IssueCredentialHandler
                             verifiableCredential,
                             AuditEventUser.fromPassportSessionItem(passportSessionItem)));
 
+            // CI Metric captured here as check lambda can have multiple attempts
+            recordCIMetrics(PASSPORT_CI_PREFIX, passportCheck.getEvidence().getCi());
+
+            // Lambda Complete No Error
+            eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK);
+
             return ApiGatewayResponseGenerator.proxyJwtResponse(
                     HttpStatus.SC_OK, signedJWT.serialize());
         } catch (ParseException e) {
             LOGGER.error("Failed to parse access token");
+            eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getErrorObject().getHTTPStatusCode(), e.getErrorObject().toJSONObject());
         } catch (JOSEException e) {
             LOGGER.error("Failed to sign verifiable credential: '{}'", e.getMessage());
+            eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     OAuth2Error.SERVER_ERROR.getHTTPStatusCode(),
                     OAuth2Error.SERVER_ERROR
@@ -181,11 +205,13 @@ public class IssueCredentialHandler
                             .toJSONObject());
         } catch (SqsException e) {
             LOGGER.error("Failed to send audit event to SQS queue because: {}", e.getMessage());
+            eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST,
                     ErrorResponse.FAILED_TO_SEND_AUDIT_MESSAGE_TO_SQS_QUEUE);
         } catch (IllegalArgumentException e) {
             LOGGER.error("Failed to revoke access token after use because: {}", e.getMessage());
+            eventProbe.counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR,
                     ErrorResponse.FAILED_TO_REVOKE_ACCESS_TOKEN);
@@ -237,5 +263,15 @@ public class IssueCredentialHandler
                         .build();
 
         return JwtHelper.createSignedJwtFromClaimSet(claimsSet, kmsSigner);
+    }
+
+    private void recordCIMetrics(String ciRequestPrefix, List<ContraIndicators> contraIndications) {
+        if (contraIndications == null) {
+            return;
+        }
+
+        for (ContraIndicators ci : contraIndications) {
+            eventProbe.counterMetric(ciRequestPrefix + ci.toString().toLowerCase());
+        }
     }
 }

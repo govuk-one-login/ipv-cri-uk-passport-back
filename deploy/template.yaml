@@ -8,6 +8,8 @@ Globals:
     Environment:
       Variables:
         JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+        POWERTOOLS_LOG_LEVEL: INFO
+        POWERTOOLS_METRICS_NAMESPACE: !Ref CriIdentifier
     CodeSigningConfigArn: !If
       - UseCodeSigning
       - !Ref CodeSigningConfigArn
@@ -43,6 +45,10 @@ Parameters:
     Description: >
       The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
+# When common stack support is added CriIdentifier should be pointed to passport SSM Param /common-cri-parameters/CriIdentifier
+  CriIdentifier:
+    Type: String
+    Default: "di-ipv-cri-uk-passport-api"
 
 Mappings:
   EnvironmentConfiguration:
@@ -234,6 +240,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
+          POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-issuecredential"
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
@@ -321,6 +328,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
+          POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-accesstoken"
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAuthCodesTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
@@ -398,6 +406,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
+          POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-checkpassport"
           ENVIRONMENT: !Sub "${Environment}"
           DCS_RESPONSE_TABLE_NAME: !Select [1, !Split ['/', !GetAtt DCSResponseTable.Arn]]
           CRI_PASSPORT_ACCESS_TOKENS_TABLE_NAME: !Select [1, !Split ['/', !GetAtt CRIPassportAccessTokensTable.Arn]]
@@ -479,6 +488,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
+          POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-buildclientoauthresponse"
           ENVIRONMENT: !Sub "${Environment}"
           CRI_PASSPORT_AUTH_CODES_TABLE_NAME: !Ref CRIPassportAuthCodesTable
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Ref CRIPassportBackSessionsTable
@@ -548,6 +558,7 @@ Resources:
       Environment:
         # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
+          POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-initialisesession"
           ENVIRONMENT: !Sub "${Environment}"
           PASSPORT_BACK_SESSIONS_TABLE_NAME: !Select [ 1, !Split [ '/', !GetAtt CRIPassportBackSessionsTable.Arn ] ]
           CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX: !Sub "/${Environment}/credentialIssuers/ukPassport/clients"

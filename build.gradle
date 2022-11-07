@@ -27,6 +27,7 @@ ext {
 		nimbusJoseJwt:'9.16',
 		nimbusdsOauth2OidcSdk:'9.22.1',
 		powertoolsLogging:'1.12.2',
+		powertoolsMetrics:'1.12.2',
 		powertoolsParameters:'1.9.0',
 		cri_common_lib: "1.1.7"
 	]

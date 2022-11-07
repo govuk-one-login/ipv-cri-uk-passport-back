@@ -22,11 +22,12 @@ dependencies {
 			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
 			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
 			"software.amazon.awssdk:dynamodb-enhanced:$rootProject.ext.dependencyVersions.dynamodbEnhanced",
-			"software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
 			project(":lib"),
 			configurations.cri_common_lib
 
-	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
+	aspect "software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
+			"software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging",
+			"software.amazon.lambda:powertools-metrics:$rootProject.ext.dependencyVersions.powertoolsMetrics"
 
 	testImplementation "com.github.tomakehurst:wiremock-jre8:2.31.0",
 			"org.junit.jupiter:junit-jupiter:5.8.2",

@@ -27,10 +27,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
+import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NamePartType;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.NameParts;
@@ -62,10 +64,10 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
@@ -74,6 +76,9 @@ import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Ver
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VERIFIABLE_CREDENTIAL_TYPE;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PUBLIC_JWK_1;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.PASSPORT_CI_PREFIX;
 
 @ExtendWith(MockitoExtension.class)
 class IssueCredentialHandlerTest {
@@ -92,6 +97,7 @@ class IssueCredentialHandlerTest {
     @Mock private AccessTokenService mockAccessTokenService;
     @Mock private AuditService mockAuditService;
     @Mock private ConfigurationService mockConfigurationService;
+    @Mock private EventProbe mockEventProbe;
     @Mock private PassportSessionService mockPassportSessionService;
     @Spy private ECDSASigner ecSigner = new ECDSASigner(getPrivateKey());
     @InjectMocks private IssueCredentialHandler issueCredentialHandler;
@@ -105,7 +111,8 @@ class IssueCredentialHandlerTest {
                     FORENAMES,
                     LocalDate.parse(DATE_OF_BIRTH),
                     LocalDate.parse(EXPIRY_DATE));
-    private final Evidence evidence = new Evidence(UUID.randomUUID().toString(), 4, 2, null);
+    private final Evidence evidence =
+            new Evidence(UUID.randomUUID().toString(), 4, 2, List.of(ContraIndicators.D02));
     private final String userId = "test-user-id";
     private final String clientId = "test-client-id";
     private final PassportCheckDao passportCheckDao =
@@ -145,6 +152,10 @@ class IssueCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK);
+        verify(mockEventProbe)
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         ArgumentCaptor<AuditEvent> argumentCaptor = ArgumentCaptor.forClass(AuditEvent.class);
         verify(mockAuditService).sendAuditEvent(argumentCaptor.capture());
@@ -186,6 +197,10 @@ class IssueCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK);
+        verify(mockEventProbe)
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         assertEquals(200, response.getStatusCode());
         assertEquals(
@@ -230,6 +245,10 @@ class IssueCredentialHandlerTest {
 
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK);
+        verify(mockEventProbe)
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         SignedJWT signedJWT = SignedJWT.parse(response.getBody());
         JsonNode claimsSet = objectMapper.readTree(signedJWT.getJWTClaimsSet().toString());
@@ -307,7 +326,8 @@ class IssueCredentialHandlerTest {
                 passportCheckDao.getEvidence().getValidityScore(),
                 verifiableCredential.getEvidence().get(0).getValidityScore());
 
-        assertNull(verifiableCredential.getEvidence().get(0).getCi());
+        assertEquals(
+                ContraIndicators.D02, verifiableCredential.getEvidence().get(0).getCi().get(0));
 
         ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
         assertTrue(signedJWT.verify(ecVerifier));
@@ -323,6 +343,10 @@ class IssueCredentialHandlerTest {
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
         responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         assertEquals(BearerTokenError.MISSING_TOKEN.getHTTPStatusCode(), response.getStatusCode());
         assertEquals(BearerTokenError.MISSING_TOKEN.getCode(), responseBody.get("error"));
@@ -342,6 +366,10 @@ class IssueCredentialHandlerTest {
                 issueCredentialHandler.handleRequest(event, mockContext);
         responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
+
         assertEquals(
                 BearerTokenError.INVALID_REQUEST.getHTTPStatusCode(), response.getStatusCode());
         assertEquals(BearerTokenError.INVALID_REQUEST.getCode(), responseBody.get("error"));
@@ -358,6 +386,10 @@ class IssueCredentialHandlerTest {
         APIGatewayProxyResponseEvent response =
                 issueCredentialHandler.handleRequest(event, mockContext);
         responseBody = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         assertEquals(BearerTokenError.MISSING_TOKEN.getHTTPStatusCode(), response.getStatusCode());
         assertEquals(BearerTokenError.MISSING_TOKEN.getCode(), responseBody.get("error"));
@@ -381,6 +413,10 @@ class IssueCredentialHandlerTest {
                 issueCredentialHandler.handleRequest(event, mockContext);
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         assertEquals(403, response.getStatusCode());
         assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
@@ -422,6 +458,10 @@ class IssueCredentialHandlerTest {
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
+
         assertEquals(403, response.getStatusCode());
         assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
         assertEquals(
@@ -459,6 +499,10 @@ class IssueCredentialHandlerTest {
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
+
         assertEquals(403, response.getStatusCode());
         assertEquals(OAuth2Error.ACCESS_DENIED.getCode(), responseBody.get("error"));
         assertEquals(
@@ -495,6 +539,10 @@ class IssueCredentialHandlerTest {
                 issueCredentialHandler.handleRequest(event, mockContext);
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_ERROR);
+        verify(mockEventProbe, never())
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
 
         assertEquals(500, response.getStatusCode());
         assertEquals(

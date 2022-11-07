@@ -9,6 +9,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -24,6 +25,9 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_POST_URL_PARAM;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.THIRD_PARTY_DCS_RESPONSE_OK;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.THIRD_PARTY_DCS_RESPONSE_TYPE_EMPTY;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.THIRD_PARTY_DCS_RESPONSE_TYPE_ERROR;
 
 public class PassportService {
 
@@ -33,20 +37,24 @@ public class PassportService {
     private final ConfigurationService configurationService;
     private final DataStore<PassportCheckDao> dataStore;
     private final HttpClient httpClient;
+    private final EventProbe eventProbe;
 
     public PassportService(
             HttpClient httpClient,
             ConfigurationService configurationService,
-            DataStore<PassportCheckDao> dataStore) {
+            DataStore<PassportCheckDao> dataStore,
+            EventProbe eventProbe) {
         this.httpClient = httpClient;
         this.configurationService = configurationService;
         this.dataStore = dataStore;
+        this.eventProbe = eventProbe;
     }
 
-    public PassportService(ConfigurationService configurationService)
+    public PassportService(ConfigurationService configurationService, EventProbe eventProbe)
             throws CertificateException, NoSuchAlgorithmException, InvalidKeySpecException,
                     KeyStoreException, IOException {
         this.configurationService = configurationService;
+        this.eventProbe = eventProbe;
         this.dataStore =
                 new DataStore<>(
                         this.configurationService.getEnvironmentVariable(
@@ -67,15 +75,19 @@ public class PassportService {
         HttpResponse response = httpClient.execute(request);
 
         if (response == null) {
+            eventProbe.counterMetric(THIRD_PARTY_DCS_RESPONSE_TYPE_EMPTY);
             throw new EmptyDcsResponseException("Response from DCS is empty");
         }
 
         if (response.getStatusLine().getStatusCode() != 200) {
             int statusCode = response.getStatusLine().getStatusCode();
             LOGGER.error("Response from DCS has status code: {}", statusCode);
+            eventProbe.counterMetric(THIRD_PARTY_DCS_RESPONSE_TYPE_ERROR);
             throw new HttpResponseException(
                     response.getStatusLine().getStatusCode(), "DCS responded with an error");
         }
+
+        eventProbe.counterMetric(THIRD_PARTY_DCS_RESPONSE_OK);
 
         return new DcsSignedEncryptedResponse(EntityUtils.toString(response.getEntity()));
     }

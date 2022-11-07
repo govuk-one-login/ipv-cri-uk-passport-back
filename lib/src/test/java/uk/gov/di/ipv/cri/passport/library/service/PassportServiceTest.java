@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsSignedEncryptedResponse;
@@ -47,14 +48,14 @@ class PassportServiceTest {
     @Mock JWSObject jwsObject;
     @Mock HttpResponse httpResponse;
     @Mock StatusLine statusLine;
-
+    @Mock EventProbe eventProbe;
     @Captor ArgumentCaptor<HttpPost> httpPost;
 
     private PassportService underTest;
 
     @BeforeEach
     void setUp() {
-        underTest = new PassportService(httpClient, configurationService, dataStore);
+        underTest = new PassportService(httpClient, configurationService, dataStore, eventProbe);
     }
 
     @Test

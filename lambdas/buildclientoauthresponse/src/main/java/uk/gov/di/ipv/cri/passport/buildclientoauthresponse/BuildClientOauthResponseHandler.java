@@ -12,7 +12,10 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.lambda.powertools.logging.CorrelationIdPathConstants;
 import software.amazon.lambda.powertools.logging.Logging;
+import software.amazon.lambda.powertools.metrics.Metrics;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientDetails;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
@@ -30,6 +33,9 @@ import uk.gov.di.ipv.cri.passport.library.service.PassportSessionService;
 
 import java.net.URISyntaxException;
 
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_OK;
+
 public class BuildClientOauthResponseHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -38,16 +44,19 @@ public class BuildClientOauthResponseHandler
     private final PassportSessionService passportSessionService;
     private final AuditService auditService;
     private final ConfigurationService configurationService;
+    private final EventProbe eventProbe;
 
     public BuildClientOauthResponseHandler(
             AuthorizationCodeService authorizationCodeService,
             PassportSessionService passportSessionService,
             AuditService auditService,
-            ConfigurationService configurationService) {
+            ConfigurationService configurationService,
+            EventProbe eventProbe) {
         this.authorizationCodeService = authorizationCodeService;
         this.passportSessionService = passportSessionService;
         this.auditService = auditService;
         this.configurationService = configurationService;
+        this.eventProbe = eventProbe;
     }
 
     public BuildClientOauthResponseHandler() {
@@ -56,10 +65,12 @@ public class BuildClientOauthResponseHandler
         this.passportSessionService = new PassportSessionService(configurationService);
         this.auditService =
                 new AuditService(AuditService.getDefaultSqsClient(), configurationService);
+        this.eventProbe = new EventProbe();
     }
 
     @Override
-    @Logging(clearState = true)
+    @Logging(clearState = true, correlationIdPath = CorrelationIdPathConstants.API_GATEWAY_REST)
+    @Metrics(captureColdStart = true)
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
         LogHelper.attachComponentIdToLogs();
@@ -83,6 +94,8 @@ public class BuildClientOauthResponseHandler
 
                 auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, auditEventUser);
 
+                eventProbe.counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
+
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         HttpStatus.SC_OK, clientResponse);
             }
@@ -99,12 +112,16 @@ public class BuildClientOauthResponseHandler
 
             auditService.sendAuditEvent(AuditEventTypes.IPV_PASSPORT_CRI_END, auditEventUser);
 
+            eventProbe.counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_OK);
+
             return ApiGatewayResponseGenerator.proxyJsonResponse(HttpStatus.SC_OK, clientResponse);
         } catch (HttpResponseExceptionWithErrorBody e) {
+            eventProbe.counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     e.getStatusCode(), e.getErrorResponse());
         } catch (URISyntaxException e) {
             LOGGER.error("Failed to construct redirect uri because: {}", e.getMessage());
+            eventProbe.counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         } catch (SqsException e) {
@@ -115,6 +132,7 @@ public class BuildClientOauthResponseHandler
                     error.getCode(),
                     error.getDescription());
 
+            eventProbe.counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_BAD_REQUEST, error.toJSONObject());
         }
