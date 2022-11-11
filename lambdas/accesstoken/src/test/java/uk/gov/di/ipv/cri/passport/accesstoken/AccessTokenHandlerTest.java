@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
@@ -43,6 +44,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ACCESS_TOKEN_COMPLETED_OK;
 
 @ExtendWith(MockitoExtension.class)
 class AccessTokenHandlerTest {
@@ -62,6 +65,7 @@ class AccessTokenHandlerTest {
     @Mock private AuthorizationCodeService mockAuthorizationCodeService;
     @Mock private PassportSessionService mockPassportSessionService;
     @Mock private TokenRequestValidator mockTokenRequestValidator;
+    @Mock private EventProbe mockEventProbe;
     @InjectMocks private AccessTokenHandler handler;
 
     @Test
@@ -82,6 +86,8 @@ class AccessTokenHandlerTest {
         mockSessionItem();
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_OK);
 
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
@@ -121,6 +127,8 @@ class AccessTokenHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_OK);
+
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(200, response.getStatusCode());
@@ -136,6 +144,8 @@ class AccessTokenHandlerTest {
         event.setBody(invalidTokenRequest);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
@@ -158,6 +168,8 @@ class AccessTokenHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
+
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
@@ -178,6 +190,8 @@ class AccessTokenHandlerTest {
         event.setBody(tokenRequestBody);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
@@ -201,6 +215,8 @@ class AccessTokenHandlerTest {
         when(mockAuthorizationCodeService.getAuthCodeItem("12345")).thenReturn(null);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
@@ -229,6 +245,8 @@ class AccessTokenHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
+
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
@@ -249,6 +267,8 @@ class AccessTokenHandlerTest {
         when(mockAccessTokenService.validateAuthorizationGrant(any()))
                 .thenReturn(ValidationResult.createValidResult());
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
@@ -279,6 +299,9 @@ class AccessTokenHandlerTest {
                 .authenticateClient(any());
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
+
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
         assertEquals(HTTPResponse.SC_UNAUTHORIZED, response.getStatusCode());
@@ -316,6 +339,8 @@ class AccessTokenHandlerTest {
                 .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
 
         verify(mockAccessTokenService)
                 .revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
@@ -362,6 +387,8 @@ class AccessTokenHandlerTest {
                 .thenReturn(passportSessionItem);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
 
         verify(mockAccessTokenService)
                 .revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.buildclientoauthresponse.domain.ClientResponse;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -38,6 +39,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_OK;
 
 @ExtendWith(MockitoExtension.class)
 class BuildClientOauthResponseHandlerTest {
@@ -53,6 +56,7 @@ class BuildClientOauthResponseHandlerTest {
     @Mock private PassportSessionService mockPassportSessionService;
     @Mock private ConfigurationService mockConfigurationService;
     @Mock private AuditService mockAuditService;
+    @Mock private EventProbe mockEventProbe;
 
     private AuthorizationCode authorizationCode;
     private BuildClientOauthResponseHandler handler;
@@ -67,7 +71,8 @@ class BuildClientOauthResponseHandlerTest {
                         mockAuthorizationCodeService,
                         mockPassportSessionService,
                         mockAuditService,
-                        mockConfigurationService);
+                        mockConfigurationService,
+                        mockEventProbe);
     }
 
     @Test
@@ -88,6 +93,8 @@ class BuildClientOauthResponseHandlerTest {
 
         ClientResponse responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+
+        verify(mockEventProbe).counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_OK);
 
         verify(mockAuthorizationCodeService)
                 .persistAuthorizationCode(
@@ -127,6 +134,8 @@ class BuildClientOauthResponseHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_OK);
+
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
 
         ClientResponse responseBody =
@@ -146,6 +155,8 @@ class BuildClientOauthResponseHandlerTest {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
 
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
@@ -175,6 +186,8 @@ class BuildClientOauthResponseHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
+
         Map<String, Object> responseBody =
                 objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
@@ -198,6 +211,8 @@ class BuildClientOauthResponseHandlerTest {
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
+
         objectMapper.readValue(response.getBody(), new TypeReference<>() {});
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -216,6 +231,8 @@ class BuildClientOauthResponseHandlerTest {
         event.setHeaders(TEST_EVENT_HEADERS);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_BUILD_CLIENT_OAUTH_RESPONSE_COMPLETED_ERROR);
 
         assertEquals(HttpStatus.SC_OK, response.getStatusCode());
 

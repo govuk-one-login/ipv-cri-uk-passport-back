@@ -22,7 +22,9 @@ dependencies {
 			project(":lib"),
 			configurations.cri_common_lib
 
-	aspect "software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging"
+	aspect "software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
+			"software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging",
+			"software.amazon.lambda:powertools-metrics:$rootProject.ext.dependencyVersions.powertoolsMetrics"
 
 	testImplementation "com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
 			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",

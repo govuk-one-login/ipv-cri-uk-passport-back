@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
@@ -55,6 +56,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.EC_PRIVATE_KEY_1;
 import static uk.gov.di.ipv.cri.passport.library.helpers.fixtures.TestFixtures.JWE_OBJECT_STRING;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_INITIALISE_SESSION_COMPLETED_OK;
 
 @ExtendWith(MockitoExtension.class)
 class InitialiseSessionHandlerTest {
@@ -74,6 +77,8 @@ class InitialiseSessionHandlerTest {
     private SignedJWT signedJWT;
 
     @Mock Context context;
+
+    @Mock private EventProbe mockEventProbe;
 
     @BeforeEach
     void setUp() throws JOSEException, InvalidKeySpecException, NoSuchAlgorithmException {
@@ -118,6 +123,9 @@ class InitialiseSessionHandlerTest {
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_OK);
+
         assertEquals(200, response.getStatusCode());
         verify(auditService)
                 .sendAuditEvent(
@@ -139,6 +147,8 @@ class InitialiseSessionHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_OK);
+
         Map<String, Object> claims =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
 
@@ -158,6 +168,8 @@ class InitialiseSessionHandlerTest {
         event.setBody(null);
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
 
         Map<String, Object> error =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
@@ -181,6 +193,8 @@ class InitialiseSessionHandlerTest {
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
 
         Map<String, Object> error =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
@@ -206,6 +220,8 @@ class InitialiseSessionHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
+
         Map<String, Object> error =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
         assertEquals(400, response.getStatusCode());
@@ -221,6 +237,8 @@ class InitialiseSessionHandlerTest {
         event.setHeaders(noClientId);
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
 
         Map<String, Object> error =
                 OBJECT_MAPPER.readValue(response.getBody(), new TypeReference<>() {});
@@ -241,6 +259,8 @@ class InitialiseSessionHandlerTest {
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
 
         ErrorObject errorResponse = createErrorObjectFromResponse(response.getBody());
 
@@ -267,6 +287,8 @@ class InitialiseSessionHandlerTest {
 
         var response = underTest.handleRequest(event, context);
 
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
+
         assertEquals(302, response.getStatusCode());
         assertEquals(
                 "{\"redirect_uri\":\"http://redirect-url.com\",\"oauth_error\":{\"error_description\":\"Invalid request JWT\",\"error\":\"invalid_request_object\"}}",
@@ -289,6 +311,8 @@ class InitialiseSessionHandlerTest {
         event.setBody(JWE_OBJECT_STRING);
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_ERROR);
 
         assertEquals(302, response.getStatusCode());
         assertEquals(

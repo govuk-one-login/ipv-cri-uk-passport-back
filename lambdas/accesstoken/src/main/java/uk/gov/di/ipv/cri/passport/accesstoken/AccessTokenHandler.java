@@ -14,7 +14,10 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.lambda.powertools.logging.CorrelationIdPathConstants;
 import software.amazon.lambda.powertools.logging.Logging;
+import software.amazon.lambda.powertools.metrics.Metrics;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.accesstoken.exceptions.ClientAuthenticationException;
 import uk.gov.di.ipv.cri.passport.accesstoken.validation.TokenRequestValidator;
 import uk.gov.di.ipv.cri.passport.library.annotations.ExcludeFromGeneratedCoverageReport;
@@ -31,6 +34,9 @@ import uk.gov.di.ipv.cri.passport.library.validation.ValidationResult;
 
 import java.util.Objects;
 
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_ACCESS_TOKEN_COMPLETED_OK;
+
 public class AccessTokenHandler
         implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -40,20 +46,22 @@ public class AccessTokenHandler
     private final AuthorizationCodeService authorizationCodeService;
     private final ConfigurationService configurationService;
     private final TokenRequestValidator tokenRequestValidator;
-
     private final PassportSessionService passportSessionService;
+    private final EventProbe eventProbe;
 
     public AccessTokenHandler(
             AccessTokenService accessTokenService,
             AuthorizationCodeService authorizationCodeService,
             ConfigurationService configurationService,
             TokenRequestValidator tokenRequestValidator,
-            PassportSessionService passportSessionService) {
+            PassportSessionService passportSessionService,
+            EventProbe eventProbe) {
         this.accessTokenService = accessTokenService;
         this.authorizationCodeService = authorizationCodeService;
         this.configurationService = configurationService;
         this.tokenRequestValidator = tokenRequestValidator;
         this.passportSessionService = passportSessionService;
+        this.eventProbe = eventProbe;
     }
 
     @ExcludeFromGeneratedCoverageReport
@@ -65,10 +73,12 @@ public class AccessTokenHandler
                 new TokenRequestValidator(
                         configurationService, new ClientAuthJwtIdService(configurationService));
         this.passportSessionService = new PassportSessionService(configurationService);
+        this.eventProbe = new EventProbe();
     }
 
     @Override
-    @Logging(clearState = true)
+    @Logging(clearState = true, correlationIdPath = CorrelationIdPathConstants.API_GATEWAY_REST)
+    @Metrics(captureColdStart = true)
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input, Context context) {
         LogHelper.attachComponentIdToLogs();
@@ -84,6 +94,7 @@ public class AccessTokenHandler
                 ErrorObject error = validationResult.getError();
                 LogHelper.logOauthError(
                         "Invalid auth grant received", error.getCode(), error.getDescription());
+                eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         getHttpStatusCodeForErrorResponse(validationResult.getError()),
                         validationResult.getError().toJSONObject());
@@ -96,6 +107,7 @@ public class AccessTokenHandler
             if (authorizationCodeItem == null) {
                 LOGGER.error(
                         "Access Token could not be issued. The supplied authorization code was not found in the database.");
+                eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
                         OAuth2Error.INVALID_GRANT.toJSONObject());
@@ -115,6 +127,7 @@ public class AccessTokenHandler
                         authorizationCodeItem.getExchangeDateTime());
 
                 ErrorObject error = revokeAccessToken(authorizationCodeItem.getIssuedAccessToken());
+                eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
@@ -125,6 +138,7 @@ public class AccessTokenHandler
                         authorizationCodeItem.getCreationDateTime());
                 ErrorObject error =
                         OAuth2Error.INVALID_GRANT.setDescription("Authorization code expired");
+                eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         error.getHTTPStatusCode(), error.toJSONObject());
             }
@@ -133,6 +147,7 @@ public class AccessTokenHandler
                 LOGGER.error(
                         "Redirect URL in token request does not match that received in auth code request. Resource ID: {}",
                         authorizationCodeItem.getResourceId());
+                eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
                 return ApiGatewayResponseGenerator.proxyJsonResponse(
                         OAuth2Error.INVALID_GRANT.getHTTPStatusCode(),
                         OAuth2Error.INVALID_GRANT.toJSONObject());
@@ -150,6 +165,9 @@ public class AccessTokenHandler
                     authorizationCodeItem.getAuthCode(),
                     accessTokenResponse.getTokens().getBearerAccessToken().getValue());
 
+            // Lambda Complete No Error
+            eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_OK);
+
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     HttpStatus.SC_OK, accessTokenResponse.toJSONObject());
         } catch (ParseException e) {
@@ -157,11 +175,13 @@ public class AccessTokenHandler
                     "Token request could not be parsed: '{}'",
                     e.getErrorObject().getDescription(),
                     e);
+            eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     getHttpStatusCodeForErrorResponse(e.getErrorObject()),
                     e.getErrorObject().toJSONObject());
         } catch (ClientAuthenticationException e) {
             LOGGER.error("Client authentication failed: ", e);
+            eventProbe.counterMetric(LAMBDA_ACCESS_TOKEN_COMPLETED_ERROR);
             return ApiGatewayResponseGenerator.proxyJsonResponse(
                     OAuth2Error.INVALID_CLIENT.getHTTPStatusCode(),
                     OAuth2Error.INVALID_CLIENT.toJSONObject());

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
@@ -54,6 +55,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAXIMUM_ATTEMPT_COUNT;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_CHECK_PASSPORT_COMPLETED_ERROR;
+import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.LAMBDA_CHECK_PASSPORT_COMPLETED_OK;
 
 @ExtendWith(MockitoExtension.class)
 class CheckPassportHandlerTest {
@@ -93,6 +96,7 @@ class CheckPassportHandlerTest {
     @Mock PassportSessionService passportSessionService;
     @Mock AuditService auditService;
     @Mock JWSObject jwsObject;
+    @Mock EventProbe mockEventProbe;
 
     private CheckPassportHandler underTest;
 
@@ -104,7 +108,8 @@ class CheckPassportHandlerTest {
                         mockConfigurationService,
                         dcsCryptographyService,
                         auditService,
-                        passportSessionService);
+                        passportSessionService,
+                        mockEventProbe);
     }
 
     @Test
@@ -120,6 +125,8 @@ class CheckPassportHandlerTest {
                         "12345", objectMapper.writeValueAsString(validPassportFormData));
 
         var response = underTest.handleRequest(event, context);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_OK);
 
         ArgumentCaptor<AuditEvent> argumentCaptor = ArgumentCaptor.forClass(AuditEvent.class);
         verify(auditService, times(2)).sendAuditEvent(argumentCaptor.capture());
@@ -182,6 +189,9 @@ class CheckPassportHandlerTest {
                         "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
 
         Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_OK);
+
         assertEquals("finish", responseBody.get("result"));
     }
 
@@ -202,6 +212,9 @@ class CheckPassportHandlerTest {
                         "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
 
         Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_OK);
+
         assertEquals("retry", responseBody.get("result"));
     }
 
@@ -222,6 +235,9 @@ class CheckPassportHandlerTest {
                         "test-client-id", objectMapper.writeValueAsString(validPassportFormData));
 
         Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_OK);
+
         assertEquals("finish", responseBody.get("result"));
     }
 
@@ -234,6 +250,8 @@ class CheckPassportHandlerTest {
         event.setHeaders(missingSessionHeaders);
 
         Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_ERROR);
 
         assertEquals(
                 ErrorResponse.MISSING_PASSPORT_SESSION_ID_HEADER.getCode(),
@@ -253,6 +271,8 @@ class CheckPassportHandlerTest {
         event.setHeaders(missingSessionHeaders);
 
         Map<String, Object> responseBody = getResponseBody(underTest.handleRequest(event, context));
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_ERROR);
 
         assertEquals(
                 ErrorResponse.PASSPORT_SESSION_NOT_FOUND.getMessage(),
@@ -279,6 +299,9 @@ class CheckPassportHandlerTest {
                     ErrorResponse.FAILED_TO_PARSE_PASSPORT_FORM_DATA.getMessage(),
                     responseBody.get("error_description"));
         }
+
+        verify(mockEventProbe, times(formFields.size()))
+                .counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_ERROR);
     }
 
     @Test
@@ -294,6 +317,8 @@ class CheckPassportHandlerTest {
 
         var response = underTest.handleRequest(event, context);
         var responseBody = getResponseBody(response);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_ERROR);
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusCode());
         assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
@@ -328,6 +353,8 @@ class CheckPassportHandlerTest {
 
         var response = underTest.handleRequest(event, context);
         var responseBody = getResponseBody(response);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_CHECK_PASSPORT_COMPLETED_ERROR);
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals(OAuth2Error.SERVER_ERROR_CODE, responseBody.get("error"));
