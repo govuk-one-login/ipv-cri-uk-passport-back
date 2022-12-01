@@ -14,6 +14,8 @@ public enum ConfigurationVariable {
     MAXIMUM_ATTEMPT_COUNT("/%s/credentialIssuers/ukPassport/self/maximumAttemptCount"),
     PASSPORT_CRI_CLIENT_AUDIENCE("/%s/credentialIssuers/ukPassport/self/audienceForClients"),
     PASSPORT_CRI_CLIENT_AUTH_MAX_TTL("/%s/credentialIssuers/ukPassport/self/maxJwtTtl"),
+    PASSPORT_CRI_CLIENT_VC_MAX_TTL("/%s/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"),
+    PASSPORT_CRI_CLIENT_TTL_UNIT("/%s/credentialIssuers/ukPassport/self/JwtTtlUnit"),
     PASSPORT_CRI_ENCRYPTION_KEY(
             "/%s/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"),
     PASSPORT_CRI_SIGNING_CERT("/%s/credentialIssuers/ukPassport/self/signingCertForDcsToVerify"),

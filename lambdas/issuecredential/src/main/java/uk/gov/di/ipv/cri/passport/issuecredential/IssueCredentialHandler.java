@@ -6,6 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
@@ -51,7 +52,6 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VC_CLAIM;
@@ -251,14 +251,9 @@ public class IssueCredentialHandler
                         .issuer(configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                         .audience(configurationService.getClientIssuer(passportCheck.getClientId()))
                         .notBeforeTime(new Date(now.toEpochMilli()))
-                        .expirationTime(
-                                new Date(
-                                        now.plusSeconds(
-                                                        Long.parseLong(
-                                                                configurationService
-                                                                        .getSsmParameter(
-                                                                                MAX_JWT_TTL)))
-                                                .toEpochMilli()))
+                        .claim(
+                                JWTClaimNames.EXPIRATION_TIME,
+                                configurationService.getVcExpiryTime())
                         .claim(VC_CLAIM, verifiableCredential)
                         .build();
 
