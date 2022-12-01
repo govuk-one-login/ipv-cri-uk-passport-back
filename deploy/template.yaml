@@ -67,22 +67,22 @@ Mappings:
     production:
       provisionedConcurrency: 1
 
-    MaxVCJwtTtlMapping:
-      Environment:
-        dev: "6"
-        build: "6"
-        staging: "6"
-        integration: "6"
-        production: "2"
+  MaxVCJwtTtlMapping:
+    Environment:
+      dev: "6"
+      build: "6"
+      staging: "6"
+      integration: "6"
+      production: "2"
 
-    # Permitted values: SECONDS,MINUTES,HOURS,DAYS,MONTHS,YEARS
-    JwtTtlUnitMapping:
-      Environment:
-        dev: MONTHS
-        build: MONTHS
-        staging: MONTHS
-        integration: MONTHS
-        production: HOURS
+  # Permitted values: SECONDS,MINUTES,HOURS,DAYS,MONTHS,YEARS
+  JwtTtlUnitMapping:
+    Environment:
+      dev: MONTHS
+      build: MONTHS
+      staging: MONTHS
+      integration: MONTHS
+      production: HOURS
 
 Conditions:
   AddProvisionedConcurrency: !Not
@@ -277,7 +277,7 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
-       - SSMParameterReadPolicy:
+        - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit
