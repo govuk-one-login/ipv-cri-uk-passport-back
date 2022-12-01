@@ -892,7 +892,7 @@ Resources:
   MaxVCJwtTtlMapping:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"
+      Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"
       Type: String
       Value: !FindInMap [ MaxVCJwtTtlMapping, Environment, !Ref Environment ]
       Description: default time to live for a VC
@@ -900,7 +900,7 @@ Resources:
   JwtTtlUnitParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit"
+      Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit"
       Type: String
       Value: !FindInMap [ JwtTtlUnitMapping, Environment, !Ref Environment ]
       Description: The unit for the time-to-live for an JWT e.g. (MONTHS)
