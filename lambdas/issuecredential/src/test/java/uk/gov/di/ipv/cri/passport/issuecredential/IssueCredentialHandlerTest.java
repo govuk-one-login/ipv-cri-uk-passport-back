@@ -70,7 +70,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAX_JWT_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.IDENTITY_CHECK_CREDENTIAL_TYPE;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VERIFIABLE_CREDENTIAL_TYPE;
@@ -210,7 +209,6 @@ class IssueCredentialHandlerTest {
     private void mockConfigurationServiceCalls() {
         when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                 .thenReturn("TEST");
-        when(mockConfigurationService.getSsmParameter(MAX_JWT_TTL)).thenReturn("1000");
     }
 
     @Test
@@ -236,6 +234,7 @@ class IssueCredentialHandlerTest {
                 .thenReturn("test-issuer");
         when(mockConfigurationService.getClientIssuer(clientId))
                 .thenReturn("https://example.com/issuer");
+        when(mockConfigurationService.getVcExpiryTime()).thenReturn(1000l);
         mockConfigurationServiceCalls();
 
         PassportSessionItem passportSessionItem = new PassportSessionItem();
@@ -256,6 +255,7 @@ class IssueCredentialHandlerTest {
         assertEquals(200, response.getStatusCode());
         assertEquals(6, claimsSet.size());
         assertEquals("https://example.com/issuer", claimsSet.get("aud").asText());
+        assertEquals(claimsSet.get(JWTClaimNames.EXPIRATION_TIME).asText(), "1000");
 
         verify(mockAccessTokenService).revokeAccessToken(accessTokenItem.getAccessToken());
 

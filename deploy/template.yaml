@@ -67,6 +67,23 @@ Mappings:
     production:
       provisionedConcurrency: 1
 
+    MaxVCJwtTtlMapping:
+      Environment:
+        dev: "6"
+        build: "6"
+        staging: "6"
+        integration: "6"
+        production: "2"
+
+    # Permitted values: SECONDS,MINUTES,HOURS,DAYS,MONTHS,YEARS
+    JwtTtlUnitMapping:
+      Environment:
+        dev: MONTHS
+        build: MONTHS
+        staging: MONTHS
+        integration: MONTHS
+        production: HOURS
+
 Conditions:
   AddProvisionedConcurrency: !Not
     - !Equals
@@ -260,6 +277,10 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/verifiableCredentialIssuer
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/maxJwtTtl
+       - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
         - SSMParameterReadPolicy:
@@ -867,6 +888,22 @@ Resources:
                   Value: !Sub "IPV Passport Back Private API Gateway ${Environment}"
             Period: 300
             Stat: Sum
+
+  MaxVCJwtTtlMapping:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping
+      Type: String
+      Value: !FindInMap [ MaxVCJwtTtlMapping, Environment, !Ref Environment ]
+      Description: default time to live for an JWT in (seconds)
+
+  JwtTtlUnitParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit
+      Type: String
+      Value: !FindInMap [ JwtTtlUnitMapping, Environment, !Ref Environment ]
+      Description: The unit for the time-to-live for an JWT e.g. (MONTHS)
 
   ####################################################################
   #                                                                  #

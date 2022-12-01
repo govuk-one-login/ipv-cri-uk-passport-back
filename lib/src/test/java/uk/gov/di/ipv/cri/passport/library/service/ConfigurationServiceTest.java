@@ -19,6 +19,8 @@ import uk.org.webcompere.systemstubs.properties.SystemProperties;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
+import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.getAllServeEvents;
@@ -68,6 +70,20 @@ class ConfigurationServiceTest {
         PrivateKey underTest = configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY);
         assertEquals("PKCS#8", underTest.getFormat());
         assertEquals("RSA", underTest.getAlgorithm());
+    }
+
+    @Test
+    void shouldSetVCExpiryBasedOnParamValueAndParamUnits()
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
+        environmentVariables.set("ENVIRONMENT", "dev");
+        when(ssmProvider.get("/dev/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"))
+                .thenReturn("1000");
+        when(ssmProvider.get("/dev/credentialIssuers/ukPassport/self/JwtTtlUnit"))
+                .thenReturn("HOURS");
+
+        long vcExpiryTime = configurationService.getVcExpiryTime();
+        OffsetDateTime dateTimeNow = OffsetDateTime.now(Clock.systemUTC());
+        assertEquals(vcExpiryTime, dateTimeNow.plusHours(1000).toEpochSecond());
     }
 
     @Test

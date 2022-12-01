@@ -23,11 +23,16 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
+import java.time.Clock;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_TTL_UNIT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_VC_MAX_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_CERT;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.BEARER_TOKEN_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DYNAMODB_ENDPOINT_OVERRIDE;
@@ -160,5 +165,29 @@ public class ConfigurationService {
                 String.format(
                         "%s/%s/jwtAuthentication/issuer",
                         System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
+    }
+
+    public long getVcExpiryTime() throws UnknownClientException {
+        ChronoUnit jwtTtlUnit = ChronoUnit.valueOf(getSsmParameter(PASSPORT_CRI_CLIENT_TTL_UNIT));
+        long ttl = Long.parseLong(getSsmParameter(PASSPORT_CRI_CLIENT_VC_MAX_TTL));
+        OffsetDateTime dateTimeNow = OffsetDateTime.now(Clock.systemUTC());
+
+        switch (jwtTtlUnit) {
+            case SECONDS:
+                return dateTimeNow.plusSeconds(ttl).toEpochSecond();
+            case MINUTES:
+                return dateTimeNow.plusMinutes(ttl).toEpochSecond();
+            case HOURS:
+                return dateTimeNow.plusHours(ttl).toEpochSecond();
+            case DAYS:
+                return dateTimeNow.plusDays(ttl).toEpochSecond();
+            case MONTHS:
+                return dateTimeNow.plusMonths(ttl).toEpochSecond();
+            case YEARS:
+                return dateTimeNow.plusYears(ttl).toEpochSecond();
+            default:
+                throw new IllegalStateException(
+                        "Unexpected time-to-live unit encountered: " + jwtTtlUnit);
+        }
     }
 }
