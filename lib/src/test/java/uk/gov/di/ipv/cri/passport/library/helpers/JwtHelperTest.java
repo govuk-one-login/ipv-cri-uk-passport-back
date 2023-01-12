@@ -45,6 +45,7 @@ class JwtHelperTest {
     public static final String PASSPORT_NUMBER = "123456789";
     public static final String GIVEN_NAME = "Paul";
     public static final String EXPIRY_DATE = "2020-01-01";
+    public static final String ISSUING_COUNTRY_CODE = "GBR";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -66,7 +67,8 @@ class JwtHelperTest {
                                 List.of(
                                         new Passport(
                                                 PASSPORT_NUMBER,
-                                                LocalDate.parse(EXPIRY_DATE).toString()))),
+                                                LocalDate.parse(EXPIRY_DATE).toString(),
+                                                ISSUING_COUNTRY_CODE))),
                         Collections.singletonList(
                                 new Evidence(UUID.randomUUID().toString(), 4, 2, null)));
 

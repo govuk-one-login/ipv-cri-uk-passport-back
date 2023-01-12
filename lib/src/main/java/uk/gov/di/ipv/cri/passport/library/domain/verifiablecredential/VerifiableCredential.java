@@ -52,7 +52,10 @@ public class VerifiableCredential {
                         List.of(
                                 new Passport(
                                         passportCheck.getDcsPayload().getPassportNumber(),
-                                        passportCheck.getDcsPayload().getExpiryDate().toString())));
+                                        passportCheck.getDcsPayload().getExpiryDate().toString(),
+                                        // Country code will need to be updated once users outside
+                                        // of UK can use the service
+                                        "GBR")));
 
         return new VerifiableCredential(
                 credentialSubject, Collections.singletonList(passportCheck.getEvidence()));

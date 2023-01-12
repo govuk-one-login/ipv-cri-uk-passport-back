@@ -23,6 +23,7 @@ class VerifiableCredentialTest {
     public static final String PASSPORT_NUMBER = "passportNumber";
     public static final LocalDate DATE_OF_BIRTH = LocalDate.of(1984, 9, 28);
     public static final LocalDate EXPIRY_DATE = LocalDate.of(2034, 9, 28);
+    public static final String ISSUING_COUNTRY_CODE = "GBR";
     public static final String RESOURCE_ID = "resourceId";
 
     @Test
@@ -72,6 +73,13 @@ class VerifiableCredentialTest {
                 EXPIRY_DATE.toString(),
                 verifiableCredential.getCredentialSubject().getPassport().get(0).getExpiryDate());
         assertEquals(
+                ISSUING_COUNTRY_CODE,
+                verifiableCredential
+                        .getCredentialSubject()
+                        .getPassport()
+                        .get(0)
+                        .getIcaoIssuerCode());
+        assertEquals(
                 EVIDENCE_TYPE_IDENTITY_CHECK, verifiableCredential.getEvidence().get(0).getType());
         assertDoesNotThrow(
                 () -> UUID.fromString(verifiableCredential.getEvidence().get(0).getTxn()));
@@ -98,7 +106,8 @@ class VerifiableCredentialTest {
                         + "    } ],\n"
                         + "    \"passport\" : [ {\n"
                         + "      \"documentNumber\" : \"passportNumber\",\n"
-                        + "      \"expiryDate\" : \"2034-09-28\"\n"
+                        + "      \"expiryDate\" : \"2034-09-28\",\n"
+                        + "      \"icaoIssuerCode\" : \"GBR\"\n"
                         + "    } ]\n"
                         + "  },\n"
                         + "  \"evidence\" : [ {\n"
@@ -147,7 +156,8 @@ class VerifiableCredentialTest {
                         + "    } ],\n"
                         + "    \"passport\" : [ {\n"
                         + "      \"documentNumber\" : \"passportNumber\",\n"
-                        + "      \"expiryDate\" : \"2034-09-28\"\n"
+                        + "      \"expiryDate\" : \"2034-09-28\",\n"
+                        + "      \"icaoIssuerCode\" : \"GBR\"\n"
                         + "    } ]\n"
                         + "  },\n"
                         + "  \"evidence\" : [ {\n"
