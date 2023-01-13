@@ -19,10 +19,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_TLS_INTERMEDIATE_CERT;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.DCS_TLS_ROOT_CERT;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_TLS_CERT;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_TLS_KEY;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.HTTPCLIENT_TLS_CERT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.HTTPCLIENT_TLS_INTERMEDIATE_CERT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.HTTPCLIENT_TLS_KEY;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.HTTPCLIENT_TLS_ROOT_CERT;
 
 public class HttpClientSetUp {
 
@@ -35,14 +35,14 @@ public class HttpClientSetUp {
                     KeyStoreException, IOException {
         KeyStore keystoreTLS =
                 createKeyStore(
-                        configurationService.getCertificate(PASSPORT_CRI_TLS_CERT),
-                        configurationService.getPrivateKey(PASSPORT_CRI_TLS_KEY));
+                        configurationService.getCertificate(HTTPCLIENT_TLS_CERT),
+                        configurationService.getPrivateKey(HTTPCLIENT_TLS_KEY));
 
         KeyStore trustStore =
                 createTrustStore(
                         new Certificate[] {
-                            configurationService.getCertificate(DCS_TLS_ROOT_CERT),
-                            configurationService.getCertificate(DCS_TLS_INTERMEDIATE_CERT)
+                            configurationService.getCertificate(HTTPCLIENT_TLS_ROOT_CERT),
+                            configurationService.getCertificate(HTTPCLIENT_TLS_INTERMEDIATE_CERT)
                         });
 
         return contextSetup(keystoreTLS, trustStore);

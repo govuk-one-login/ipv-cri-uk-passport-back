@@ -34,19 +34,16 @@ import java.util.Optional;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_TTL_UNIT;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_CLIENT_VC_MAX_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_SIGNING_CERT;
+import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.AWS_STACK_NAME;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.BEARER_TOKEN_TTL;
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DYNAMODB_ENDPOINT_OVERRIDE;
-import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.ENVIRONMENT;
 
 public class ConfigurationService {
-
     public static final int LOCALHOST_PORT = 4567;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
     private static final long DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS = 3600L;
     private static final String IS_LOCAL = "IS_LOCAL";
     private static final String CLIENT_REDIRECT_URL_SEPARATOR = ",";
-    public static final String CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX =
-            "CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX";
 
     private final SSMProvider ssmProvider;
 
@@ -83,16 +80,16 @@ public class ConfigurationService {
     public String getSsmParameter(ConfigurationVariable configurationVariable) {
         return ssmProvider.get(
                 String.format(
-                        configurationVariable.getValue(), getEnvironmentVariable(ENVIRONMENT)));
+                        configurationVariable.getValue(), getEnvironmentVariable(AWS_STACK_NAME)));
     }
 
-    public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
+    private String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
         return ssmProvider
                 .withDecryption()
                 .get(
                         String.format(
                                 configurationVariable.getValue(),
-                                getEnvironmentVariable(ENVIRONMENT)));
+                                getEnvironmentVariable(AWS_STACK_NAME)));
     }
 
     public Certificate getCertificate(ConfigurationVariable configurationVariable)
@@ -143,19 +140,21 @@ public class ConfigurationService {
     }
 
     public ECKey getClientSigningPublicJwk(String clientId) throws ParseException {
-        return ECKey.parse(
+        String serialisedPublicKey =
                 ssmProvider.get(
                         String.format(
-                                "%s/%s/signingPublicJwk",
-                                System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId)));
+                                "/%s/clients/%s/jwtAuthentication/publicSigningJwkBase64",
+                                getEnvironmentVariable(AWS_STACK_NAME), clientId));
+
+        return ECKey.parse(new String(Base64.getDecoder().decode(serialisedPublicKey)));
     }
 
     public List<String> getClientRedirectUrls(String clientId) throws UnknownClientException {
         String redirectUrlStrings =
                 ssmProvider.get(
                         String.format(
-                                "%s/%s/jwtAuthentication/validRedirectUrls",
-                                System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
+                                "/%s/clients/%s/jwtAuthentication/redirectUri",
+                                getEnvironmentVariable(AWS_STACK_NAME), clientId));
 
         return Arrays.asList(redirectUrlStrings.split(CLIENT_REDIRECT_URL_SEPARATOR));
     }
@@ -163,8 +162,8 @@ public class ConfigurationService {
     public String getClientIssuer(String clientId) throws UnknownClientException {
         return ssmProvider.get(
                 String.format(
-                        "%s/%s/jwtAuthentication/issuer",
-                        System.getenv(CREDENTIAL_ISSUERS_CONFIG_PARAM_PREFIX), clientId));
+                        "/%s/clients/%s/jwtAuthentication/issuer",
+                        getEnvironmentVariable(AWS_STACK_NAME), clientId));
     }
 
     public long getVcExpiryTime() throws UnknownClientException {

@@ -82,3 +82,31 @@ core/deploy/dns-zones/template.yaml:20:3
 Checkov..............................................(no files to check)Skipped
 - hook id: checkov
 ```
+
+## Build
+
+Build with `./gradlew`
+
+## Deploy
+
+### Prerequisites
+
+See onboarding guide for instructions on how to setup the following command line interfaces (CLI)
+- aws cli
+- aws-vault
+- sam cli
+- gds cli
+
+### Deploy to dev account
+
+Any time you wish to deploy, run:
+
+`gds aws di-ipv-cri-dev -- ./deploy.sh my-ukpassport-api-stack-name`
+
+### Delete stack from dev account
+> The stack name *must* be unique to you and created by you in the deploy stage above.
+> Type `y`es when prompted to delete the stack and the folders in S3 bucket
+
+The command to run is:
+
+`gds aws di-ipv-cri-dev -- sam delete --config-env dev --stack-name <unique-stack-name>`

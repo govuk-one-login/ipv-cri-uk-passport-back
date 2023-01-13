@@ -27,7 +27,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.BACKEND_SESSION_TTL;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.SESSION_TTL;
 
 @ExtendWith(MockitoExtension.class)
 class DataStoreTest {
@@ -61,7 +61,7 @@ class DataStoreTest {
 
     @Test
     void shouldPutItemIntoDynamoDbTable() {
-        when(mockConfigurationService.getSsmParameter(BACKEND_SESSION_TTL)).thenReturn("100");
+        when(mockConfigurationService.getSsmParameter(SESSION_TTL)).thenReturn("100");
 
         dataStore.create(authorizationCodeItem);
 

@@ -61,10 +61,10 @@ class ConfigurationServiceTest {
     @Test
     void shouldLoadPrivateKeyFromParameterStore()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        environmentVariables.set("ENVIRONMENT", "dev");
+        environmentVariables.set("AWS_STACK_NAME", "passport-api-dev");
         when(ssmProvider.withDecryption()).thenReturn(ssmProviderWithDecryption);
         when(ssmProviderWithDecryption.get(
-                        "/dev/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"))
+                        "/passport-api-dev/DCS/JWE/EncryptionKeyForPassportToDecrypt"))
                 .thenReturn(TEST_PRIVATE_KEY);
 
         PrivateKey underTest = configurationService.getPrivateKey(PASSPORT_CRI_ENCRYPTION_KEY);
@@ -75,11 +75,9 @@ class ConfigurationServiceTest {
     @Test
     void shouldSetVCExpiryBasedOnParamValueAndParamUnits()
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        environmentVariables.set("ENVIRONMENT", "dev");
-        when(ssmProvider.get("/dev/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"))
-                .thenReturn("1000");
-        when(ssmProvider.get("/dev/credentialIssuers/ukPassport/self/JwtTtlUnit"))
-                .thenReturn("HOURS");
+        environmentVariables.set("AWS_STACK_NAME", "passport-api-dev");
+        when(ssmProvider.get("/passport-api-dev/MaxVCJwtTtlMapping")).thenReturn("1000");
+        when(ssmProvider.get("/passport-api-dev/JwtTtlUnit")).thenReturn("HOURS");
 
         long vcExpiryTime = configurationService.getVcExpiryTime();
         OffsetDateTime dateTimeNow = OffsetDateTime.now(Clock.systemUTC());
