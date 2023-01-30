@@ -118,7 +118,10 @@ public class InitialiseSessionHandler
                     AuditEventUser.fromPassportSessionItem(passportSessionItem));
 
             JarResponse response =
-                    generateJarResponse(claimsSet, passportSessionItem.getPassportSessionId());
+                    generateJarResponse(
+                            claimsSet,
+                            passportSessionItem.getPassportSessionId(),
+                            passportSessionItem.getAuthParams().getRedirectUri());
 
             eventProbe.counterMetric(LAMBDA_INITIALISE_SESSION_COMPLETED_OK);
 
@@ -150,8 +153,10 @@ public class InitialiseSessionHandler
         }
     }
 
-    private JarResponse generateJarResponse(JWTClaimsSet claimsSet, String passportSessionId)
+    private JarResponse generateJarResponse(
+            JWTClaimsSet claimsSet, String passportSessionId, String redirectUrl)
             throws ParseException {
-        return new JarResponse(claimsSet.getJSONObjectClaim(SHARED_CLAIMS), passportSessionId);
+        return new JarResponse(
+                claimsSet.getJSONObjectClaim(SHARED_CLAIMS), passportSessionId, redirectUrl);
     }
 }

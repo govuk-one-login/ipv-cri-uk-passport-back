@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventUser;
+import uk.gov.di.ipv.cri.passport.library.domain.AuthParams;
 import uk.gov.di.ipv.cri.passport.library.error.ErrorResponse;
 import uk.gov.di.ipv.cri.passport.library.exceptions.JarValidationException;
 import uk.gov.di.ipv.cri.passport.library.exceptions.RecoverableJarValidationException;
@@ -112,10 +113,17 @@ class InitialiseSessionHandlerTest {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
+
         PassportSessionItem passportSessionItem = new PassportSessionItem();
         passportSessionItem.setUserId("test-user-id");
         passportSessionItem.setPassportSessionId("test-session-id");
         passportSessionItem.setGovukSigninJourneyId("test-govuk-id");
+
+        AuthParams authParams = new AuthParams();
+        authParams.setState("test-state");
+        authParams.setRedirectUri("https://www.example.com");
+        passportSessionItem.setAuthParams(authParams);
+
         when(passportSessionService.generatePassportSession(any())).thenReturn(passportSessionItem);
 
         var event = new APIGatewayProxyRequestEvent();
@@ -138,8 +146,13 @@ class InitialiseSessionHandlerTest {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         when(jarValidator.validateRequestJwt(any(), anyString()))
                 .thenReturn(signedJWT.getJWTClaimsSet());
+        PassportSessionItem testPassportSessionItem = new PassportSessionItem();
+        testPassportSessionItem.setPassportSessionId("test-session");
+        testPassportSessionItem.setAuthParams(new AuthParams());
+        testPassportSessionItem.getAuthParams().setState("test-state");
+        testPassportSessionItem.getAuthParams().setRedirectUri("https://www.example.com");
         when(passportSessionService.generatePassportSession(any()))
-                .thenReturn(new PassportSessionItem());
+                .thenReturn(testPassportSessionItem);
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);
@@ -208,11 +221,14 @@ class InitialiseSessionHandlerTest {
             throws JsonProcessingException, JarValidationException, ParseException {
         when(jarValidator.decryptJWE(any(JWEObject.class))).thenReturn(signedJWT);
         JWTClaimsSet myMock = mock(JWTClaimsSet.class);
+        PassportSessionItem testPassportSessionItem = new PassportSessionItem();
+        testPassportSessionItem.setAuthParams(new AuthParams());
+        testPassportSessionItem.getAuthParams().setRedirectUri("test-redirect");
         when(myMock.getJSONObjectClaim(anyString()))
                 .thenThrow(new ParseException("Failed to parse jwt claim set", 0));
         when(jarValidator.validateRequestJwt(any(), anyString())).thenReturn(myMock);
         when(passportSessionService.generatePassportSession(any()))
-                .thenReturn(new PassportSessionItem());
+                .thenReturn(testPassportSessionItem);
 
         var event = new APIGatewayProxyRequestEvent();
         event.setHeaders(TEST_EVENT_HEADERS);
