@@ -13,9 +13,14 @@ public class JarResponse {
     @JsonProperty("passportSessionId")
     private String passportSessionId;
 
-    public JarResponse(Map<String, Object> sharedClaims, String passportSessionId) {
+    @JsonProperty("redirect_uri")
+    private String redirectUrl;
+
+    public JarResponse(
+            Map<String, Object> sharedClaims, String passportSessionId, String redirectUrl) {
         this.sharedClaims = sharedClaims;
         this.passportSessionId = passportSessionId;
+        this.redirectUrl = redirectUrl;
     }
 
     public Map<String, Object> getSharedClaims() {
