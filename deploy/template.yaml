@@ -52,7 +52,11 @@ Parameters:
 
 Mappings:
   EnvironmentConfiguration:
-    dev:
+    development-a:
+      provisionedConcurrency: 0
+    development-b:
+      provisionedConcurrency: 0
+    development-c:
       provisionedConcurrency: 0
     build:
       provisionedConcurrency: 0
@@ -81,6 +85,11 @@ Mappings:
       production: MONTHS
 
 Conditions:
+  AddProvisionedConcurrency: !Not
+    - !Equals
+      - !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+      -  0
+
   IsDevelopmentEnvironment: !Not
     - !Or
       - !Equals [ !Ref Environment, "build"]
@@ -300,7 +309,11 @@ Resources:
             Path: /credentials/issue
             Method: POST
       AutoPublishAlias: live
-
+      ProvisionedConcurrencyConfig:
+        !If
+          - AddProvisionedConcurrency
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+          - !Ref AWS::NoValue
 
   IPVCriUKPassportIssueCredentialFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -374,7 +387,11 @@ Resources:
             Path: /token
             Method: POST
       AutoPublishAlias: live
-
+      ProvisionedConcurrencyConfig:
+        !If
+          - AddProvisionedConcurrency
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+          - !Ref AWS::NoValue
 
   IPVCriUKPassportAccessTokenFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -452,7 +469,11 @@ Resources:
             Path: /check-passport
             Method: POST
       AutoPublishAlias: live
-
+      ProvisionedConcurrencyConfig:
+        !If
+          - AddProvisionedConcurrency
+          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+          - !Ref AWS::NoValue
 
   IPVCriUKPassportCheckPassportFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -518,7 +539,11 @@ Resources:
             Path: /build-client-oauth-response
             Method: POST
       AutoPublishAlias: live
-
+      ProvisionedConcurrencyConfig:
+        !If
+        - AddProvisionedConcurrency
+        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+        - !Ref AWS::NoValue
 
   IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -601,6 +626,11 @@ Resources:
             Path: /initialise-session
             Method: POST
       AutoPublishAlias: live
+      ProvisionedConcurrencyConfig:
+        !If
+        - AddProvisionedConcurrency
+        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
+        - !Ref AWS::NoValue
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -907,7 +937,7 @@ Resources:
     Properties:
       Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"
       Type: String
-      Value: "6"
+      Value: !FindInMap [ MaxVCJwtTtlMapping, Environment, !Ref Environment ]
       Description: default time to live for a VC
 
   JwtTtlUnitParameter:
@@ -915,7 +945,7 @@ Resources:
     Properties:
       Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit"
       Type: String
-      Value: MONTHS
+      Value: !FindInMap [ JwtTtlUnitMapping, Environment, !Ref Environment ]
       Description: The unit for the time-to-live for an JWT e.g. (MONTHS)
 
   ####################################################################
