@@ -52,11 +52,7 @@ Parameters:
 
 Mappings:
   EnvironmentConfiguration:
-    development-a:
-      provisionedConcurrency: 0
-    development-b:
-      provisionedConcurrency: 0
-    development-c:
+    dev:
       provisionedConcurrency: 0
     build:
       provisionedConcurrency: 0
@@ -85,11 +81,6 @@ Mappings:
       production: MONTHS
 
 Conditions:
-  AddProvisionedConcurrency: !Not
-    - !Equals
-      - !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
-      -  0
-
   IsDevelopmentEnvironment: !Not
     - !Or
       - !Equals [ !Ref Environment, "build"]
@@ -309,11 +300,7 @@ Resources:
             Path: /credentials/issue
             Method: POST
       AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        !If
-          - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
-          - !Ref AWS::NoValue
+
 
   IPVCriUKPassportIssueCredentialFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -387,11 +374,7 @@ Resources:
             Path: /token
             Method: POST
       AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        !If
-          - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
-          - !Ref AWS::NoValue
+
 
   IPVCriUKPassportAccessTokenFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -469,11 +452,7 @@ Resources:
             Path: /check-passport
             Method: POST
       AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        !If
-          - AddProvisionedConcurrency
-          - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
-          - !Ref AWS::NoValue
+
 
   IPVCriUKPassportCheckPassportFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -539,11 +518,7 @@ Resources:
             Path: /build-client-oauth-response
             Method: POST
       AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        !If
-        - AddProvisionedConcurrency
-        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
-        - !Ref AWS::NoValue
+
 
   IPVCriUKPassportBuildClientOauthResponseFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -626,11 +601,6 @@ Resources:
             Path: /initialise-session
             Method: POST
       AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        !If
-        - AddProvisionedConcurrency
-        - ProvisionedConcurrentExecutions: !FindInMap [ EnvironmentConfiguration, !Ref Environment, provisionedConcurrency ]
-        - !Ref AWS::NoValue
 
   IPVCriUKPassportInitialiseSessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -889,12 +859,55 @@ Resources:
             Period: 300
             Stat: Sum
 
+  PassportLambdaInvocationDeviation:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub Passport ${Environment} Deviation between the session and issue credential lambda
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmTopicPassport
+      OKActions:
+        - !Ref AlarmTopicPassport
+      InsufficientDataActions: [ ]
+      DatapointsToAlarm: 6
+      EvaluationPeriods: 6
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: booleanDevationMetric
+          Label: BooleanDevationMetric
+          ReturnData: true
+          Expression: IF(ABS(((sessionInvocations-issueCredentialInvocations)/sessionInvocations) *100) > 50, 2, 1)
+        - Id: issueCredentialInvocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Sub "ipv-passport-issue-credential-${Environment}"
+            Period: 300
+            Stat: Sum
+        - Id: sessionInvocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Sub "ipv-passport-initialise-session-${Environment}"
+            Period: 300
+            Stat: Sum
+
   MaxVCJwtTtlMapping:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"
       Type: String
-      Value: !FindInMap [ MaxVCJwtTtlMapping, Environment, !Ref Environment ]
+      Value: "6"
       Description: default time to live for a VC
 
   JwtTtlUnitParameter:
@@ -902,7 +915,7 @@ Resources:
     Properties:
       Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit"
       Type: String
-      Value: !FindInMap [ JwtTtlUnitMapping, Environment, !Ref Environment ]
+      Value: MONTHS
       Description: The unit for the time-to-live for an JWT e.g. (MONTHS)
 
   ####################################################################
