@@ -889,6 +889,49 @@ Resources:
             Period: 300
             Stat: Sum
 
+  PassportLambdaInvocationDeviation:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub Passport ${Environment} Deviation between the session and issue credential lambda
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmTopicPassport
+      OKActions:
+        - !Ref AlarmTopicPassport
+      InsufficientDataActions: [ ]
+      DatapointsToAlarm: 6
+      EvaluationPeriods: 6
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: booleanDevationMetric
+          Label: BooleanDevationMetric
+          ReturnData: true
+          Expression: IF(ABS(((sessionInvocations-issueCredentialInvocations)/sessionInvocations) *100) > 50, 2, 1)
+        - Id: issueCredentialInvocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Sub "ipv-passport-issue-credential-${Environment}"
+            Period: 300
+            Stat: Sum
+        - Id: sessionInvocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Sub "ipv-passport-initialise-session-${Environment}"
+            Period: 300
+            Stat: Sum
+
   MaxVCJwtTtlMapping:
     Type: AWS::SSM::Parameter
     Properties:
