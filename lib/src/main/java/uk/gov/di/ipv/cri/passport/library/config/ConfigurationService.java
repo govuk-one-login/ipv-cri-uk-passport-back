@@ -85,9 +85,11 @@ public class ConfigurationService {
     }
 
     public String getSsmParameter(ConfigurationVariable configurationVariable) {
-        String ssmParameter = ssmProvider.get(
-                String.format(
-                        configurationVariable.getValue(), getEnvironmentVariable(ENVIRONMENT)));
+        String ssmParameter =
+                ssmProvider.get(
+                        String.format(
+                                configurationVariable.getValue(),
+                                getEnvironmentVariable(ENVIRONMENT)));
 
         String hashConfigValue = hashConfigValue(ssmParameter);
 
@@ -99,12 +101,13 @@ public class ConfigurationService {
     }
 
     public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
-        String ssmParameter = ssmProvider
-                .withDecryption()
-                .get(
-                        String.format(
-                                configurationVariable.getValue(),
-                                getEnvironmentVariable(ENVIRONMENT)));
+        String ssmParameter =
+                ssmProvider
+                        .withDecryption()
+                        .get(
+                                String.format(
+                                        configurationVariable.getValue(),
+                                        getEnvironmentVariable(ENVIRONMENT)));
 
         String hashConfigValue = hashConfigValue(ssmParameter);
 
