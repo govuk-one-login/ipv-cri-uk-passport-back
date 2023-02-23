@@ -17,11 +17,11 @@ public enum ConfigurationVariable {
     PASSPORT_CRI_CLIENT_VC_MAX_TTL("/%s/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"),
     PASSPORT_CRI_CLIENT_TTL_UNIT("/%s/credentialIssuers/ukPassport/self/JwtTtlUnit"),
     PASSPORT_CRI_ENCRYPTION_KEY(
-            "/%s/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt"),
-    PASSPORT_CRI_SIGNING_CERT("/%s/credentialIssuers/ukPassport/self/signingCertForDcsToVerify"),
-    PASSPORT_CRI_SIGNING_KEY("/%s/credentialIssuers/ukPassport/self/signingKeyForPassportToSign"),
-    PASSPORT_CRI_TLS_CERT("/%s/credentialIssuers/ukPassport/self/tlsCert"),
-    PASSPORT_CRI_TLS_KEY("/%s/credentialIssuers/ukPassport/self/tlsKey"),
+            "/%s/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt-2023-02-17"),
+    PASSPORT_CRI_SIGNING_CERT("/%s/credentialIssuers/ukPassport/self/signingCertForDcsToVerify-2023-02-17"),
+    PASSPORT_CRI_SIGNING_KEY("/%s/credentialIssuers/ukPassport/self/signingKeyForPassportToSign-2023-02-17"),
+    PASSPORT_CRI_TLS_CERT("/%s/credentialIssuers/ukPassport/self/tlsCert-2023-02-17"),
+    PASSPORT_CRI_TLS_KEY("/%s/credentialIssuers/ukPassport/self/tlsKey-2023-02-17"),
     VERIFIABLE_CREDENTIAL_ISSUER(
             "/%s/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"),
     VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID(
