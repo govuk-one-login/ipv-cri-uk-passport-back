@@ -87,7 +87,10 @@ public class ConfigurationService {
     public String getSsmParameter(ConfigurationVariable configurationVariable) {
         String hashConfigValue = hashConfigValue(configurationVariable);
 
-        LOGGER.info("Hashed param value for Name:{} Value:{}", configurationVariable.name(), hashConfigValue);
+        LOGGER.info(
+                "Hashed param value for Name:{} Value:{}",
+                configurationVariable.name(),
+                hashConfigValue);
 
         return ssmProvider.get(
                 String.format(
@@ -97,7 +100,10 @@ public class ConfigurationService {
     public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
         String hashConfigValue = hashConfigValue(configurationVariable);
 
-        LOGGER.info("Hashed param value for Name:{} Value:{}", configurationVariable.name(), hashConfigValue);
+        LOGGER.info(
+                "Hashed param value for Name:{} Value:{}",
+                configurationVariable.name(),
+                hashConfigValue);
 
         return ssmProvider
                 .withDecryption()
