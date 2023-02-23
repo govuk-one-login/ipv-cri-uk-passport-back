@@ -85,32 +85,38 @@ public class ConfigurationService {
     }
 
     public String getSsmParameter(ConfigurationVariable configurationVariable) {
-        String hashConfigValue = hashConfigValue(configurationVariable);
-
-        LOGGER.info(
-                "Hashed param value for Name:{} Value:{}",
-                configurationVariable.name(),
-                hashConfigValue);
-
-        return ssmProvider.get(
-                String.format(
-                        configurationVariable.getValue(), getEnvironmentVariable(ENVIRONMENT)));
-    }
-
-    public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
-        String hashConfigValue = hashConfigValue(configurationVariable);
-
-        LOGGER.info(
-                "Hashed param value for Name:{} Value:{}",
-                configurationVariable.name(),
-                hashConfigValue);
-
-        return ssmProvider
-                .withDecryption()
-                .get(
+        String ssmParameter =
+                ssmProvider.get(
                         String.format(
                                 configurationVariable.getValue(),
                                 getEnvironmentVariable(ENVIRONMENT)));
+
+        String hashConfigValue = hashConfigValue(ssmParameter);
+
+        LOGGER.info(
+                "Hashed param value for Name:{} Value:{}",
+                configurationVariable.getValue(),
+                hashConfigValue);
+        return ssmParameter;
+    }
+
+    public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
+        String ssmParameter =
+                ssmProvider
+                        .withDecryption()
+                        .get(
+                                String.format(
+                                        configurationVariable.getValue(),
+                                        getEnvironmentVariable(ENVIRONMENT)));
+
+        String hashConfigValue = hashConfigValue(ssmParameter);
+
+        LOGGER.info(
+                "Hashed param value for Name:{} Value:{}",
+                configurationVariable.getValue(),
+                hashConfigValue);
+
+        return ssmParameter;
     }
 
     public Certificate getCertificate(ConfigurationVariable configurationVariable)
@@ -209,16 +215,18 @@ public class ConfigurationService {
         }
     }
 
-    private String hashConfigValue(ConfigurationVariable configurationVariable) {
+    private String hashConfigValue(String ssmParam) {
         MessageDigest messageDigest = null;
         try {
             messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.update(ssmParam.getBytes());
+            String varHash = new String(messageDigest.digest());
+
+            return varHash;
         } catch (NoSuchAlgorithmException e) {
             LOGGER.info("Cant hash param");
         }
-        messageDigest.update(configurationVariable.getValue().getBytes());
-        String varHash = new String(messageDigest.digest());
 
-        return varHash;
+        return null;
     }
 }
