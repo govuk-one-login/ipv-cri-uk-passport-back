@@ -1,6 +1,8 @@
 package uk.gov.di.ipv.cri.passport.library.config;
 
 import com.nimbusds.jose.jwk.ECKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
@@ -39,6 +41,8 @@ import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.DYNA
 import static uk.gov.di.ipv.cri.passport.library.config.EnvironmentVariable.ENVIRONMENT;
 
 public class ConfigurationService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationService.class);
 
     public static final int LOCALHOST_PORT = 4567;
     private static final String LOCALHOST_URI = "http://localhost:" + LOCALHOST_PORT;
@@ -81,12 +85,26 @@ public class ConfigurationService {
     }
 
     public String getSsmParameter(ConfigurationVariable configurationVariable) {
+        String hashConfigValue = hashConfigValue(configurationVariable);
+
+        LOGGER.info(
+                "Hashed param value for Name:{} Value:{}",
+                configurationVariable.name(),
+                hashConfigValue);
+
         return ssmProvider.get(
                 String.format(
                         configurationVariable.getValue(), getEnvironmentVariable(ENVIRONMENT)));
     }
 
     public String getEncryptedSsmParameter(ConfigurationVariable configurationVariable) {
+        String hashConfigValue = hashConfigValue(configurationVariable);
+
+        LOGGER.info(
+                "Hashed param value for Name:{} Value:{}",
+                configurationVariable.name(),
+                hashConfigValue);
+
         return ssmProvider
                 .withDecryption()
                 .get(
@@ -189,5 +207,18 @@ public class ConfigurationService {
                 throw new IllegalStateException(
                         "Unexpected time-to-live unit encountered: " + jwtTtlUnit);
         }
+    }
+
+    private String hashConfigValue(ConfigurationVariable configurationVariable) {
+        MessageDigest messageDigest = null;
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.info("Cant hash param");
+        }
+        messageDigest.update(configurationVariable.getValue().getBytes());
+        String varHash = new String(messageDigest.digest());
+
+        return varHash;
     }
 }
