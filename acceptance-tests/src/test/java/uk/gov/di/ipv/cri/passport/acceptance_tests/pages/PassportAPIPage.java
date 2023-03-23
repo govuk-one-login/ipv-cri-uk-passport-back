@@ -1,0 +1,264 @@
+package uk.gov.di.ipv.cri.passport.acceptance_tests.pages;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jwt.SignedJWT;
+
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Assert;
+import uk.gov.di.ipv.cri.passport.acceptance_tests.model.AuthorisationResponse;
+import uk.gov.di.ipv.cri.passport.acceptance_tests.model.DocumentCheckResponse;
+import uk.gov.di.ipv.cri.passport.acceptance_tests.service.ConfigurationService;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.text.ParseException;
+import java.util.Base64;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class PassportAPIPage extends PassportPageObject {
+
+    private static String SESSION_REQUEST_BODY;
+    private static String SESSION_ID;
+    private static String STATE;
+    private static String AUTHCODE;
+    private static String ACCESS_TOKEN;
+    private static Boolean RETRY;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final ConfigurationService configurationService =
+            new ConfigurationService(System.getenv("ENVIRONMENT"));
+    private static final Logger LOGGER =
+            Logger.getLogger(PassportAPIPage.class.getName());
+
+    public String getAuthorisationJwtFromStub(String criId, Integer LindaDuffExperianRowNumber)
+            throws URISyntaxException, IOException, InterruptedException {
+        String coreStubUrl = configurationService.getCoreStubUrl(false);
+        if (coreStubUrl == null) {
+            throw new IllegalArgumentException("Environment variable IPV_CORE_STUB_URL is not set");
+        }
+        return getClaimsForUser(coreStubUrl, criId, LindaDuffExperianRowNumber);
+    }
+
+    public void passportUserIdentityAsJwtString(String criId, Integer LindaDuffExperianRowNumber)
+            throws URISyntaxException, IOException, InterruptedException {
+        String jsonString = getAuthorisationJwtFromStub(criId, LindaDuffExperianRowNumber);
+        LOGGER.info("jsonString = " + jsonString);
+        String coreStubUrl = configurationService.getCoreStubUrl(false);
+        SESSION_REQUEST_BODY = createRequest(coreStubUrl, criId, jsonString);
+        LOGGER.info("SESSION_REQUEST_BODY = " + SESSION_REQUEST_BODY);
+    }
+
+    public void passportPostRequestToSessionEndpoint() throws IOException, InterruptedException {
+        String privateApiGatewayUrl = configurationService.getPrivateAPIEndpoint();
+        LOGGER.info("getPrivateAPIEndpoint() ==> " + privateApiGatewayUrl);
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(privateApiGatewayUrl + "/session"))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader("X-Forwarded-For", "123456789")
+                        .POST(HttpRequest.BodyPublishers.ofString(SESSION_REQUEST_BODY))
+                        .build();
+        String sessionResponse = sendHttpRequest(request).body();
+        LOGGER.info("sessionResponse = " + sessionResponse);
+        Map<String, String> deserialisedResponse =
+                objectMapper.readValue(sessionResponse, new TypeReference<>() {});
+        SESSION_ID = deserialisedResponse.get("session_id");
+        STATE = deserialisedResponse.get("state");
+    }
+
+    public void getSessionIdForPassport() {
+        LOGGER.info("SESSION_ID = " + SESSION_ID);
+        assertTrue(StringUtils.isNotBlank(SESSION_ID));
+    }
+
+    public void postRequestToPassportEndpoint(String passportJsonRequestBody)
+            throws IOException, InterruptedException {
+        String privateApiGatewayUrl = configurationService.getPrivateAPIEndpoint();
+        JsonNode passportJson =
+                objectMapper.readTree(
+                        new File("src/test/resources/Data/" + passportJsonRequestBody + ".json"));
+        String passportInputJsonString = passportJson.toString();
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(privateApiGatewayUrl + "/check-passport"))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader("session_id", SESSION_ID)
+                        .POST(HttpRequest.BodyPublishers.ofString(passportInputJsonString))
+                        .build();
+        LOGGER.info("passport RequestBody = " + passportInputJsonString);
+        String passportCheckResponse = sendHttpRequest(request).body();
+        LOGGER.info("passportCheckResponse = " + passportCheckResponse);
+        DocumentCheckResponse documentCheckResponse =
+                objectMapper.readValue(passportCheckResponse, DocumentCheckResponse.class);
+        RETRY = documentCheckResponse.getRetry();
+        LOGGER.info("RETRY = " + RETRY);
+    }
+
+    public void retryValueInPassportCheckResponse(Boolean retry) {
+        Assert.assertEquals(retry, RETRY);
+    }
+
+    public void getAuthorisationCodeForPassport() throws IOException, InterruptedException {
+        String privateApiGatewayUrl = configurationService.getPrivateAPIEndpoint();
+        String coreStubUrl = configurationService.getCoreStubUrl(false);
+
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(
+                                URI.create(
+                                        privateApiGatewayUrl
+                                                + "/authorization?redirect_uri="
+                                                + coreStubUrl
+                                                + "/callback&state="
+                                                + STATE
+                                                + "&scope=openid&response_type=code&client_id=ipv-core-stub"))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader("session-id", SESSION_ID)
+                        .GET()
+                        .build();
+        String authCallResponse = sendHttpRequest(request).body();
+        LOGGER.info("authCallResponse = " + authCallResponse);
+        AuthorisationResponse deserialisedResponse =
+                objectMapper.readValue(authCallResponse, AuthorisationResponse.class);
+        AUTHCODE = deserialisedResponse.getAuthorizationCode().getValue();
+        LOGGER.info("authorizationCode = " + AUTHCODE);
+    }
+
+    public void postRequestToAccessTokenEndpointForPassport(String criId)
+            throws IOException, InterruptedException {
+        String accessTokenRequestBody = getAccessTokenRequest(criId);
+        LOGGER.info("Access Token Request Body = " + accessTokenRequestBody);
+        String publicApiGatewayUrl = configurationService.getPublicAPIEndpoint();
+        LOGGER.info("getPublicAPIEndpoint() ==> " + publicApiGatewayUrl);
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(publicApiGatewayUrl + "/token"))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(accessTokenRequestBody))
+                        .build();
+        String accessTokenPostCallResponse = sendHttpRequest(request).body();
+        LOGGER.info("accessTokenPostCallResponse = " + accessTokenPostCallResponse);
+        Map<String, String> deserialisedResponse =
+                objectMapper.readValue(accessTokenPostCallResponse, new TypeReference<>() {});
+        ACCESS_TOKEN = deserialisedResponse.get("access_token");
+    }
+
+    public String postRequestToPassportVCEndpoint()
+            throws IOException, InterruptedException, ParseException {
+        String publicApiGatewayUrl = configurationService.getPublicAPIEndpoint();
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(publicApiGatewayUrl + "/credential/issue"))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader("Authorization", "Bearer " + ACCESS_TOKEN)
+                        .POST(HttpRequest.BodyPublishers.ofString(""))
+                        .build();
+        String requestPassportVCResponse = sendHttpRequest(request).body();
+        LOGGER.info("requestPassportVCResponse = " + requestPassportVCResponse);
+        SignedJWT signedJWT = SignedJWT.parse(requestPassportVCResponse);
+        return signedJWT.getJWTClaimsSet().toString();
+    }
+
+    public void validityScoreAndStrengthScoreInVC(String validityScore, String strengthScore)
+            throws URISyntaxException, IOException, InterruptedException, ParseException {
+        String passportCriVc = postRequestToPassportVCEndpoint();
+        scoreIs(validityScore, strengthScore, passportCriVc);
+    }
+
+    private String getClaimsForUser(String baseUrl, String criId, int userDataRowNumber)
+            throws URISyntaxException, IOException, InterruptedException {
+
+        var url =
+                new URI(
+                        baseUrl
+                                + "/backend/generateInitialClaimsSet?cri="
+                                + criId
+                                + "&rowNumber="
+                                + userDataRowNumber);
+
+        LOGGER.info("URL =>> " + url);
+
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(url)
+                        .GET()
+                        .setHeader(
+                                "Authorization",
+                                getBasicAuthenticationHeader(
+                                        configurationService.getCoreStubUsername(),
+                                        configurationService.getCoreStubPassword()))
+                        .build();
+        return sendHttpRequest(request).body();
+    }
+
+    private String createRequest(String baseUrl, String criId, String jsonString)
+            throws URISyntaxException, IOException, InterruptedException {
+
+        URI uri = new URI(baseUrl + "/backend/createSessionRequest?cri=" + criId);
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(uri)
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader(
+                                "Authorization",
+                                getBasicAuthenticationHeader(
+                                        configurationService.getCoreStubUsername(),
+                                        configurationService.getCoreStubPassword()))
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonString))
+                        .build();
+
+        return sendHttpRequest(request).body();
+    }
+
+    private HttpResponse<String> sendHttpRequest(HttpRequest request)
+            throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newBuilder().build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response;
+    }
+
+    private static final String getBasicAuthenticationHeader(String username, String password) {
+        String valueToEncode = username + ":" + password;
+        return "Basic " + Base64.getEncoder().encodeToString(valueToEncode.getBytes());
+    }
+
+    private String getAccessTokenRequest(String criId) throws IOException, InterruptedException {
+        String coreStubUrl = configurationService.getCoreStubUrl(false);
+
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(
+                                URI.create(
+                                        coreStubUrl
+                                                + "/backend/createTokenRequestPrivateKeyJWT?authorization_code="
+                                                + AUTHCODE
+                                                + "&cri="
+                                                + criId))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader(
+                                "Authorization",
+                                getBasicAuthenticationHeader(
+                                        configurationService.getCoreStubUsername(),
+                                        configurationService.getCoreStubPassword()))
+                        .GET()
+                        .build();
+        return sendHttpRequest(request).body();
+    }
+}
