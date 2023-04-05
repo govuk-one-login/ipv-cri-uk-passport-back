@@ -962,7 +962,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/release-flags/vc-expiry-removed"
-      Value: !FindInMap [ VcExpiryRemoved, Environment, "dev" ]
+      Value: !FindInMap [ VcExpiryRemoved, Environment, !Ref Environment ]
       Type: String
       Description: Expiry date release toggle
 
