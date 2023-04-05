@@ -75,6 +75,14 @@ Mappings:
       integration: "6"
       production: "6"
 
+  VcExpiryRemoved:
+    Environment:
+      dev: "true"
+      build: "true"
+      staging: "true"
+      integration: "true"
+      production: "false"
+
   # Permitted values: SECONDS,MINUTES,HOURS,DAYS,MONTHS,YEARS
   JwtTtlUnitMapping:
     Environment:
@@ -283,6 +291,8 @@ Resources:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/JwtTtlUnit
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/backendSessionTtl
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/self/release-flags/vc-expiry-removed
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${Environment}/credentialIssuers/ukPassport/clients/*
         - SQSSendMessagePolicy:
@@ -947,6 +957,14 @@ Resources:
       Type: String
       Value: !FindInMap [ JwtTtlUnitMapping, Environment, !Ref Environment ]
       Description: The unit for the time-to-live for an JWT e.g. (MONTHS)
+
+  ParameterReleaseFlagsVcExpiryRemoved:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/release-flags/vc-expiry-removed"
+      Value: !FindInMap [ VcExpiryRemoved, Environment, "dev" ]
+      Type: String
+      Description: Expiry date release toggle
 
   ####################################################################
   #                                                                  #

@@ -52,6 +52,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_RELEASE_FLAG_EXCLUDE_EXPIRY;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID;
 import static uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.VerifiableCredentialConstants.VC_CLAIM;
@@ -245,19 +246,20 @@ public class IssueCredentialHandler
             VerifiableCredential verifiableCredential, PassportCheckDao passportCheck)
             throws JOSEException {
         Instant now = Instant.now();
-        JWTClaimsSet claimsSet =
+        JWTClaimsSet.Builder claimsSetBuilder =
                 new JWTClaimsSet.Builder()
                         .subject(passportCheck.getUserId())
                         .issuer(configurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
                         .audience(configurationService.getClientIssuer(passportCheck.getClientId()))
                         .notBeforeTime(new Date(now.toEpochMilli()))
-                        .claim(
-                                JWTClaimNames.EXPIRATION_TIME,
-                                configurationService.getVcExpiryTime())
-                        .claim(VC_CLAIM, verifiableCredential)
-                        .build();
+                        .claim(VC_CLAIM, verifiableCredential);
 
-        return JwtHelper.createSignedJwtFromClaimSet(claimsSet, kmsSigner);
+        if (!configurationService.isReleaseFlag(PASSPORT_CRI_RELEASE_FLAG_EXCLUDE_EXPIRY)) {
+            claimsSetBuilder.claim(
+                    JWTClaimNames.EXPIRATION_TIME, configurationService.getVcExpiryTime());
+        }
+
+        return JwtHelper.createSignedJwtFromClaimSet(claimsSetBuilder.build(), kmsSigner);
     }
 
     private void recordCIMetrics(String ciRequestPrefix, List<ContraIndicators> contraIndications) {
