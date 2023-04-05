@@ -57,16 +57,7 @@ public class TestDataCreator {
                         "2042");
         selinaUnhappyPath =
                 new PassportSubject(
-                        "88776655",
-                        "KYLE",
-                        "SELINA",
-                        "",
-                        "12",
-                        "08",
-                        "1985",
-                        "04",
-                        "08",
-                        "2032");
+                        "88776655", "KYLE", "SELINA", "", "12", "08", "1985", "04", "08", "2032");
 
         kennethIncorrectPassportNumber = new PassportSubject(kennethHappyPath);
         kennethIncorrectPassportNumber.setPassportNumber("887766551");
@@ -90,27 +81,22 @@ public class TestDataCreator {
         kennethLastNameWithNumbers = new PassportSubject(kennethHappyPath);
         kennethLastNameWithNumbers.setLastName("KYLE123");
 
-        kennethIncorrectLastNameWithSpecialChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectLastNameWithSpecialChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectLastNameWithSpecialChars.setLastName("KYLE^&(");
 
         kennethIncorrectNoSecondName = new PassportSubject(kennethHappyPath);
         kennethIncorrectNoSecondName.setLastName("");
 
-        kennethIncorrectFirstNameWithNumbers =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectFirstNameWithNumbers = new PassportSubject(kennethHappyPath);
         kennethIncorrectFirstNameWithNumbers.setFirstName("SELINA987");
 
-        kennethIncorrectFirstNameWithSpecialChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectFirstNameWithSpecialChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectFirstNameWithSpecialChars.setFirstName("SELINA%$@");
 
-        kennethIncorrectMiddleNameWithSpecialChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectMiddleNameWithSpecialChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectMiddleNameWithSpecialChars.setMiddleNames("SELINA%$@");
 
-        kennethIncorrectMiddleNameWithNumbers =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectMiddleNameWithNumbers = new PassportSubject(kennethHappyPath);
         kennethIncorrectMiddleNameWithNumbers.setMiddleNames("SELINA987");
 
         kennethIncorrectNoFirstName = new PassportSubject(kennethHappyPath);
@@ -121,8 +107,7 @@ public class TestDataCreator {
         kennethIncorrectInvalidDateOfBirth.setBirthMonth("71");
         kennethIncorrectInvalidDateOfBirth.setBirthYear("198");
 
-        kennethIncorrectDoBWithSpecialChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectDoBWithSpecialChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectDoBWithSpecialChars.setBirthDay("@");
         kennethIncorrectDoBWithSpecialChars.setBirthMonth("*&");
         kennethIncorrectDoBWithSpecialChars.setBirthYear("19 7");
@@ -142,8 +127,7 @@ public class TestDataCreator {
         kennethIncorrectInvalidToDate.setValidToMonth("10");
         kennethIncorrectInvalidToDate.setValidToYear("2030");
 
-        kennethIncorrectValidToDateWithSpecialChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectValidToDateWithSpecialChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectValidToDateWithSpecialChars.setValidToDay("!@");
         kennethIncorrectValidToDateWithSpecialChars.setValidToMonth("£$");
         kennethIncorrectValidToDateWithSpecialChars.setValidToYear("%^ *");
@@ -161,16 +145,13 @@ public class TestDataCreator {
         kennethIncorrectLessThan8Chars = new PassportSubject(kennethHappyPath);
         kennethIncorrectLessThan8Chars.setPassportNumber("5566778");
 
-        kennethIncorrectPassportNumberWithSpecialChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectPassportNumberWithSpecialChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectPassportNumberWithSpecialChars.setPassportNumber("555667^&*");
 
-        kennethIncorrectPassportNumberWithAlphanumerics =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectPassportNumberWithAlphanumerics = new PassportSubject(kennethHappyPath);
         kennethIncorrectPassportNumberWithAlphanumerics.setPassportNumber("555667ABC");
 
-        kennethIncorrectPassportNumberWithAlphaChars =
-                new PassportSubject(kennethHappyPath);
+        kennethIncorrectPassportNumberWithAlphaChars = new PassportSubject(kennethHappyPath);
         kennethIncorrectPassportNumberWithAlphaChars.setPassportNumber("XYZabdABC");
 
         kennethIncorrectNoPassportNumber = new PassportSubject(kennethHappyPath);
@@ -186,8 +167,7 @@ public class TestDataCreator {
         passportTestUsers.put("NoPostcode", kennethIncorrectNoPostcode);
         passportTestUsers.put("InvalidFirstNameWithNumbers", kennethIncorrectFirstNameWithNumbers);
         passportTestUsers.put(
-                "InvalidFirstNameWithSpecialCharacters",
-                kennethIncorrectFirstNameWithSpecialChars);
+                "InvalidFirstNameWithSpecialCharacters", kennethIncorrectFirstNameWithSpecialChars);
         passportTestUsers.put(
                 "DateOfBirthWithSpecialCharacters", kennethIncorrectDoBWithSpecialChars);
         passportTestUsers.put("InvalidDateOfBirth", kennethIncorrectInvalidDateOfBirth);
@@ -195,18 +175,14 @@ public class TestDataCreator {
         passportTestUsers.put(
                 "IssueDateWithSpecialCharacters", kennethIncorrectIssueDateWithSpecialChars);
         passportTestUsers.put(
-                "ValidToDateWithSpecialCharacters",
-                kennethIncorrectValidToDateWithSpecialChars);
+                "ValidToDateWithSpecialCharacters", kennethIncorrectValidToDateWithSpecialChars);
         passportTestUsers.put("ValidToDateInPast", kennethValidToDateInPast);
         passportTestUsers.put(
-                "PassportNumberWithSpecialChar",
-                kennethIncorrectPassportNumberWithSpecialChars);
+                "PassportNumberWithSpecialChar", kennethIncorrectPassportNumberWithSpecialChars);
         passportTestUsers.put(
-                "PassportNumberWithAlphaChar",
-                kennethIncorrectPassportNumberWithAlphaChars);
+                "PassportNumberWithAlphaChar", kennethIncorrectPassportNumberWithAlphaChars);
         passportTestUsers.put(
-                "PassportNumberWithNumericChar",
-                kennethIncorrectPassportNumberWithAlphanumerics);
+                "PassportNumberWithNumericChar", kennethIncorrectPassportNumberWithAlphanumerics);
         passportTestUsers.put("PassportNumLessThan8Char", kennethIncorrectLessThan8Chars);
         passportTestUsers.put("InvalidValidToDate", kennethIncorrectValidToDateWithSpecialChars);
         passportTestUsers.put("IncorrectValidToDate", kennethIncorrectValidToDate);
@@ -214,18 +190,16 @@ public class TestDataCreator {
         passportTestUsers.put("DateOfBirthInFuture", kennethIncorrectDoBInFuture);
         passportTestUsers.put("InvalidLastNameWithNumbers", kennethLastNameWithNumbers);
         passportTestUsers.put(
-                "InvalidLastNameWithSpecialCharacters",
-                kennethIncorrectLastNameWithSpecialChars);
+                "InvalidLastNameWithSpecialCharacters", kennethIncorrectLastNameWithSpecialChars);
         passportTestUsers.put("IncorrectPassportNumber", kennethIncorrectPassportNumber);
         passportTestUsers.put("IncorrectPostcode", kennethIncorrectPostcode);
         passportTestUsers.put("IncorrectLastName", kennethIncorrectLastName);
         passportTestUsers.put("IncorrectFirstName", kennethIncorrectFirstName);
         passportTestUsers.put("InvalidIssueDate", kennethIncorrectInvalidIssueDate);
         passportTestUsers.put("IncorrectIssueDate", kennethIncorrectIssueDate);
-
     }
 
     public static TestInput getPassportTestUserFromMap(String scenario) {
-            return passportTestUsers.get(scenario);
+        return passportTestUsers.get(scenario);
     }
 }

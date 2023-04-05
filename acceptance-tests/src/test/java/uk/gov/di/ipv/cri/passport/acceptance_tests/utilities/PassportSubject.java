@@ -130,5 +130,4 @@ public class PassportSubject implements TestInput {
     public void setValidToYear(String validToYear) {
         this.validToYear = validToYear;
     }
-
 }

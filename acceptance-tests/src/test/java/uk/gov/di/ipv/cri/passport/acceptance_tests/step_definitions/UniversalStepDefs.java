@@ -5,7 +5,6 @@ import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.UniversalSteps;
 
 import static uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.BrowserUtils.changeLanguageTo;
 
-
 public class UniversalStepDefs extends UniversalSteps {
 
     @And("The test is complete and I close the driver")

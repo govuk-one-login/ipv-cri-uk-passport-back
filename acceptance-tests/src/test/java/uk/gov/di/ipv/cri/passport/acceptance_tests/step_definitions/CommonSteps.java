@@ -1,9 +1,7 @@
 package uk.gov.di.ipv.cri.passport.acceptance_tests.step_definitions;
 
 import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.junit.Assert;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.OrchestratorStubPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.BrowserUtils;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.ConfigurationReader;
@@ -22,5 +20,4 @@ public class CommonSteps {
         new OrchestratorStubPage().DebugRoute.click();
         BrowserUtils.waitForPageToLoad(10);
     }
-
 }

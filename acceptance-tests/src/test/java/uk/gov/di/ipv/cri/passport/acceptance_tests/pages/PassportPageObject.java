@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.openqa.selenium.By;
@@ -255,7 +254,10 @@ public class PassportPageObject extends UniversalSteps {
     }
 
     public void searchForUATUser(String number) {
-        assertURLContains("credential-issuer?cri=" + System.getenv("ENVIRONMENT").toLowerCase() + "-passport");
+        assertURLContains(
+                "credential-issuer?cri="
+                        + System.getenv("ENVIRONMENT").toLowerCase()
+                        + "-passport");
         selectRow.sendKeys(number);
         searchButton.click();
     }

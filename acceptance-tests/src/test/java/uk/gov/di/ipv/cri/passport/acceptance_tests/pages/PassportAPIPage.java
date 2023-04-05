@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.SignedJWT;
-
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.model.AuthorisationResponse;
@@ -37,8 +36,7 @@ public class PassportAPIPage extends PassportPageObject {
 
     private final ConfigurationService configurationService =
             new ConfigurationService(System.getenv("ENVIRONMENT"));
-    private static final Logger LOGGER =
-            Logger.getLogger(PassportAPIPage.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PassportAPIPage.class.getName());
 
     public String getAuthorisationJwtFromStub(String criId, Integer LindaDuffExperianRowNumber)
             throws URISyntaxException, IOException, InterruptedException {

@@ -31,10 +31,9 @@ public class PassportAPIStepDefs extends PassportAPIPage {
         getSessionIdForPassport();
     }
 
-    @When(
-            "Passport user sends a POST request to Passport endpoint using jsonRequest (.*)$")
-    public void passport_user_sends_a_post_request_to_passport_end_point(String passportJsonRequestBody)
-            throws IOException, InterruptedException {
+    @When("Passport user sends a POST request to Passport endpoint using jsonRequest (.*)$")
+    public void passport_user_sends_a_post_request_to_passport_end_point(
+            String passportJsonRequestBody) throws IOException, InterruptedException {
         postRequestToPassportEndpoint(passportJsonRequestBody);
     }
 
@@ -55,7 +54,8 @@ public class PassportAPIStepDefs extends PassportAPIPage {
     }
 
     @Then("User requests Passport CRI VC")
-    public void user_requests_passport_vc() throws IOException, InterruptedException, ParseException {
+    public void user_requests_passport_vc()
+            throws IOException, InterruptedException, ParseException {
         postRequestToPassportVCEndpoint();
     }
 

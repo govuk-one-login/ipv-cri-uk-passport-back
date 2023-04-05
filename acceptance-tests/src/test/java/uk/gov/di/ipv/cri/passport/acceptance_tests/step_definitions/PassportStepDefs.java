@@ -43,8 +43,7 @@ public class PassportStepDefs extends PassportPageObject {
         assertCTATextAs(string);
     }
 
-    @Then(
-            "^I should on the page Enter your details exactly as they appear on your UK passport$")
+    @Then("^I should on the page Enter your details exactly as they appear on your UK passport$")
     public void i_should_be_on_the_page() {
         assertPageTitle("hello");
     }
@@ -60,8 +59,7 @@ public class PassportStepDefs extends PassportPageObject {
     }
 
     @Then("^I navigate to the passport verifiable issuer to check for a (.*) response$")
-    public void i_navigate_to_passport_verifiable_issuer_for_valid_response(
-            String validOrInvalid) {
+    public void i_navigate_to_passport_verifiable_issuer_for_valid_response(String validOrInvalid) {
         navigateToPassportResponse(validOrInvalid);
     }
 
@@ -287,8 +285,7 @@ public class PassportStepDefs extends PassportPageObject {
     }
 
     @And("^I see check date of birth sentence as (.*)$")
-    public void ISeeCheckDateOfBirthInErrorSummaryAs(
-            String expectedText) {
+    public void ISeeCheckDateOfBirthInErrorSummaryAs(String expectedText) {
         assertInvalidDoBInErrorSummary(expectedText);
     }
 
@@ -363,10 +360,9 @@ public class PassportStepDefs extends PassportPageObject {
         Continue.click();
     }
 
-    @Then(
-            "I should be on `Enter your details exactly as they appear on your UK passport` page")
+    @Then("I should be on `Enter your details exactly as they appear on your UK passport` page")
     public void
-    i_should_be_on_enter_your_details_exactly_as_they_appear_on_your_uk_passport_page() {
+            i_should_be_on_enter_your_details_exactly_as_they_appear_on_your_uk_passport_page() {
         Assert.assertTrue(passportNumber.isDisplayed());
     }
 

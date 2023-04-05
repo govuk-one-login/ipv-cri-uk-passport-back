@@ -2,8 +2,8 @@ name: Daily Smoke Test
 
 on:
   schedule:
-    # Every weekday at 5am
-    - cron: '0 5 * * 1-5'
+    # Every weekday between 9 - 5 every 2 hours
+    - cron: '0 9-17/2 * * 1-5'
   push:
 
 jobs:
