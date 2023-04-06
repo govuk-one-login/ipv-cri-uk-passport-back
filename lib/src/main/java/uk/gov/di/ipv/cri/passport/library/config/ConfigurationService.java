@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 import software.amazon.lambda.powertools.parameters.ParamManager;
 import software.amazon.lambda.powertools.parameters.SSMProvider;
 import uk.gov.di.ipv.cri.passport.library.domain.Thumbprints;
@@ -117,6 +118,17 @@ public class ConfigurationService {
                 hashConfigValue);
 
         return ssmParameter;
+    }
+
+    public boolean isReleaseFlag(ConfigurationVariable flagParameter) {
+        try {
+            return Optional.ofNullable(this.getSsmParameter(flagParameter))
+                    .map(x -> x.equalsIgnoreCase("true"))
+                    .orElse(false);
+
+        } catch (ParameterNotFoundException e) {
+            return false;
+        }
     }
 
     public Certificate getCertificate(ConfigurationVariable configurationVariable)

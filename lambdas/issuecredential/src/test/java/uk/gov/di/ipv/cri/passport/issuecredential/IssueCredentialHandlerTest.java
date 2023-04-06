@@ -31,6 +31,7 @@ import uk.gov.di.ipv.cri.common.library.util.EventProbe;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEvent;
 import uk.gov.di.ipv.cri.passport.library.auditing.AuditEventTypes;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable;
 import uk.gov.di.ipv.cri.passport.library.domain.DcsPayload;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.ContraIndicators;
 import uk.gov.di.ipv.cri.passport.library.domain.verifiablecredential.Evidence;
@@ -64,6 +65,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -256,6 +258,131 @@ class IssueCredentialHandlerTest {
         assertEquals(6, claimsSet.size());
         assertEquals("https://example.com/issuer", claimsSet.get("aud").asText());
         assertEquals(claimsSet.get(JWTClaimNames.EXPIRATION_TIME).asText(), "1000");
+
+        verify(mockAccessTokenService).revokeAccessToken(accessTokenItem.getAccessToken());
+
+        JsonNode vcNode = claimsSet.get("vc");
+        VerifiableCredential verifiableCredential =
+                objectMapper.convertValue(vcNode, VerifiableCredential.class);
+        List<NameParts> nameParts =
+                verifiableCredential.getCredentialSubject().getName().get(0).getNameParts();
+
+        assertEquals(passportCheckDao.getUserId(), claimsSet.get("sub").asText());
+
+        assertEquals(
+                List.of(VERIFIABLE_CREDENTIAL_TYPE, IDENTITY_CHECK_CREDENTIAL_TYPE),
+                verifiableCredential.getType());
+
+        assertTrue(
+                nameParts.stream()
+                        .anyMatch(
+                                o ->
+                                        isType(NamePartType.FAMILY_NAME)
+                                                .and(
+                                                        hasValue(
+                                                                passportCheckDao
+                                                                        .getDcsPayload()
+                                                                        .getSurname()))
+                                                .test(o)));
+        assertTrue(
+                nameParts.stream()
+                        .anyMatch(
+                                o ->
+                                        isType(NamePartType.GIVEN_NAME)
+                                                .and(
+                                                        hasValue(
+                                                                passportCheckDao
+                                                                        .getDcsPayload()
+                                                                        .getForenames()
+                                                                        .get(0)))
+                                                .test(o)));
+
+        assertEquals(
+                passportCheckDao.getDcsPayload().getDateOfBirth().toString(),
+                verifiableCredential.getCredentialSubject().getBirthDate().get(0).getValue());
+
+        assertEquals(
+                passportCheckDao.getDcsPayload().getPassportNumber(),
+                verifiableCredential
+                        .getCredentialSubject()
+                        .getPassport()
+                        .get(0)
+                        .getDocumentNumber());
+
+        assertEquals(
+                passportCheckDao.getDcsPayload().getExpiryDate().toString(),
+                verifiableCredential.getCredentialSubject().getPassport().get(0).getExpiryDate());
+
+        assertEquals(
+                passportCheckDao.getEvidence().getTxn(),
+                verifiableCredential.getEvidence().get(0).getTxn());
+
+        assertEquals(
+                passportCheckDao.getEvidence().getType(),
+                verifiableCredential.getEvidence().get(0).getType());
+
+        assertEquals(
+                passportCheckDao.getEvidence().getStrengthScore(),
+                verifiableCredential.getEvidence().get(0).getStrengthScore());
+        assertEquals(
+                passportCheckDao.getEvidence().getValidityScore(),
+                verifiableCredential.getEvidence().get(0).getValidityScore());
+
+        assertEquals(
+                ContraIndicators.D02, verifiableCredential.getEvidence().get(0).getCi().get(0));
+
+        ECDSAVerifier ecVerifier = new ECDSAVerifier(ECKey.parse(EC_PUBLIC_JWK_1));
+        assertTrue(signedJWT.verify(ecVerifier));
+    }
+
+    @Test
+    void shouldReturnCredentialsOnSuccessfulDcsCredentialRequestWithNoExpiryField()
+            throws JsonProcessingException, ParseException, JOSEException {
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        AccessToken accessToken = new BearerAccessToken();
+        AccessTokenItem accessTokenItem =
+                new AccessTokenItem(
+                        accessToken.getValue(),
+                        TEST_RESOURCE_ID,
+                        Instant.now().plusSeconds(3600).toString(),
+                        UUID.randomUUID().toString());
+        Map<String, String> headers =
+                Collections.singletonMap("Authorization", accessToken.toAuthorizationHeader());
+        event.setHeaders(headers);
+
+        when(mockAccessTokenService.getAccessTokenItem(accessToken.getValue()))
+                .thenReturn(accessTokenItem);
+        when(mockDcsPassportCheckService.getDcsPassportCheck(anyString()))
+                .thenReturn(passportCheckDao);
+        when(mockConfigurationService.getSsmParameter(VERIFIABLE_CREDENTIAL_ISSUER))
+                .thenReturn("test-issuer");
+        when(mockConfigurationService.getClientIssuer(clientId))
+                .thenReturn("https://example.com/issuer");
+        when(mockConfigurationService.isReleaseFlag(
+                        ConfigurationVariable.PASSPORT_CRI_RELEASE_FLAG_EXCLUDE_EXPIRY))
+                .thenReturn(true);
+
+        mockConfigurationServiceCalls();
+
+        PassportSessionItem passportSessionItem = new PassportSessionItem();
+        passportSessionItem.setGovukSigninJourneyId("test-govuk-signin-journey-id");
+        when(mockPassportSessionService.getPassportSession(anyString()))
+                .thenReturn(passportSessionItem);
+
+        APIGatewayProxyResponseEvent response =
+                issueCredentialHandler.handleRequest(event, mockContext);
+
+        verify(mockEventProbe).counterMetric(LAMBDA_ISSUE_CREDENTIAL_COMPLETED_OK);
+        verify(mockEventProbe)
+                .counterMetric(PASSPORT_CI_PREFIX + ContraIndicators.D02.toString().toLowerCase());
+
+        SignedJWT signedJWT = SignedJWT.parse(response.getBody());
+        JsonNode claimsSet = objectMapper.readTree(signedJWT.getJWTClaimsSet().toString());
+
+        assertEquals(200, response.getStatusCode());
+        assertEquals(5, claimsSet.size());
+        assertEquals("https://example.com/issuer", claimsSet.get("aud").asText());
+        assertNull(claimsSet.get(JWTClaimNames.EXPIRATION_TIME));
 
         verify(mockAccessTokenService).revokeAccessToken(accessTokenItem.getAccessToken());
 

@@ -16,6 +16,8 @@ public enum ConfigurationVariable {
     PASSPORT_CRI_CLIENT_AUTH_MAX_TTL("/%s/credentialIssuers/ukPassport/self/maxJwtTtl"),
     PASSPORT_CRI_CLIENT_VC_MAX_TTL("/%s/credentialIssuers/ukPassport/self/MaxVCJwtTtlMapping"),
     PASSPORT_CRI_CLIENT_TTL_UNIT("/%s/credentialIssuers/ukPassport/self/JwtTtlUnit"),
+    PASSPORT_CRI_RELEASE_FLAG_EXCLUDE_EXPIRY(
+            "/%s/credentialIssuers/ukPassport/self/release-flags/vc-expiry-removed"),
     PASSPORT_CRI_ENCRYPTION_KEY(
             "/%s/credentialIssuers/ukPassport/self/encryptionKeyForPassportToDecrypt-2023-02-17"),
     PASSPORT_CRI_SIGNING_CERT(
