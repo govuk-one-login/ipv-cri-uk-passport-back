@@ -22,6 +22,7 @@ Globals:
 Parameters:
   Environment:
     AllowedValues:
+      - dev
       - development-a
       - development-b
       - development-c
@@ -52,6 +53,8 @@ Parameters:
 
 Mappings:
   EnvironmentConfiguration:
+    dev:
+      provisionedConcurrency: 0
     development-a:
       provisionedConcurrency: 0
     development-b:
@@ -105,6 +108,8 @@ Conditions:
       - !Equals [ !Ref Environment, "integration"]
       - !Equals [ !Ref Environment, "production"]
 
+  IsCriDevEnvironment: !Equals [ !Ref Environment, "dev" ]
+
   IsNotDevelopmentEnvironment: !Not
     - Condition: IsDevelopmentEnvironment
 
@@ -131,7 +136,7 @@ Resources:
       Name: !Sub IPV Passport Back Private API Gateway ${Environment}
       Description: Private Passport CRI API with metrics
       EndpointConfiguration:
-        Type: PRIVATE
+        Type: !If [IsNotDevelopmentEnvironment, PRIVATE, REGIONAL]
       Auth:
         ResourcePolicy:
           CustomStatements:
@@ -141,17 +146,14 @@ Resources:
               Resource:
                 - 'execute-api:/*'
             - Action: 'execute-api:Invoke'
-              Effect: Deny
+              Effect: !If [IsNotDevelopmentEnvironment, Deny, Allow]
               Principal: '*'
               Resource:
                 - 'execute-api:/*'
               Condition:
                 StringNotEquals:
-                  'aws:SourceVpce': !If
-                    - IsDevelopmentEnvironment
-                    - !ImportValue "networking-shared-development-ApiGatewayVpcEndpointId"
-                    - Fn::ImportValue:
-                        !Sub "${VpcStackName}-ApiGatewayVpcEndpointId"
+                  'aws:SourceVpce': !If [IsDevelopmentEnvironment, !ImportValue "networking-shared-development-ApiGatewayVpcEndpointId",
+                    !If [IsCriDevEnvironment, "none", Fn::ImportValue: !Sub "${VpcStackName}-ApiGatewayVpcEndpointId"]]
       StageName: !Sub ${Environment}
       TracingEnabled: true
       MethodSettings:
@@ -201,6 +203,8 @@ Resources:
       Name: !Sub IPV CRI UK Passport API Gateway ${Environment}
       Description: Public Passport CRI API with metrics
       StageName: !Sub ${Environment}
+      EndpointConfiguration:
+        Type: !If [ IsNotDevelopmentEnvironment, EDGE, REGIONAL ]
       TracingEnabled: true
       Auth:
         ApiKeyRequired: true
@@ -303,7 +307,7 @@ Resources:
               Action:
                 - 'kms:sign'
               Resource:
-                - !ImportValue PassportCriVcSigningKeyArn
+                - !If [IsCriDevEnvironment, !ImportValue core-infrastructure-CriVcSigningKey1Arn, !ImportValue PassportCriVcSigningKeyArn]
             - Sid: auditEventQueueKmsEncryptionKeyPermission
               Effect: Allow
               Action:
@@ -620,7 +624,7 @@ Resources:
                 - 'kms:Decrypt'
                 - 'kms:GenerateDataKey'
               Resource:
-                - !ImportValue PassportCriEncryptionKeyArn
+                - !If [IsCriDevEnvironment, !ImportValue core-infrastructure-CriDecryptionKey1Arn, !ImportValue PassportCriEncryptionKeyArn]
             - Sid: auditEventQueueKmsEncryptionKeyPermission
               Effect: Allow
               Action:
@@ -1012,12 +1016,12 @@ Outputs:
   IPVCriUkPassportBackAPIGatewayID:
     Description: CRI UK Passport API Gateway ID
     Export:
-      Name: !Sub "PassportBackAPIGatewayID-${Environment}"
+      Name: !If [IsCriDevEnvironment,!Sub "PassportBackAPIGatewayID-${Environment}-${AWS::StackName}",!Sub "PassportBackAPIGatewayID-${Environment}"]
     Value: !Ref IPVCriUKPassportAPI
   IPVCriUkPassportPrivateAPIGatewayID:
     Description: CRI UK Passport Private API Gateway ID
     Export:
-      Name: !Sub "IPVCriUkPassportPrivateAPIGatewayID-${Environment}"
+      Name: !If [IsCriDevEnvironment,!Sub "IPVCriUkPassportPrivateAPIGatewayID-${Environment}-${AWS::StackName}", !Sub "IPVCriUkPassportPrivateAPIGatewayID-${Environment}"]
     Value: !Ref IPVCriUKPassportPrivateAPI
   IpvCoreBackApiKeyId:
     # This !Ref isn't set explicitly in this template, it is generated as a result of PER_API in the UsagePlan of IPVCriUKPassportAPI.

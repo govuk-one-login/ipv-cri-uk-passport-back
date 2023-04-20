@@ -5,8 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Assert;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.model.AuthorisationResponse;
+import uk.gov.di.ipv.cri.passport.acceptance_tests.model.ClientResponse;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.model.DocumentCheckResponse;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.service.ConfigurationService;
 
@@ -23,6 +22,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PassportAPIPage extends PassportPageObject {
 
@@ -31,7 +31,8 @@ public class PassportAPIPage extends PassportPageObject {
     private static String STATE;
     private static String AUTHCODE;
     private static String ACCESS_TOKEN;
-    private static Boolean RETRY;
+    private static String VC;
+    private static String RETRY;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ConfigurationService configurationService =
@@ -59,20 +60,26 @@ public class PassportAPIPage extends PassportPageObject {
     public void passportPostRequestToSessionEndpoint() throws IOException, InterruptedException {
         String privateApiGatewayUrl = configurationService.getPrivateAPIEndpoint();
         LOGGER.info("getPrivateAPIEndpoint() ==> " + privateApiGatewayUrl);
+        String requestString =
+                String.valueOf(
+                        new ObjectMapper()
+                                .readValue(SESSION_REQUEST_BODY, Map.class)
+                                .get("request"));
+        LOGGER.info("REQUEST STRING ==> " + requestString);
         HttpRequest request =
                 HttpRequest.newBuilder()
-                        .uri(URI.create(privateApiGatewayUrl + "/session"))
+                        .uri(URI.create(privateApiGatewayUrl + "/initialise-session"))
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
                         .setHeader("X-Forwarded-For", "123456789")
-                        .POST(HttpRequest.BodyPublishers.ofString(SESSION_REQUEST_BODY))
+                        .setHeader("client_id", "ipv-core-stub")
+                        .POST(HttpRequest.BodyPublishers.ofString(requestString))
                         .build();
         String sessionResponse = sendHttpRequest(request).body();
         LOGGER.info("sessionResponse = " + sessionResponse);
-        Map<String, String> deserialisedResponse =
+        Map<String, Object> deserialisedResponse =
                 objectMapper.readValue(sessionResponse, new TypeReference<>() {});
-        SESSION_ID = deserialisedResponse.get("session_id");
-        STATE = deserialisedResponse.get("state");
+        SESSION_ID = (String) deserialisedResponse.get("passportSessionId");
     }
 
     public void getSessionIdForPassport() {
@@ -92,7 +99,7 @@ public class PassportAPIPage extends PassportPageObject {
                         .uri(URI.create(privateApiGatewayUrl + "/check-passport"))
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
-                        .setHeader("session_id", SESSION_ID)
+                        .setHeader("passport_session_id", SESSION_ID)
                         .POST(HttpRequest.BodyPublishers.ofString(passportInputJsonString))
                         .build();
         LOGGER.info("passport RequestBody = " + passportInputJsonString);
@@ -100,12 +107,24 @@ public class PassportAPIPage extends PassportPageObject {
         LOGGER.info("passportCheckResponse = " + passportCheckResponse);
         DocumentCheckResponse documentCheckResponse =
                 objectMapper.readValue(passportCheckResponse, DocumentCheckResponse.class);
-        RETRY = documentCheckResponse.getRetry();
+        RETRY = documentCheckResponse.getResult();
         LOGGER.info("RETRY = " + RETRY);
     }
 
     public void retryValueInPassportCheckResponse(Boolean retry) {
-        Assert.assertEquals(retry, RETRY);
+        if (retry) {
+            if (RETRY.equals("retry")) {
+                LOGGER.info("Success");
+            } else {
+                fail("Failure should not retry");
+            }
+        } else {
+            if (RETRY.equals("finish")) {
+                LOGGER.info("Success");
+            } else {
+                fail("Should have retried");
+            }
+        }
     }
 
     public void getAuthorisationCodeForPassport() throws IOException, InterruptedException {
@@ -114,24 +133,18 @@ public class PassportAPIPage extends PassportPageObject {
 
         HttpRequest request =
                 HttpRequest.newBuilder()
-                        .uri(
-                                URI.create(
-                                        privateApiGatewayUrl
-                                                + "/authorization?redirect_uri="
-                                                + coreStubUrl
-                                                + "/callback&state="
-                                                + STATE
-                                                + "&scope=openid&response_type=code&client_id=ipv-core-stub"))
+                        .uri(URI.create(privateApiGatewayUrl + "/build-client-oauth-response"))
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
-                        .setHeader("session-id", SESSION_ID)
-                        .GET()
+                        .setHeader("passport_session_id", SESSION_ID)
+                        .POST(HttpRequest.BodyPublishers.noBody())
                         .build();
         String authCallResponse = sendHttpRequest(request).body();
         LOGGER.info("authCallResponse = " + authCallResponse);
-        AuthorisationResponse deserialisedResponse =
-                objectMapper.readValue(authCallResponse, AuthorisationResponse.class);
-        AUTHCODE = deserialisedResponse.getAuthorizationCode().getValue();
+        ClientResponse deserialisedResponse =
+                objectMapper.readValue(authCallResponse, ClientResponse.class);
+        String redirectUrl = deserialisedResponse.getClient().getRedirectUrl();
+        AUTHCODE = redirectUrl.substring(redirectUrl.indexOf("?code=") + 6);
         LOGGER.info("authorizationCode = " + AUTHCODE);
     }
 
@@ -146,6 +159,7 @@ public class PassportAPIPage extends PassportPageObject {
                         .uri(URI.create(publicApiGatewayUrl + "/token"))
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
+                        .setHeader("x-api-key", configurationService.getPublicApiGatewayKey())
                         .POST(HttpRequest.BodyPublishers.ofString(accessTokenRequestBody))
                         .build();
         String accessTokenPostCallResponse = sendHttpRequest(request).body();
@@ -160,21 +174,26 @@ public class PassportAPIPage extends PassportPageObject {
         String publicApiGatewayUrl = configurationService.getPublicAPIEndpoint();
         HttpRequest request =
                 HttpRequest.newBuilder()
-                        .uri(URI.create(publicApiGatewayUrl + "/credential/issue"))
+                        .uri(URI.create(publicApiGatewayUrl + "/credentials/issue"))
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
                         .setHeader("Authorization", "Bearer " + ACCESS_TOKEN)
+                        .setHeader("x-api-key", configurationService.getPublicApiGatewayKey())
                         .POST(HttpRequest.BodyPublishers.ofString(""))
                         .build();
         String requestPassportVCResponse = sendHttpRequest(request).body();
         LOGGER.info("requestPassportVCResponse = " + requestPassportVCResponse);
         SignedJWT signedJWT = SignedJWT.parse(requestPassportVCResponse);
+        VC = signedJWT.getJWTClaimsSet().toString();
         return signedJWT.getJWTClaimsSet().toString();
     }
 
     public void validityScoreAndStrengthScoreInVC(String validityScore, String strengthScore)
             throws URISyntaxException, IOException, InterruptedException, ParseException {
-        String passportCriVc = postRequestToPassportVCEndpoint();
+        String passportCriVc = VC;
+        if (null == VC) {
+            passportCriVc = postRequestToPassportVCEndpoint();
+        }
         scoreIs(validityScore, strengthScore, passportCriVc);
     }
 
@@ -208,6 +227,8 @@ public class PassportAPIPage extends PassportPageObject {
             throws URISyntaxException, IOException, InterruptedException {
 
         URI uri = new URI(baseUrl + "/backend/createSessionRequest?cri=" + criId);
+        LOGGER.info("URL =>> " + uri);
+
         HttpRequest request =
                 HttpRequest.newBuilder()
                         .uri(uri)

@@ -47,7 +47,6 @@ public class JarValidator {
     public SignedJWT decryptJWE(JWEObject jweObject) throws JarValidationException {
         try {
             jweObject.decrypt(kmsRsaDecrypter);
-
             return jweObject.getPayload().toSignedJWT();
         } catch (JOSEException e) {
             LOGGER.error("Failed to decrypt the JWE");
