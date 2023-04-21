@@ -5,8 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DocumentCheckResponse {
 
-    private boolean retry;
+    private String result;
     private String redirectUrl;
+
+    public String getResult() {
+        return result;
+    }
+
+    public void setResult(String result) {
+        this.result = result;
+    }
 
     public String getRedirectUrl() {
         return redirectUrl;
@@ -14,13 +22,5 @@ public class DocumentCheckResponse {
 
     public void setRedirectUrl(String redirectUrl) {
         this.redirectUrl = redirectUrl;
-    }
-
-    public Boolean getRetry() {
-        return retry;
-    }
-
-    public void setRetry(Boolean retry) {
-        this.retry = retry;
     }
 }

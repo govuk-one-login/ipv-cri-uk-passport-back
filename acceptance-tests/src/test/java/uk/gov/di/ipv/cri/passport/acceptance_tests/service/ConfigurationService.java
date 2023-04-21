@@ -16,6 +16,7 @@ public class ConfigurationService {
     private final String privateApiGatewayId;
     private final String environment;
     private final String publicApiGatewayId;
+    private final String publicApiGatewayKey;
 
     public ConfigurationService(String env) {
 
@@ -30,6 +31,7 @@ public class ConfigurationService {
         this.orchestratorStubUrl = getParameter("orchestratorStubUrl");
         this.privateApiGatewayId = getParameter("API_GATEWAY_ID_PRIVATE");
         this.publicApiGatewayId = getParameter("API_GATEWAY_ID_PUBLIC");
+        this.publicApiGatewayKey = getParameter("API_GATEWAY_KEY");
         this.environment = env;
     }
 
@@ -56,6 +58,10 @@ public class ConfigurationService {
 
     public String getOrchestratorStubUrl() {
         return orchestratorStubUrl;
+    }
+
+    public String getPublicApiGatewayKey() {
+        return publicApiGatewayKey;
     }
 
     public String getCoreStubUrl(boolean withAuth) {
