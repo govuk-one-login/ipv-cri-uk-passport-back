@@ -28,6 +28,7 @@ configurations {
 	test_runtime
 	powertools
 	logging_runtime
+	sns
 
 	cucumberRuntime {
 		extendsFrom testImplementation
@@ -73,14 +74,20 @@ dependencies {
 	implementation 'com.deque:axe-selenium:3.0'
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.239'
+	implementation 'com.amazonaws:aws-java-sdk-sns:1.12.455'
 
 	testImplementation 'software.amazon.awssdk:s3:2.17.209'
+	testImplementation 'com.amazonaws:aws-java-sdk-sns:1.12.459'
+
 	testImplementation 'io.rest-assured:rest-assured:5.1.1'
 	testImplementation 'io.cucumber:cucumber-junit:7.3.3'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+	testImplementation 'com.jayway.jsonpath:json-path:2.8.0'
+
 
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 	test_runtime "org.junit.jupiter:junit-jupiter-engine:${dependencyVersions.junit}"
+	//	implementation 'https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-sns/1.12.455'
 
 	aspect configurations.powertools
 }

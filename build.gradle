@@ -16,6 +16,7 @@ ext {
 	dependencyVersions = [
 		awsJavaSdkDynamodb:'1.12.146',
 		awsJavaSdkSqs:'1.12.197',
+		awsJavaSdkSns: '1.12.459',
 		awsLambdaJavaCore:'1.2.1',
 		awsLambdaJavaEvents:'3.11.0',
 		awsLambdaJavaLog4j2:'1.5.1',
