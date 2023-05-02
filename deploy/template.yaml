@@ -913,8 +913,8 @@ Resources:
       OKActions:
         - !Ref AlarmTopicPassport
       InsufficientDataActions: [ ]
-      DatapointsToAlarm: 6
-      EvaluationPeriods: 6
+      DatapointsToAlarm: 10
+      EvaluationPeriods: 10
       Threshold: 1
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
