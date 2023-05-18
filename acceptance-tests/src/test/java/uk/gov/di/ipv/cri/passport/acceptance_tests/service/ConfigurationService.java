@@ -57,7 +57,10 @@ public class ConfigurationService {
     }
 
     public String getOrchestratorStubUrl() {
-        return orchestratorStubUrl;
+        if (!this.environment.equals("local")) {
+            return "https://" + orchestratorStubUrl;
+        }
+        return "http://" + orchestratorStubUrl;
     }
 
     public String getPublicApiGatewayKey() {

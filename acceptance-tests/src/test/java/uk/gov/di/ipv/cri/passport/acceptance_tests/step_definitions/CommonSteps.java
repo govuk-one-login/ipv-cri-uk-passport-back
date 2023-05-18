@@ -15,6 +15,12 @@ public class CommonSteps {
         BrowserUtils.waitForPageToLoad(10);
     }
 
+    @When("I click on Full journey route")
+    public void i_click_on_full_journey_route() {
+        new OrchestratorStubPage().FullJourneyRoute.click();
+        BrowserUtils.waitForPageToLoad(10);
+    }
+
     @When("I click on Debug route")
     public void i_click_on_debug_route() {
         new OrchestratorStubPage().DebugRoute.click();

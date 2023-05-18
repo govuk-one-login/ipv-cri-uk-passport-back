@@ -12,6 +12,7 @@ Feature: Passport Test
     Then I navigate to the passport verifiable issuer to check for a Valid response
     And JSON payload should contain validity score 2 and strength score 4
     And JSON response should contain documentNumber 321654987 same as given passport
+#    And Expiry time should be 6 months from the nbf in the JSON payload
     And The test is complete and I close the driver
     Examples:
       |PassportSubject             |
@@ -21,8 +22,8 @@ Feature: Passport Test
   Scenario Outline: Passport details page unhappy path with InvalidPassportDetails
     Given User enters data as a <PassportSubject>
     When User clicks on continue
-    Then I navigate to the passport verifiable issuer to check for a Invalid response
-    And JSON response should contain error description Authorization permission denied and status code as 302
+    Then I see the passport number error in the summary as Your passport number should be 9 digits long
+    And I can see the passport number error in the field as Error:Your passport number should be 9 digits long
     And The test is complete and I close the driver
     Examples:
       |PassportSubject      |
@@ -137,8 +138,9 @@ Feature: Passport Test
   @Passport_test @smoke
   Scenario: Passport User cancels before first attempt via prove your identity another way route
     Given User click on ‘prove your identity another way' Link
+    When User selects prove another way radio button
     Then I navigate to the passport verifiable issuer to check for a Invalid response
-    And JSON response should contain error description Authorization permission denied and status code as 302
+    And JSON response should contain error description Access denied by resource owner or authorization server and status code as 302
     And The test is complete and I close the driver
 
 ###########   Field Validations ##########

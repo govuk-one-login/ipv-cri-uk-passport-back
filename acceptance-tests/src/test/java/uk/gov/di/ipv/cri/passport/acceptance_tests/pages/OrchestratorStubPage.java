@@ -14,6 +14,9 @@ public class OrchestratorStubPage {
     @FindBy(xpath = "//input[@value='Debug route']")
     public WebElement DebugRoute;
 
+    @FindBy(xpath = "//input[@value='Full journey route']")
+    public WebElement FullJourneyRoute;
+
     @FindBy(xpath = "//*[@id='cri-link-ukPassport']")
     public WebElement UkPassport;
 }

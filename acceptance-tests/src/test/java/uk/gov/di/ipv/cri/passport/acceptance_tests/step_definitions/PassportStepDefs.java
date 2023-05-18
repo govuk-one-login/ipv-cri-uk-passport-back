@@ -388,4 +388,9 @@ public class PassportStepDefs extends PassportPageObject {
     public void errorInJsonResponse(String documentNumber) throws IOException {
         assertDocumentNumberInVc(documentNumber);
     }
+
+    @And("^Expiry time should be (.*) months from the nbf in the JSON payload$")
+    public void nbfAndExpiryInJsonResponse(long durationInMonths) throws JsonProcessingException {
+        nbfAndExpiryInVC(durationInMonths);
+    }
 }

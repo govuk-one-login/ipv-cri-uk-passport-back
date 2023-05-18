@@ -18,8 +18,14 @@ import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.TestDataCreator;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.TestInput;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -688,5 +694,38 @@ public class PassportPageObject extends UniversalSteps {
 
     private WebElement getLabel(WebElement webElement) {
         return webElement.findElement(By.tagName("label"));
+    }
+
+    public void nbfAndExpiryInVC(long durationInMonths) throws JsonProcessingException {
+        long monthsBetween = vcValidityInMonths();
+        assertEquals(monthsBetween, durationInMonths);
+    }
+
+    private long vcValidityInMonths() throws JsonProcessingException {
+        //        String result = JSONPayload.toString();
+        String result = JSONPayload.getText();
+        LOGGER.info("result = " + result);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(result);
+        JsonNode nbfNode = jsonNode.get("nbf");
+        JsonNode expNode = jsonNode.get("exp");
+        String nbf = jsonNode.get("nbf").asText();
+        String exp = jsonNode.get("exp").asText();
+        LOGGER.info("nbf = " + nbfNode);
+        LOGGER.info("exp = " + expNode);
+        LocalDateTime nbfDateTime =
+                LocalDateTime.ofEpochSecond(Long.parseLong(nbf), 0, ZoneOffset.UTC);
+        LocalDateTime expDateTime =
+                LocalDateTime.ofEpochSecond(Long.parseLong(exp), 0, ZoneOffset.UTC);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
+        String nbfFormattedDate = nbfDateTime.format(formatter);
+        String expFormattedDate = expDateTime.format(formatter);
+        LOGGER.info("nbf Formatted Date = " + nbfFormattedDate);
+        LOGGER.info("exp Formatted Date = " + expFormattedDate);
+        long monthsBetween =
+                ChronoUnit.MONTHS.between(
+                        LocalDate.parse(nbfFormattedDate), LocalDate.parse(expFormattedDate));
+        LOGGER.info("Duration in months: " + monthsBetween);
+        return monthsBetween;
     }
 }
