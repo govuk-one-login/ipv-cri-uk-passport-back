@@ -115,7 +115,7 @@ Feature: Passport Language Test
     When User enters data as a <PassportSubject>
     Then User clicks on continue
     And I can see Check your details as Gwiriwch bod eich manylion yn cyfateb i’r hyn sydd ar eich pasbort y DU
-    Then I see error word as Error
+    Then I see error word as Gwall
     And I see We could not find your details as Nid oeddem yn gallu ddod o hyd i’ch manylion
     And I can see Check your details as Gwiriwch bod eich manylion yn cyfateb i’r hyn sydd ar eich pasbort y DU
     And I see you will not be able to change your details as Ni fyddwch yn gallu newid eich manylion eto os byddwch yn gwneud camgymeriad.
