@@ -118,6 +118,11 @@ public class PassportCriSteps {
         enterPassportDetailsPage.cookieupdatecy();
     }
 
+    @When("user updated cookies can see the non CRI content in Welsh")
+    public void userUpdatedCookiesCanSeeTheNonCRIContentInWelsh() {
+        enterPassportDetailsPage.updateLanguageCookiesDirect("cy");
+    }
+
     @Then("the content is displayed in Welsh language in GOVUK account page")
     public void theContentIsDisplayedInWelshLanguageInGOVUKAccountPage() {
         enterPassportDetailsPage.weleshLngGOVUKPage();

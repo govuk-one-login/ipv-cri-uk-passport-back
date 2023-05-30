@@ -7,6 +7,7 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User "<PassportSubject>" adds their passport details
     Then User should be on Address CRI Page
+    Then The test is complete and I close the driver
 
     Examples:
       |PassportSubject             |
@@ -24,6 +25,8 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid passport number should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject      |
       |InvalidPassportNumber|
@@ -35,6 +38,8 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid Surname should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject |
       |Invalidsurname  |
@@ -46,6 +51,8 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid First Name should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject |
       |InvalidfirstName|
@@ -57,6 +64,8 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid Date of Birth should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject   |
       |InvalidDateofBirth|
@@ -68,6 +77,8 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid Expiry Date should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject  |
       |InvalidExpiryDate|
@@ -79,6 +90,8 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User adds Invalid "<InvalidPassportSubject>" and then adds valid "<PassportSubject>"
     Then User should be on Address CRI Page
+    Then The test is complete and I close the driver
+
     Examples:
       |InvalidPassportSubject  | PassportSubject           |
       |PassportSubjectInvalid  | PassportSubjectHappyDanny |
@@ -91,6 +104,8 @@ Feature: Passport Test (Full Journey Route)
     When User adds Invalid "<InvalidPassportSubject>"
     And  adds again Invalid "<InvalidPassportSubject>"
     Then we cannot prove your identity right now error page is displayed
+    Then The test is complete and I close the driver
+
     Examples:
       |InvalidPassportSubject |
       |PassportSubjectInvalid |
@@ -102,6 +117,7 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User clicks prove your identity in another way
     Then  Prove your identity in another way is displayed
+    Then The test is complete and I close the driver
 
   @Staging @Integration @PYIC-1636
   Scenario Outline: Passport Escape route Passport Retry
@@ -111,6 +127,7 @@ Feature: Passport Test (Full Journey Route)
     When User clicks Try to Enter Passport details and redirected back to passport page
     And User "<PassportSubject>" adds their passport details
     Then User should be on Address CRI Page
+    Then The test is complete and I close the driver
 
     Examples:
       |PassportSubject            |
@@ -123,6 +140,7 @@ Feature: Passport Test (Full Journey Route)
     And clicks continue on the signed into your GOV.UK One Login page
     When User adds Invalid "<InvalidPassportSubject>" and then adds through retry valid "<PassportSubject>"
     Then User should be on Address CRI Page
+    Then The test is complete and I close the driver
 
     Examples:
       |InvalidPassportSubject  | PassportSubject           |
@@ -137,6 +155,7 @@ Feature: Passport Test (Full Journey Route)
     And User clicks Try to Enter Passport details and redirected back to passport page
     And  adds again Invalid "<InvalidPassportSubject>"
     Then we cannot prove your identity right now error page is displayed
+    Then The test is complete and I close the driver
 
     Examples:
       |InvalidPassportSubject  |
@@ -172,4 +191,6 @@ Feature: Passport Test (Full Journey Route)
     And I click continue
     Then I should be on the core stub Verifiable Credentials page
     And I should see passport data in JSON
+    Then The test is complete and I close the driver
+
 #    And Expiry time should be 6 months from the nbf in the JSON payload

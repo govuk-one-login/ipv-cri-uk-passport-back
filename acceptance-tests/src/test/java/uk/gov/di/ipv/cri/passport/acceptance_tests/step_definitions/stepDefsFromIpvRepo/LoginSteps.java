@@ -111,7 +111,7 @@ public class LoginSteps {
             LOGGER.warning(
                     "No environment variable specified, please specify a variable for runs in Integration");
         }
-        //            passportDocCheckPage.waitForPageToLoad();
+        passportDocCheckPage.waitForPageToLoad();
         passportDocCheckPage.passportDocCheck();
     }
 

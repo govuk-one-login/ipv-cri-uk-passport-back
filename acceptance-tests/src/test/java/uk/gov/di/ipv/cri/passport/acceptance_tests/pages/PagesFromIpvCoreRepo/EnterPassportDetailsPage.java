@@ -346,12 +346,31 @@ public class EnterPassportDetailsPage extends GlobalPage {
     }
 
     public void cookieupdatecy() {
-        Cookie cookie = new Cookie("lng", "cy");
-        Cookie cookie1 = new Cookie("lang", "cy");
+        changeLanguageTo("Welsh");
+    }
+
+    public void changeLanguageTo(final String language) {
+        BrowserUtils.waitForPageToLoad(10);
+        String languageCode = "eng";
+        switch (language) {
+            case "Welsh":
+                {
+                    languageCode = "cy";
+                }
+        }
+
+        String currentURL = Driver.get().getCurrentUrl();
+        String newURL = currentURL + "/?lang=" + languageCode;
+        Driver.get().get(newURL);
+        BrowserUtils.waitForPageToLoad(10);
+    }
+
+    public void updateLanguageCookiesDirect(final String language) {
+        driver.manage().deleteCookieNamed("lng");
+        Cookie cookie = new Cookie("lng", language);
         Driver.get().manage().addCookie(cookie);
-        Driver.get().manage().addCookie(cookie1);
-        Driver.get().navigate().refresh();
-        BrowserUtils.waitFor(2);
+        Driver.get().navigate().to(driver.getCurrentUrl());
+        BrowserUtils.waitForPageToLoad(10);
     }
 
     public void weleshLngGOVUKPage() {
