@@ -125,7 +125,7 @@ public class PassportCriSteps {
 
     @Then("the content is displayed in Welsh language in GOVUK account page")
     public void theContentIsDisplayedInWelshLanguageInGOVUKAccountPage() {
-        enterPassportDetailsPage.weleshLngGOVUKPage();
+        enterPassportDetailsPage.welshLngGOVUKPage();
     }
 
     @Then("the content is displayed in Welsh language in Passport CRI Page")

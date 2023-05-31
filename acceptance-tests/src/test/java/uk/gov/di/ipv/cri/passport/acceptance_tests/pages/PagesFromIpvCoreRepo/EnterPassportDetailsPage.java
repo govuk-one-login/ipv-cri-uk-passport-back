@@ -373,7 +373,7 @@ public class EnterPassportDetailsPage extends GlobalPage {
         BrowserUtils.waitForPageToLoad(10);
     }
 
-    public void weleshLngGOVUKPage() {
+    public void welshLngGOVUKPage() {
         Assert.assertEquals("Cwcis ar GOV.UK One Login", getText(COOKIE_BANNER_GOVUK));
         Assert.assertEquals(
                 "Dechrau profi pwy ydych chi gyda GOV.UK One Login", getText(GOVUK_HDR));
