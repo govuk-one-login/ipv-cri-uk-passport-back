@@ -1,17 +1,12 @@
 Feature: Welsh Language Test
 
-  @Smoke_test @Staging @Integration
-  Scenario: The content in GOV.UK account page displayed in Welsh
-    Given User on Orchestrator Stub and click on full journey route
-    When  user updated cookies can see the stub content in Welsh
-    Then the content is displayed in Welsh language in GOVUK account page
-
   @Staging @Integration
   Scenario: The content in Passport CRI page displayed in Welsh
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK account page
     When user updated cookies can see the stub content in Welsh
     Then the content is displayed in Welsh language in Passport CRI Page
+    Then The test is complete and I close the driver
 
   @Smoke_test @Staging @Integration @staging
   Scenario Outline: Passport Journey in Welsh translation Happy Path
@@ -20,6 +15,7 @@ Feature: Welsh Language Test
     And user updated cookies can see the stub content in Welsh
     When User "<PassportSubject>" adds their passport details
     Then User should be on Address CRI Page
+    Then The test is complete and I close the driver
 
     Examples:
       |PassportSubject             |
@@ -32,6 +28,7 @@ Feature: Welsh Language Test
     And user updated cookies can see the stub content in Welsh
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid passport number should be displayed in Welsh
+    Then The test is complete and I close the driver
 
     Examples:
       |PassportSubject       |
@@ -44,6 +41,7 @@ Feature: Welsh Language Test
     And user updated cookies can see the stub content in Welsh
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid first name should be displayed in Welsh
+    Then The test is complete and I close the driver
 
     Examples:
       |PassportSubject  |
@@ -56,6 +54,7 @@ Feature: Welsh Language Test
     And user updated cookies can see the stub content in Welsh
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid surname should be displayed in Welsh
+    Then The test is complete and I close the driver
 
     Examples:
       |PassportSubject |
@@ -68,6 +67,8 @@ Feature: Welsh Language Test
     And user updated cookies can see the stub content in Welsh
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid dob should be displayed in Welsh
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject    |
       |InvalidDateofBirth |
@@ -79,6 +80,8 @@ Feature: Welsh Language Test
     And user updated cookies can see the stub content in Welsh
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid exp date should be displayed in Welsh
+    Then The test is complete and I close the driver
+
     Examples:
       |PassportSubject  |
       |InvalidExpiryDate|
@@ -89,8 +92,9 @@ Feature: Welsh Language Test
     And clicks continue on the signed into your GOV.UK account page
     When User adds Invalid "<InvalidPassportSubject>"
     And  adds again Invalid "<InvalidPassportSubject>"
-    And user updated cookies can see the stub content in Welsh
+    And user updated cookies can see the non CRI content in Welsh
     Then we cannot prove your identity right now error page is displayed in Welsh
+    Then The test is complete and I close the driver
 
     Examples:
       |InvalidPassportSubject |
@@ -108,6 +112,7 @@ Feature: Welsh Language Test
     When user enters data in kbv stub and Click on submit data and generate auth code
     And user updated cookies can see the stub content in Welsh
     Then user should be successful in proving identity in Welsh
+    Then The test is complete and I close the driver
 
     Examples:
       | PassportSubject   |
@@ -120,6 +125,7 @@ Feature: Welsh Language Test
     And user does not enters the data in Passport stub and click on submit
     And user updated cookies can see the stub content in Welsh
     Then technical error page should be displayed in Welsh
+    Then The test is complete and I close the driver
 
 
 #  To be updated with New user with KBV questions enabled

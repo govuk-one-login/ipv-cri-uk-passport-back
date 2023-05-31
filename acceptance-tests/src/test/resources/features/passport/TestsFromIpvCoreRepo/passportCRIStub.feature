@@ -7,6 +7,7 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User "<PassportSubject>" adds their passport details
     Then Appropriate "<StubValidJsonResponse>" response should be displayed
+    Then The test is complete and I close the driver
 
     Examples:
       | PassportSubject            |  StubValidJsonResponse |
@@ -24,6 +25,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid passport number should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | PassportSubject       |
       | InvalidPassportNumber |
@@ -35,6 +38,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid First Name should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | PassportSubject  |
       | InvalidfirstName |
@@ -46,6 +51,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid Surname should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | PassportSubject |
       | Invalidsurname  |
@@ -57,6 +64,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid Date of Birth should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | PassportSubject    |
       | InvalidDateofBirth |
@@ -68,6 +77,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User "<PassportSubject>" adds their passport details
     Then proper error message for invalid Expiry Date should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | PassportSubject   |
       | InvalidExpiryDate |
@@ -79,6 +90,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User adds Invalid "<InvalidPassportSubject>" and then adds valid "<PassportSubject>"
     Then Appropriate "<StubValidJsonResponse>" response should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | InvalidPassportSubject | PassportSubject           | StubValidJsonResponse |
       | PassportSubjectInvalid | PassportSubjectHappyDanny | StubValidJsonResponse |
@@ -91,6 +104,8 @@ Feature: Passport Test (Through Passport Stub)
     When User adds Invalid "<InvalidPassportSubject>"
     And  adds again Invalid "<InvalidPassportSubject>"
     Then Appropriate Error "<StubErrorJsonResponse>" response should be displayed
+    Then The test is complete and I close the driver
+
     Examples:
       | InvalidPassportSubject | StubErrorJsonResponse |
       | PassportSubjectInvalid | StubErrorJsonResponse |
@@ -102,6 +117,8 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User clicks prove your identity in another way
     Then we cannot prove your identity right now error page is displayed
+    Then The test is complete and I close the driver
+
 
   @PYIC-1636
   Scenario Outline: Passport Escape route happy path
@@ -110,6 +127,7 @@ Feature: Passport Test (Through Passport Stub)
     And I click on ukPassport
     When User adds Invalid "<InvalidPassportSubject>" and then adds through retry valid "<PassportSubject>"
     Then Appropriate "<StubValidJsonResponse>" response should be displayed
+    Then The test is complete and I close the driver
 
     Examples:
       |InvalidPassportSubject  | PassportSubject           | StubValidJsonResponse |
@@ -124,6 +142,7 @@ Feature: Passport Test (Through Passport Stub)
     And User clicks Try to Enter Passport details and redirected back to passport page
     And  adds again Invalid "<InvalidPassportSubject>"
     Then Appropriate Error "<StubErrorJsonResponse>" response should be displayed
+    Then The test is complete and I close the driver
 
     Examples:
       |InvalidPassportSubject  | StubErrorJsonResponse |
