@@ -970,6 +970,22 @@ Resources:
       Type: String
       Description: Expiry date release toggle
 
+  IsPerformanceStubParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/release-flags/isPerformanceStub"
+      Type: String
+      Value: "false"
+      Description: Feature toggle to allow performance testing passed SSL
+
+  logDcsStubParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/${Environment}/credentialIssuers/ukPassport/self/release-flags/logDcsResponse"
+      Type: String
+      Value: "false"
+      Description: Feature toggle to allow performance testing passed SSL
+
   ####################################################################
   #                                                                  #
   # Alarm setup                                                      #

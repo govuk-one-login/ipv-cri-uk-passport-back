@@ -29,8 +29,11 @@ public enum ConfigurationVariable {
     VERIFIABLE_CREDENTIAL_ISSUER(
             "/%s/credentialIssuers/ukPassport/self/verifiableCredentialIssuer"),
     VERIFIABLE_CREDENTIAL_SIGNING_KEY_ID(
-            "/%s/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId");
-
+            "/%s/credentialIssuers/ukPassport/self/verifiableCredentialKmsSigningKeyId"),
+    PASSPORT_CRI_RELEASE_FLAG_IS_PERFORMANCE_STUB(
+            "/%s/credentialIssuers/ukPassport/self/release-flags/isPerformanceStub"),
+    PASSPORT_CRI_RELEASE_FLAG_LOG_DCS_RESPONSE(
+            "/%s/credentialIssuers/ukPassport/self/release-flags/logDcsResponse");
     private final String value;
 
     ConfigurationVariable(String value) {

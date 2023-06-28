@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.MAXIMUM_ATTEMPT_COUNT;
+import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.PASSPORT_CRI_RELEASE_FLAG_LOG_DCS_RESPONSE;
 import static uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable.VERIFIABLE_CREDENTIAL_ISSUER;
 import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.DCS_CHECK_REQUEST_FAILED;
 import static uk.gov.di.ipv.cri.passport.library.metrics.Definitions.DCS_CHECK_REQUEST_SUCCEEDED;
@@ -182,6 +183,9 @@ public class CheckPassportHandler
                     AuditEventUser.fromPassportSessionItem(passportSessionItem);
             auditService.sendAuditEvent(createAuditEventResponseReceived(auditEventUser));
 
+            if (configurationService.isReleaseFlag(PASSPORT_CRI_RELEASE_FLAG_LOG_DCS_RESPONSE)) {
+                LOGGER.info("DCS response " + dcsResponse.getPayload());
+            }
             DcsResponse unwrappedDcsResponse = unwrapDcsResponse(dcsResponse);
 
             validateDcsResponse(unwrappedDcsResponse);

@@ -4,6 +4,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 import uk.gov.di.ipv.cri.passport.library.config.ConfigurationService;
+import uk.gov.di.ipv.cri.passport.library.config.ConfigurationVariable;
 import uk.gov.di.ipv.cri.passport.library.exceptions.HttpClientException;
 
 import javax.net.ssl.SSLContext;
@@ -45,6 +46,10 @@ public class HttpClientSetUp {
                             configurationService.getCertificate(DCS_TLS_INTERMEDIATE_CERT)
                         });
 
+        if (configurationService.isReleaseFlag(
+                ConfigurationVariable.PASSPORT_CRI_RELEASE_FLAG_IS_PERFORMANCE_STUB)) {
+            return contextSetup(keystoreTLS, null);
+        }
         return contextSetup(keystoreTLS, trustStore);
     }
 
