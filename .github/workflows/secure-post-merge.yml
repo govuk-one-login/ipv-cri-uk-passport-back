@@ -25,8 +25,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
-          distribution: 'adopt'
-          cache: gradle
+          distribution: zulu
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
