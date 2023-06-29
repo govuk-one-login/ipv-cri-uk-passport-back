@@ -36,6 +36,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 7.6
+          cache-disabled: true
 
       - name: Set up SAM cli
         uses: aws-actions/setup-sam@v1
