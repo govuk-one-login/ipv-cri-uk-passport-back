@@ -11,7 +11,7 @@ public class ChooseYourAddressPage extends GlobalPage {
     private static final By ADDRESS_DROPDOWN = By.cssSelector("#addressResults");
     private static final By CHOOSE_ADDRESS_BUTTON = By.cssSelector("#continue");
     private static final By SELECT_USER = By.xpath("//*[@id='test_data']");
-    private static final String USER_DATA_DIRECTORY = "src/test/resources/data/";
+    private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
     private static final By SUBMIT_AUTH = By.xpath("//*[@name='submit']");
     private static final By JWT_CHECK_BOX = By.cssSelector("#vcExpiryFlg");
 

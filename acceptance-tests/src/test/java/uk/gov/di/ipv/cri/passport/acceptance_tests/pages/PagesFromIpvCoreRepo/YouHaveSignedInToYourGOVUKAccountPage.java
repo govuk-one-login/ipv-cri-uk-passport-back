@@ -15,14 +15,7 @@ public class YouHaveSignedInToYourGOVUKAccountPage {
     }
 
     @FindBy(id = "submitButton")
-    // @FindBy(xpath = "//a[@class='govuk-button']")
     public WebElement Continue;
-
-    @FindBy(xpath = "//*[@class='govuk-heading-l']")
-    public WebElement GOVUKpage;
-
-    @FindBy(xpath = "//*[@class='html[1]/body[1]/div[2]/main[1]/div[1]/div[1]/p[1]']")
-    public WebElement pagecontent;
 
     @FindBy(xpath = "//*[@class='govuk-cookie-banner__heading govuk-heading-m']")
     public WebElement GOVUKbanner;

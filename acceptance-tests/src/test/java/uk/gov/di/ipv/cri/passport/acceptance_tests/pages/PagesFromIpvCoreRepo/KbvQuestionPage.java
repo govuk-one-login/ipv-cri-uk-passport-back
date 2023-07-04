@@ -16,7 +16,7 @@ public class KbvQuestionPage extends GlobalPage {
     private static final By NONE_OF_THE_ABOVE =
             By.xpath("//input[contains(@id,'NONEOFTHEABOVEDOESNOTAPPLY')]");
     private static final By CONTINUE = By.cssSelector("#continue");
-    private static final String USER_DATA_DIRECTORY = "src/test/resources/data/";
+    private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
 
     public static final String FIELD_SET_SUFFIX = "-fieldset";
     public static final String ID = "id";

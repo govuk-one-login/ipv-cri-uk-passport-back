@@ -22,6 +22,8 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
     private static final By USER_INFO = By.cssSelector(".govuk-heading-l");
     private static final By CONTINUE_BUTTON = By.cssSelector("#submitButton");
     private static final By USER_ID_FIELD = By.cssSelector("#userIdText");
+    private static final By SIGN_OUT = By.xpath("//*[@class='one-login-header__nav__link']");
+    private static final By SIGN_OUT_HDR = By.xpath("//h1[@class='govuk-heading-l govuk-!-margin-top-0 govuk-!-margin-bottom-3']");
     public static String userId;
     public static String userId2 = "test703456";
     private static final By MOBILE_APP_USER_ID_OPTION =
@@ -90,10 +92,6 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
         pubTopic(snsClient, message, topicArn);
     }
 
-    public void inputuserId2() {
-        populateField(USER_ID_FIELD, userId2);
-    }
-
     public void ContinueToEnterDrivngLicence() {
         clickElement(CONTINUE_BUTTON);
     }
@@ -104,5 +102,13 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
 
     public void SignToAppJourney() {
         clickElement(CONTINUE_BUTTON);
+    }
+
+    public void clickSignOut() {
+        clickElement(SIGN_OUT);
+    }
+
+    public void signOutPage() {
+        Assert.assertEquals("You have signed out", getText(SIGN_OUT_HDR));
     }
 }

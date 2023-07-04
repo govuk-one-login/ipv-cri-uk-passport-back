@@ -181,4 +181,24 @@ public class LoginSteps {
         proveYourIdentityGovUkPage.selectAppUserId();
         proveYourIdentityGovUkPage.fullJourneyRoute();
     }
+
+    @And("clicks continue on the signed into your GOV.UK One Login page in build stub")
+    public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageInBuildStub() {
+        proveYourIdentityGovUkPage.waitForPageToLoad();
+        proveYourIdentityGovUkPage.ContinueToEnterPassport();
+//        passportDocCheckPage.waitForPageToLoad();
+        passportDocCheckPage.checkinAppStub();
+        passportDocCheckPage.generateOAuthError();
+        passportDocCheckPage.passportDocCheck();
+    }
+
+    @And("User clicks on Sign-out button")
+    public void userClicksOnSignOutButton() {
+        proveYourIdentityGovUkPage.clickSignOut();
+    }
+
+    @Then("Standard Sign-out page should be displayed")
+    public void standardSignOutPageShouldBeDisplayed() {
+        proveYourIdentityGovUkPage.signOutPage();
+    }
 }

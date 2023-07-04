@@ -14,7 +14,7 @@ public class IpvCheckResultsPage extends GlobalPage {
 
     private static final By PAGE_HEADER = By.cssSelector("#header");
     private static final By CONTINUE = By.cssSelector("#submitButton");
-    private static final String USER_DATA_DIRECTORY = "src/test/resources/data/";
+    private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
     private static final By VERIFY_CREDENTIALS =
             By.xpath("//div[2]//dd[1]//details[1]//summary[1]//span[1]");
     private static final By VERIFY_CREDENTIAL4 =

@@ -39,7 +39,7 @@ public class EnterPassportDetailsPage extends GlobalPage {
     private static final By PROVE_ID_R = By.cssSelector("#proveAnotherWayRadio-retry");
     private static final By PROVE_ID_A2 = By.cssSelector("#proveAnotherWayRadio");
     private static final By PROVE_ID_A3 = By.cssSelector("#proveAnotherWayRadio-retry");
-    private static final String USER_DATA_DIRECTORY = "src/test/resources/data/";
+    private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
     private static final By UK_PASSPORT_STUB = By.cssSelector("#cri-link-ukPassport");
     private static final By STUB_JSON_RESP =
             By.xpath("//html[1]/body[1]/div[1]/main[1]/div[1]/div[1]/dl[2]/div[1]/dd[1]/pre[1]");
@@ -346,23 +346,12 @@ public class EnterPassportDetailsPage extends GlobalPage {
     }
 
     public void cookieupdatecy() {
-        changeLanguageTo("Welsh");
-    }
-
-    public void changeLanguageTo(final String language) {
-        BrowserUtils.waitForPageToLoad(10);
-        String languageCode = "eng";
-        switch (language) {
-            case "Welsh":
-                {
-                    languageCode = "cy";
-                }
-        }
-
-        String currentURL = Driver.get().getCurrentUrl();
-        String newURL = currentURL + "/?lang=" + languageCode;
-        Driver.get().get(newURL);
-        BrowserUtils.waitForPageToLoad(10);
+        Cookie cookie = new Cookie("lng","cy");
+        Cookie cookie1 = new Cookie("lang","cy");
+        Driver.get().manage().addCookie(cookie);
+        Driver.get().manage().addCookie(cookie1);
+        Driver.get().navigate().refresh();
+        BrowserUtils.waitFor(2);
     }
 
     public void updateLanguageCookiesDirect(final String language) {
@@ -472,13 +461,11 @@ public class EnterPassportDetailsPage extends GlobalPage {
     }
 
     public void enterNoStubPassportDetails() {
-        //        clickElement(SUBMIT_AUTH);
-        clickElement(CONTINUE_BUTTON);
+                clickElement(SUBMIT_AUTH);
     }
 
     public void weleshTechError() {
-        //        Assert.assertEquals("Mae’n ddrwg gennym, mae problem",getText(ERROR_HDR));
-        Assert.assertEquals("Mae problem", getText(ERROR_TITLE));
+                Assert.assertEquals("Mae’n ddrwg gennym, mae problem",getText(ERROR_HDR));
     }
 
     public void clickBrowserButton() {
