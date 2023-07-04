@@ -23,7 +23,6 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
     private static final By SIGN_OUT = By.xpath("//*[@class='one-login-header__nav__link']");
     private static final By SIGN_OUT_HDR = By.xpath("//h1[@class='govuk-heading-l govuk-!-margin-top-0 govuk-!-margin-bottom-3']");
     private static final By ERROR_JOURNEY_BUTTON= By.xpath("//*[@value='Error journey route']");
-    private static final By FEATURE_FLAG = By.cssSelector("#header");
 
     public static String userId;
     public static String userId2 = "test703456";

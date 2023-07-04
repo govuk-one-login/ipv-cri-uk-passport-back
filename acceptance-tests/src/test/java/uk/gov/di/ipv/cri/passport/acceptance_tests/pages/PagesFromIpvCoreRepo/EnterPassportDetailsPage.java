@@ -571,5 +571,4 @@ public class EnterPassportDetailsPage extends GlobalPage {
                 "Enter the details from your photo ID and answer security questions",
                 getText(KBV_HDR));
     }
-
 }
