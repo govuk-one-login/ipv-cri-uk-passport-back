@@ -62,7 +62,7 @@ Mappings:
     development-c:
       provisionedConcurrency: 0
     build:
-      provisionedConcurrency: 0
+      provisionedConcurrency: 1
     staging:
       provisionedConcurrency: 1
     integration:
