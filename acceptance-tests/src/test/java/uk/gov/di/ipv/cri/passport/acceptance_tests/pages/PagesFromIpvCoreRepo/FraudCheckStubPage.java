@@ -27,27 +27,6 @@ public class FraudCheckStubPage {
     @FindBy(xpath = "//input[@name='submit']")
     public WebElement SubmitDataAndGenerateAuthCode;
 
-    @FindBy(id = "test_data")
-    public WebElement SelectCRISubData;
-
-    @FindBy(id = "fraud")
-    public WebElement GPG45Fraud;
-
-    @FindBy(id = "ci")
-    public WebElement Contraindicators;
-
-    @FindBy(id = "endpoint")
-    public WebElement Authorization;
-
-    @FindBy(id = "requested_oauth_error_endpoint_2")
-    public WebElement AccessToken;
-
-    @FindBy(id = "requested_oauth_error")
-    public WebElement OAuthError;
-
-    @FindBy(id = "requested_oauth_error_description")
-    public WebElement OAuthErrorDescription;
-
     public static void enterFraudDetails() {
         Select select = new Select(new IpvCoreFrontPageArchive().SelectfraudCRIData);
         select.selectByValue("Kenneth Decerqueira (Valid Experian) Fraud");
@@ -70,30 +49,6 @@ public class FraudCheckStubPage {
         new IpvCoreFrontPageArchive().fraudscore.sendKeys("2");
         new PassportPage().SelectCRIData.click();
         BrowserUtils.waitForPageToLoad(10);
-        new PassportPage().submitdatagenerateauth.click();
-    }
-
-    public static void enterFraudDetailsDVLA() {
-        Select select = new Select(new IpvCoreFrontPageArchive().SelectfraudCRIData);
-        select.selectByValue("Alice Parker (Valid) Fraud");
-        new IpvCoreFrontPageArchive().fraudscore.sendKeys("2");
-        new PassportPage().SelectCRIData.click();
-        BrowserUtils.waitForPageToLoad(10);
-        clickElement(JWT_CHECK_BOX);
-        new IpvCoreFrontPageArchive().JWT_EXP_HR.clear();
-        new IpvCoreFrontPageArchive().JWT_EXP_HR.sendKeys("4");
-        new PassportPage().submitdatagenerateauth.click();
-    }
-
-    public static void enterFraudDetailsDVA() {
-        Select select = new Select(new IpvCoreFrontPageArchive().SelectfraudCRIData);
-        select.selectByValue("Bob Parker (Valid) Fraud");
-        new IpvCoreFrontPageArchive().fraudscore.sendKeys("2");
-        new PassportPage().SelectCRIData.click();
-        BrowserUtils.waitForPageToLoad(10);
-        clickElement(JWT_CHECK_BOX);
-        new IpvCoreFrontPageArchive().JWT_EXP_HR.clear();
-        new IpvCoreFrontPageArchive().JWT_EXP_HR.sendKeys("4");
         new PassportPage().submitdatagenerateauth.click();
     }
 }

@@ -230,4 +230,5 @@ public class PassportCriSteps {
     public void proveYourIdentityInAnotherWayIsDisplayed() {
         enterPassportDetailsPage.proveidentityanother();
     }
+
 }

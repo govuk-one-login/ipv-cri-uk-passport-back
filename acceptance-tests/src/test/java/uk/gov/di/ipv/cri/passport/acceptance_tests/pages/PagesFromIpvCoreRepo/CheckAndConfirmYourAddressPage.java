@@ -8,7 +8,6 @@ import java.io.IOException;
 public class CheckAndConfirmYourAddressPage extends GlobalPage {
 
     private static final By WHEN_DID_YOU_START_LIVING_HERE = By.cssSelector("#addressYearFrom");
-    // private static final By CONTINUE_BUTTON = By.cssSelector("#continue");
     private static final By CONFIRM_ADDRESS_DETATILS = By.xpath("//button[@data-id='next']");
     private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
 

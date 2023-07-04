@@ -198,23 +198,34 @@ public class KbvCriSteps {
                 "Raw User Info Object", new IpvCoreFrontPageArchive().RAW_JSON.getText());
     }
 
-    @When("user enters data in kbv stub DVLA and Click on submit data and generate auth code")
-    public void userEntersDataInKbvStubDVLAAndClickOnSubmitDataAndGenerateAuthCode() {
+    @When("user enters data in kbv stub for KBV Thin and Click on submit data and generate auth code")
+    public void userEntersDataInKbvStubForKBVThinAndClickOnSubmitDataAndGenerateAuthCode() {
         Select select = new Select(new IpvCoreFrontPageArchive().SelectkbvCRIData);
-        select.selectByValue("Alice Parker (Valid) KBV");
-        new IpvCoreFrontPageArchive().kbvscore.sendKeys("2");
+        select.selectByValue("Kenneth Decerqueira (Valid Experian) KBV");
+        new IpvCoreFrontPageArchive().kbvscore.sendKeys("0");
         new PassportPage().SelectCRIData.click();
         BrowserUtils.waitForPageToLoad(10);
         new PassportPage().submitdatagenerateauth.click();
     }
 
-    @When("user enters data in kbv stub DVA and Click on submit data and generate auth code")
-    public void userEntersDataInKbvStubDVAAndClickOnSubmitDataAndGenerateAuthCode() {
+    @Then("KBV Thin Error Page should be displayed")
+    public void kbvThinErrorPageShouldBeDisplayed() {
+        Assert.assertEquals("You need to prove your identity another way",new IpvCoreFrontPageArchive().Kbvheader.getText());
+    }
+
+    @When("user enters data in kbv stub for KBV fail and Click on submit data and generate auth code")
+    public void userEntersDataInKbvStubForKBVFailAndClickOnSubmitDataAndGenerateAuthCode() {
         Select select = new Select(new IpvCoreFrontPageArchive().SelectkbvCRIData);
-        select.selectByValue("Bob Parker (Valid) KBV");
+        select.selectByValue("Kenneth Decerqueira (Valid Experian) KBV");
         new IpvCoreFrontPageArchive().kbvscore.sendKeys("2");
         new PassportPage().SelectCRIData.click();
+        new IpvCoreFrontPageArchive().updateci.sendKeys("D02");
         BrowserUtils.waitForPageToLoad(10);
         new PassportPage().submitdatagenerateauth.click();
+    }
+
+    @Then("KBV fail Error Page should be displayed")
+    public void kbvFailErrorPageShouldBeDisplayed() {
+        Assert.assertEquals("Sorry, we cannot prove your identity",new IpvCoreFrontPageArchive().Kbvheader.getText());
     }
 }

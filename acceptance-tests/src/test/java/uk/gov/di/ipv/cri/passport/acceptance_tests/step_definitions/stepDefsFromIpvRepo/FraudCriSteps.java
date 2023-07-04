@@ -63,16 +63,4 @@ public class FraudCriSteps {
             userEntersDataInFraudBuildStubWithoutJWTExpiryAndClickOnSubmitDataAndGeneratesAuthCode() {
         FraudCheckStubPage.enterFraudDetailsWithoutJwtExp();
     }
-
-    @When(
-            "user enters data in fraud build stub DVLA and Click on submit data and generates auth code")
-    public void userEntersDataInFraudBuildStubDVLAAndClickOnSubmitDataAndGeneratesAuthCode() {
-        FraudCheckStubPage.enterFraudDetailsDVLA();
-    }
-
-    @When(
-            "user enters data in fraud build stub DVA and Click on submit data and generates auth code")
-    public void userEntersDataInFraudBuildStubDVAAndClickOnSubmitDataAndGeneratesAuthCode() {
-        FraudCheckStubPage.enterFraudDetailsDVA();
-    }
 }

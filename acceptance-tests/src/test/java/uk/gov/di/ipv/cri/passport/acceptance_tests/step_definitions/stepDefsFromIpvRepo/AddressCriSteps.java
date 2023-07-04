@@ -42,14 +42,8 @@ public class AddressCriSteps {
         chooseYourAddressPage.selectStubUserAddressWithoutJwtExp();
     }
 
-    @When(
-            "user enters data in address stub for DVLA and Click on submit data and generate auth code")
-    public void userEntersDataInAddressStubForDVLAAndClickOnSubmitDataAndGenerateAuthCode() {
-        chooseYourAddressPage.selectStubUserAddressDVLA();
-    }
-
-    @When("user enters data in address stub DVA and Click on submit data and generate auth code")
-    public void userEntersDataInAddressStubDVAAndClickOnSubmitDataAndGenerateAuthCode() {
-        chooseYourAddressPage.selectStubUserAddressDVA();
+    @Then("User should see error recovery page")
+    public void userShouldSeeErrorRecoveryPage() {
+        chooseYourAddressPage.backButtonErrPage();
     }
 }

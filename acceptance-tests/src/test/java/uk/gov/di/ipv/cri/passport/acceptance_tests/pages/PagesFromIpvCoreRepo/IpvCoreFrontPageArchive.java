@@ -58,4 +58,7 @@ public class IpvCoreFrontPageArchive {
 
     @FindBy(xpath = "//*[normalize-space()='Raw User Info Object']")
     public WebElement RAW_JSON;
+
+    @FindBy(xpath = "//textarea[@id='ci']")
+    public WebElement updateci;
 }

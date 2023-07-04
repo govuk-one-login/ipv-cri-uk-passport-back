@@ -1,6 +1,7 @@
 package uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo;
 
 import org.json.JSONObject;
+import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.Select;
 
@@ -14,6 +15,7 @@ public class ChooseYourAddressPage extends GlobalPage {
     private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
     private static final By SUBMIT_AUTH = By.xpath("//*[@name='submit']");
     private static final By JWT_CHECK_BOX = By.cssSelector("#vcExpiryFlg");
+    private static final By ERROR_HDR = By.cssSelector("#header");
 
     public void selectUserAddress(String userName, String addressCriSuccess) throws IOException {
         JSONObject userDetailsObject =
@@ -47,17 +49,7 @@ public class ChooseYourAddressPage extends GlobalPage {
         clickElement(SUBMIT_AUTH);
     }
 
-    public void selectStubUserAddressDVLA() {
-        Select select = new Select(getCurrentDriver().findElement(SELECT_USER));
-        select.selectByValue("Alice Parker Valid Address");
-        clickElement(SELECT_USER);
-        clickElement(SUBMIT_AUTH);
-    }
-
-    public void selectStubUserAddressDVA() {
-        Select select = new Select(getCurrentDriver().findElement(SELECT_USER));
-        select.selectByValue("Bob Parker Valid Address");
-        clickElement(SELECT_USER);
-        clickElement(SUBMIT_AUTH);
+    public void backButtonErrPage() {
+        Assert.assertEquals("Sorry, you cannot go back", getText(ERROR_HDR));
     }
 }
