@@ -680,10 +680,10 @@ Resources:
       # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
       # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-capture-audit-events-${Environment}"
-      Handler: uk.gov.di.ipv.cri.passport.captureAuditEvents.CaptureAuditEventsHandler::handleRequest
+      Handler: uk.gov.di.ipv.cri.passport.captureauditevents.CaptureAuditEventsHandler::handleRequest
       Runtime: java11
       PackageType: Zip
-      CodeUri: ../lambdas/captureAuditEvents
+      CodeUri: ../lambdas/captureauditevents
       Architectures:
         - arm64
       Environment:
