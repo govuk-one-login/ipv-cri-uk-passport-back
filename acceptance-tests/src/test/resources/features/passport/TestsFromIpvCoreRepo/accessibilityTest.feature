@@ -1,4 +1,4 @@
-
+######## currently not working, these tests will be moved to new passport CRI front repo and will be fixed in LIME-625 ########
 Feature: Checking accessibility issues
 
 #  @accessibility_test
