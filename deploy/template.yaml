@@ -684,6 +684,7 @@ Resources:
       Runtime: java11
       PackageType: Zip
       CodeUri: ../lambdas/captureauditevents
+      MemorySize: 1024
       Architectures:
         - arm64
       Environment:
