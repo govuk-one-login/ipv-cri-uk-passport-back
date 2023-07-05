@@ -676,6 +676,9 @@ Resources:
     Type: AWS::Serverless::Function
     Condition: IsNotProdLikeEnvironment
     Properties:
+      # checkov:skip=CKV_AWS_115: We do not have enough data to allocate the concurrent execution allowance per function.
+      # checkov:skip=CKV_AWS_116: Lambdas invoked via API Gateway do not support Dead Letter Queues.
+      # checkov:skip=CKV_AWS_117: Lambdas will migrate to our own VPC in future work.
       FunctionName: !Sub "ipv-passport-capture-audit-events-${Environment}"
       Handler: uk.gov.di.ipv.cri.passport.captureAuditEvents.CaptureAuditEventsHandler::handleRequest
       Runtime: java11
@@ -684,6 +687,7 @@ Resources:
       Architectures:
         - arm64
       Environment:
+        # checkov:skip=CKV_AWS_173: These environment variables do not require encryption.
         Variables:
           POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-captureAuditEvents"
       Policies:
@@ -713,7 +717,9 @@ Resources:
     Condition: IsNotProdLikeEnvironment
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AuditEventConsumerFunction}"
-      RetentionInDays: 30
+      RetentionInDays: 14
+      KmsKeyId: !GetAtt LoggingKmsKey.Arn
+
 
   DCSResponseTable:
     Type: AWS::DynamoDB::Table
