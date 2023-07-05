@@ -127,6 +127,12 @@ Conditions:
   IsProdEnvironment: !Equals
     - !Ref Environment
     - production
+  IsProdLikeEnvironment: !Or
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
+  IsNotProdLikeEnvironment: !Not
+    - Condition: IsProdLikeEnvironment
 
 Resources:
   IPVCriUKPassportPrivateAPI:
@@ -660,6 +666,54 @@ Resources:
       DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref IPVCriUKPassportInitialiseSessionFunctionLogGroup
+
+
+  ##############################
+  # Stub Audit Event Consumer  #
+  ##############################
+
+  AuditEventConsumerFunction:
+    Type: AWS::Serverless::Function
+    Condition: IsNotProdLikeEnvironment
+    Properties:
+      FunctionName: !Sub "ipv-passport-capture-audit-events-${Environment}"
+      Handler: uk.gov.di.ipv.cri.passport.captureAuditEvents.CaptureAuditEventsHandler::handleRequest
+      Runtime: java11
+      PackageType: Zip
+      CodeUri: ../lambdas/captureAuditEvents
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: !Sub "${CriIdentifier}-captureAuditEvents"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "sqs:SendMessage"
+                - "sqs:ReceiveMessage"
+                - "sqs:DeleteMessage"
+                - "sqs:GetQueueAttributes"
+              Resource:
+                - !Sub
+                  - "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:${queueName}"
+                  - queueName: !ImportValue AuditEventQueueName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+                - 'kms:GenerateDataKey'
+              Resource:
+                - !ImportValue AuditEventQueueEncryptionKeyArn
+
+  AuditEventConsumerFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: IsNotProdLikeEnvironment
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AuditEventConsumerFunction}"
+      RetentionInDays: 30
 
   DCSResponseTable:
     Type: AWS::DynamoDB::Table

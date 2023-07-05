@@ -1,0 +1,84 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+plugins {
+	id "java"
+	id "idea"
+	id "jacoco"
+	id 'io.freefair.aspectj.post-compile-weaving' version '6.3.0'
+}
+
+dependencies {
+	implementation "com.amazonaws:aws-lambda-java-core:$rootProject.ext.dependencyVersions.awsLambdaJavaCore",
+			"com.amazonaws:aws-lambda-java-events:$rootProject.ext.dependencyVersions.awsLambdaJavaEvents",
+			"com.amazonaws:aws-java-sdk-sqs:$rootProject.ext.dependencyVersions.awsJavaSdkSqs",
+			"com.fasterxml.jackson.core:jackson-annotations:$rootProject.ext.dependencyVersions.jackson",
+			"com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
+			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",
+			"com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$rootProject.ext.dependencyVersions.jackson",
+			"com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$rootProject.ext.dependencyVersions.jackson",
+			"com.nimbusds:nimbus-jose-jwt:$rootProject.ext.dependencyVersions.nimbusJoseJwt",
+			"com.nimbusds:oauth2-oidc-sdk:$rootProject.ext.dependencyVersions.nimbusdsOauth2OidcSdk",
+			project(":lib"),
+			configurations.cri_common_lib
+
+	aspect "software.amazon.lambda:powertools-parameters:$rootProject.ext.dependencyVersions.powertoolsParameters",
+			"software.amazon.lambda:powertools-logging:$rootProject.ext.dependencyVersions.powertoolsLogging",
+			"software.amazon.lambda:powertools-metrics:$rootProject.ext.dependencyVersions.powertoolsMetrics"
+
+	testImplementation "com.fasterxml.jackson.core:jackson-core:$rootProject.ext.dependencyVersions.jackson",
+			"com.fasterxml.jackson.core:jackson-databind:$rootProject.ext.dependencyVersions.jackson",
+			"org.junit.jupiter:junit-jupiter:5.8.2",
+			"org.mockito:mockito-core:4.1.0",
+			"org.mockito:mockito-inline:2.13.0",
+			"org.mockito:mockito-junit-jupiter:4.1.0",
+			project(":lib").sourceSets.test.output
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_11
+	targetCompatibility = JavaVersion.VERSION_11
+}
+
+task buildZip(type: Zip) {
+	from compileJava
+	from processResources
+	destinationDirectory = file("$rootDir/dist")
+	into("lib") {
+		from configurations.runtimeClasspath
+	}
+}
+
+test {
+	useJUnitPlatform ()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required.set(true)
+	}
+}
+
+tasks.withType(Test) {
+	testLogging {
+		events TestLogEvent.FAILED,
+				TestLogEvent.PASSED,
+				TestLogEvent.SKIPPED
+
+		exceptionFormat TestExceptionFormat.FULL
+		showExceptions true
+		showCauses true
+		showStackTraces true
+
+		afterSuite { suite, result ->
+			if (!suite.parent) {
+				def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+				def startItem = "|  ", endItem = "  |"
+				def repeatLength = startItem.length() + output.length() + endItem.length()
+				println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
+			}
+		}
+	}
+}
