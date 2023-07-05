@@ -14,6 +14,7 @@ public class PassportDocCheckPage extends GlobalPage {
     private static final By OAUTH_ERROR = By.cssSelector("#requested_oauth_error");
     private static final By OAUTH_ERROR_TAB = By.cssSelector("#tab_oauthError");
     private static final By SUBMIT_AUTH = By.xpath("//*[@name='submit']");
+
     public void waitForPageToLoad() {
         waitForElementVisible(QUESTION_LABEL, 30);
     }
@@ -24,7 +25,8 @@ public class PassportDocCheckPage extends GlobalPage {
     }
 
     public void checkinAppStub() {
-        Assert.assertEquals("DOC Checking App (Stub)",new IpvCoreFrontPageArchive().appStubHdr.getText());
+        Assert.assertEquals(
+                "DOC Checking App (Stub)", new IpvCoreFrontPageArchive().appStubHdr.getText());
     }
 
     public void generateOAuthError() {

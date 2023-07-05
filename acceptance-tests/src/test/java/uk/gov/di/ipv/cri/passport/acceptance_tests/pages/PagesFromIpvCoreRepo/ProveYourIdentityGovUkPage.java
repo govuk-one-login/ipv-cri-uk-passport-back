@@ -21,8 +21,9 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
     private static final By CONTINUE_BUTTON = By.cssSelector("#submitButton");
     private static final By USER_ID_FIELD = By.cssSelector("#userIdText");
     private static final By SIGN_OUT = By.xpath("//*[@class='one-login-header__nav__link']");
-    private static final By SIGN_OUT_HDR = By.xpath("//h1[@class='govuk-heading-l govuk-!-margin-top-0 govuk-!-margin-bottom-3']");
-    private static final By ERROR_JOURNEY_BUTTON= By.xpath("//*[@value='Error journey route']");
+    private static final By SIGN_OUT_HDR =
+            By.xpath("//h1[@class='govuk-heading-l govuk-!-margin-top-0 govuk-!-margin-bottom-3']");
+    private static final By ERROR_JOURNEY_BUTTON = By.xpath("//*[@value='Error journey route']");
 
     public static String userId;
     public static String userId2 = "test703456";
@@ -100,6 +101,7 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
         Assert.assertEquals("You have signed out", getText(SIGN_OUT_HDR));
     }
 
-    public void errorJourneyRoute() {clickElement(ERROR_JOURNEY_BUTTON);
+    public void errorJourneyRoute() {
+        clickElement(ERROR_JOURNEY_BUTTON);
     }
 }

@@ -198,7 +198,8 @@ public class KbvCriSteps {
                 "Raw User Info Object", new IpvCoreFrontPageArchive().RAW_JSON.getText());
     }
 
-    @When("user enters data in kbv stub for KBV Thin and Click on submit data and generate auth code")
+    @When(
+            "user enters data in kbv stub for KBV Thin and Click on submit data and generate auth code")
     public void userEntersDataInKbvStubForKBVThinAndClickOnSubmitDataAndGenerateAuthCode() {
         Select select = new Select(new IpvCoreFrontPageArchive().SelectkbvCRIData);
         select.selectByValue("Kenneth Decerqueira (Valid Experian) KBV");
@@ -210,10 +211,13 @@ public class KbvCriSteps {
 
     @Then("KBV Thin Error Page should be displayed")
     public void kbvThinErrorPageShouldBeDisplayed() {
-        Assert.assertEquals("You need to prove your identity another way",new IpvCoreFrontPageArchive().Kbvheader.getText());
+        Assert.assertEquals(
+                "You need to prove your identity another way",
+                new IpvCoreFrontPageArchive().Kbvheader.getText());
     }
 
-    @When("user enters data in kbv stub for KBV fail and Click on submit data and generate auth code")
+    @When(
+            "user enters data in kbv stub for KBV fail and Click on submit data and generate auth code")
     public void userEntersDataInKbvStubForKBVFailAndClickOnSubmitDataAndGenerateAuthCode() {
         Select select = new Select(new IpvCoreFrontPageArchive().SelectkbvCRIData);
         select.selectByValue("Kenneth Decerqueira (Valid Experian) KBV");
@@ -226,6 +230,8 @@ public class KbvCriSteps {
 
     @Then("KBV fail Error Page should be displayed")
     public void kbvFailErrorPageShouldBeDisplayed() {
-        Assert.assertEquals("Sorry, we cannot prove your identity",new IpvCoreFrontPageArchive().Kbvheader.getText());
+        Assert.assertEquals(
+                "Sorry, we cannot prove your identity",
+                new IpvCoreFrontPageArchive().Kbvheader.getText());
     }
 }

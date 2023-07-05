@@ -346,8 +346,8 @@ public class EnterPassportDetailsPage extends GlobalPage {
     }
 
     public void cookieupdatecy() {
-        Cookie cookie = new Cookie("lng","cy");
-        Cookie cookie1 = new Cookie("lang","cy");
+        Cookie cookie = new Cookie("lng", "cy");
+        Cookie cookie1 = new Cookie("lang", "cy");
         Driver.get().manage().addCookie(cookie);
         Driver.get().manage().addCookie(cookie1);
         Driver.get().navigate().refresh();
@@ -461,11 +461,11 @@ public class EnterPassportDetailsPage extends GlobalPage {
     }
 
     public void enterNoStubPassportDetails() {
-                clickElement(SUBMIT_AUTH);
+        clickElement(SUBMIT_AUTH);
     }
 
     public void weleshTechError() {
-                Assert.assertEquals("Mae’n ddrwg gennym, mae problem",getText(ERROR_HDR));
+        Assert.assertEquals("Mae’n ddrwg gennym, mae problem", getText(ERROR_HDR));
     }
 
     public void clickBrowserButton() {

@@ -162,7 +162,7 @@ public class LoginSteps {
     public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageInBuildStub() {
         proveYourIdentityGovUkPage.waitForPageToLoad();
         proveYourIdentityGovUkPage.ContinueToEnterPassport();
-//        passportDocCheckPage.waitForPageToLoad();
+        //        passportDocCheckPage.waitForPageToLoad();
         passportDocCheckPage.checkinAppStub();
         passportDocCheckPage.generateOAuthError();
         passportDocCheckPage.passportDocCheck();
@@ -182,18 +182,21 @@ public class LoginSteps {
     public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageForAxeTest() {
         proveYourIdentityGovUkPage.waitForPageToLoad();
         try {
-            if (deviceSelectionPage.isDeviceSelectionScreenPresent()){
+            if (deviceSelectionPage.isDeviceSelectionScreenPresent()) {
                 deviceSelectionPage.selectNoMobileDeviceAndContinue();
                 deviceSelectionPage.selectNoIphoneOrAndroidAndContinue();
             }
-        } catch (NullPointerException e){
-            LOGGER.warning("No environment variable specified, please specify a variable for runs in Integration");
+        } catch (NullPointerException e) {
+            LOGGER.warning(
+                    "No environment variable specified, please specify a variable for runs in Integration");
         }
     }
 
     @And("User lands on IPVCore identity start page")
     public void userLandsOnIPVCoreIdentityStartPage() {
-        Assert.assertEquals("Start proving your identity with GOV.UK One Login",new IpvCoreFrontPageArchive().journeycomplete.getText());
+        Assert.assertEquals(
+                "Start proving your identity with GOV.UK One Login",
+                new IpvCoreFrontPageArchive().journeycomplete.getText());
     }
 
     @Given("User on Orchestrator Stub and click on error journey route")
@@ -205,6 +208,8 @@ public class LoginSteps {
 
     @When("unrecoverable error page should be displayed")
     public void unrecoverableErrorPageShouldBeDisplayed() {
-        Assert.assertEquals("Sorry, there is a problem",new IpvCoreFrontPageArchive().journeycomplete.getText());
+        Assert.assertEquals(
+                "Sorry, there is a problem",
+                new IpvCoreFrontPageArchive().journeycomplete.getText());
     }
 }

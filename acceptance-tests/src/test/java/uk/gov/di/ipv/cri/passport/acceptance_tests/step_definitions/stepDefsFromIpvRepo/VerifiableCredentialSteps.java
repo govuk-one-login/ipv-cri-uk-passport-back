@@ -1,8 +1,8 @@
 package uk.gov.di.ipv.cri.passport.acceptance_tests.step_definitions.stepDefsFromIpvRepo;
 
+import io.cucumber.java.en.Then;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.IpvCheckResultsPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.UserInfomationPage;
-import io.cucumber.java.en.Then;
 
 public class VerifiableCredentialSteps {
 
@@ -10,8 +10,10 @@ public class VerifiableCredentialSteps {
     private final UserInfomationPage userInfomationPage = new UserInfomationPage();
     private final String SUCCESSFULLY = "Successfully";
 
-    @Then("the user should see that they have {string} proved their identity using the Orchestrator Stub")
-    public void theUserShouldSeeThatTheyHaveProvedTheirIdentityOrchestratorStub(String identityValidity) {
+    @Then(
+            "the user should see that they have {string} proved their identity using the Orchestrator Stub")
+    public void theUserShouldSeeThatTheyHaveProvedTheirIdentityOrchestratorStub(
+            String identityValidity) {
         ipvCheckResultsPage.validateIpvCheckResults(identityValidity);
         ipvCheckResultsPage.clickContinue();
         userInfomationPage.validateUserInformationTitle();
