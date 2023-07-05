@@ -6,6 +6,6 @@ include "lib",
 		"lambdas:checkpassport",
 		"lambdas:buildclientoauthresponse",
 		"lambdas:initialisesession",
-		"lambdas:captureAuditEvents",
+		"lambdas:captureauditevents",
 		"integration-test",
 		"acceptance-tests"

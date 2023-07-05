@@ -1,4 +1,4 @@
-package uk.gov.di.ipv.cri.passport.initialisesession;
+package uk.gov.di.ipv.cri.passport.captureauditevents;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
