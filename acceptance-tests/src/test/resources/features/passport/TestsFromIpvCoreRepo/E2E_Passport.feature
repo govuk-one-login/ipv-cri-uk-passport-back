@@ -1,6 +1,5 @@
 Feature: E2E
 
-  @Smoke_test @Build @Lamdatest
   Scenario Outline: Passport details page happy path
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -18,7 +17,6 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
-  @Smoke_test @Build
   Scenario Outline: address cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -39,7 +37,6 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
-  @Smoke_test @Build
   Scenario Outline: fraud cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -61,7 +58,6 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
-  @Smoke_test @Build
   Scenario Outline: kbv cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -83,7 +79,6 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
-  @Smoke_test @Build
   Scenario: Passport IPV Technical Error Page Rebranding Changes
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -241,10 +236,10 @@ Feature: E2E
       | userName           | dbsCheckResult |
       | KennethDecerqueira | Successfully   |
 
-  @Build
+  @Staging
   Scenario Outline: Identity Persistence Sign out page
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK One Login page in build stub
+    And clicks continue on the signed into your GOV.UK One Login page
     And user enters the data in Passport stub as a <PassportSubject>
     When user enters data in address stub and Click on submit data and generate auth code
     Then user should be on Fraud Check (Stub)

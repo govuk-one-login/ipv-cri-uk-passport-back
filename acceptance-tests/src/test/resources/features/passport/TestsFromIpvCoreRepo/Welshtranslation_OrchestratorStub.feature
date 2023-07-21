@@ -100,10 +100,10 @@ Feature: Welsh Language Test
       |InvalidPassportSubject |
       |PassportSubjectInvalid |
 
-  @Build
+  @Staging
   Scenario Outline: Passport IPV Success Page in Welsh lang
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK One Login page in build stub
+    And clicks continue on the signed into your GOV.UK One Login page
     And user enters the data in Passport stub as a <PassportSubject>
     When user enters data in address stub and Click on submit data and generate auth code
     Then user should be on Fraud Check (Stub)
@@ -118,10 +118,10 @@ Feature: Welsh Language Test
       | PassportSubject   |
       | PassportSubject   |
 
-  @Build
+  @Staging
   Scenario: Passport IPV Technical Error Page in Welsh lang
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK One Login page in build stub
+    And clicks continue on the signed into your GOV.UK One Login page
     And user does not enters the data in Passport stub and click on submit
     And user updated cookies can see the stub content in Welsh
     Then technical error page should be displayed in Welsh
