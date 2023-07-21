@@ -567,8 +567,6 @@ public class EnterPassportDetailsPage extends GlobalPage {
 
     public void proveidentityanother() {
         waitForElementVisible(KBV_HDR, 20);
-        Assert.assertEquals(
-                "Enter the details from your photo ID and answer security questions",
-                getText(KBV_HDR));
+        Assert.assertEquals("Continue proving your identity online", getText(KBV_HDR));
     }
 }

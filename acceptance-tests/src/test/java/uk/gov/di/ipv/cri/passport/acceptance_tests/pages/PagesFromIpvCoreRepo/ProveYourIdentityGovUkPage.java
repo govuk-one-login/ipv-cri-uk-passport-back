@@ -19,6 +19,7 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
     private static final By UK_DCMAW_STUB = By.cssSelector("#cri-link-stubDcmaw");
     private static final By USER_INFO = By.cssSelector(".govuk-heading-l");
     private static final By CONTINUE_BUTTON = By.cssSelector("#submitButton");
+    private static final By JOURNEY_RADIO_BUTTON = By.cssSelector("#journey");
     private static final By USER_ID_FIELD = By.cssSelector("#userIdText");
     private static final By SIGN_OUT = By.xpath("//*[@class='one-login-header__nav__link']");
     private static final By SIGN_OUT_HDR =
@@ -39,6 +40,7 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
     }
 
     public void ContinueToEnterPassport() {
+        clickElement(JOURNEY_RADIO_BUTTON);
         clickElement(CONTINUE_BUTTON);
     }
 
