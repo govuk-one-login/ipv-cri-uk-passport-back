@@ -4,7 +4,7 @@ import org.openqa.selenium.By;
 
 public class AnswerSecurityQuestionPage extends GlobalPage {
 
-    private static final By CONTINUE = By.cssSelector("#submitButton");
+    private static final By CONTINUE = By.cssSelector("#continue");
 
     public void clickContinue() {
         clickElement(CONTINUE);

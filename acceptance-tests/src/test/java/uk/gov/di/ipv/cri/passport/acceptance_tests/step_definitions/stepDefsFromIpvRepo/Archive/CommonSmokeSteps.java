@@ -15,41 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommonSmokeSteps {
     public static final String CORE_FRONT_DEBUG_H1 = "di-ipv-core-front";
-    String KennethPostcode = "BA2 5AA";
 
     @Then("I should get five options")
     public void i_should_get_five_options() {
         Assert.assertTrue(new IpvCoreFrontPageArchive().UkPassport.isDisplayed());
     }
-
-    //    @Then("I should be on `What's your current home address?` page")
-    //    public void i_should_be_on_what_s_your_current_home_address_page() {
-    //        Assert.assertTrue(new
-    // WhatsYourCurrentHomeAddressPage().FindAddressButton.isDisplayed());
-    //        BrowserUtils.waitForPageToLoad(10);
-    //    }
-    //
-    //    @When("I enter postcode and click `Find address`")
-    //    public void i_enter_postcode_and_click_find_address() {
-    //        new WhatsYourCurrentHomeAddressPage().Postcode.sendKeys(KennethPostcode);
-    //        new WhatsYourCurrentHomeAddressPage().FindAddressButton.click();
-    //        BrowserUtils.waitForPageToLoad(10);
-    //    }
-    //
-    //    @When("I choose address from dropdown and click `Select address`")
-    //    public void i_choose_address_from_dropdown_and_click_select_address() {
-    //        Select select = new Select(new WhatsYourCurrentHomeAddressPage().SelectAnAddress);
-    //        select.selectByValue("8 HADLEY ROAD, BATH, BA2 5AA");
-    //        new WhatsYourCurrentHomeAddressPage().SelectAddress.click();
-    //        BrowserUtils.waitForPageToLoad(10);
-    //    }
-    //
-    //    @When("I enter `Year` and click `Continue`")
-    //    public void i_enter_year_and_click_continue() {
-    //        new WhatsYourCurrentHomeAddressPage().Year.sendKeys("2020");
-    //        new WhatsYourCurrentHomeAddressPage().Continue.click();
-    //        BrowserUtils.waitForPageToLoad(10);
-    //    }
 
     @Then("I should be on `Check your details` page")
     public void i_should_be_on_check_your_details_page() {
@@ -141,58 +111,6 @@ public class CommonSmokeSteps {
         Assert.assertEquals("Address (Stub)", new IpvCoreFrontPageArchive().Addresssstub.getText());
     }
 
-    //    @When("user enters data in address stub and Click on submit data and generate auth code")
-    //    public void userEntersDataInAddressStubAndClickOnSubmitDataAndGenerateAuthCode() {
-    //
-    ////        Select select = new Select(new IpvCoreFrontPage().SelectaddCRIData);
-    ////        select.selectByValue("Kenneth Decerqueira (Valid Experian) Address");
-    ////        new PassportPage().SelectCRIData.click();
-    ////        BrowserUtils.waitForPageToLoad(10);
-    ////        new PassportPage().Authorization.click();
-    ////        new PassportPage().submitdatagenerateauth.click();
-    //    }
-
-    //    @Then("user should be on Fraud Check \\(Stub)")
-    //    public void userShouldBeOnFraudCheckStub() {
-    //        BrowserUtils.waitForPageToLoad(10);
-    //        Assert.assertEquals("Fraud Check (Stub)",new IpvCoreFrontPage().FraudStub.getText());
-    //    }
-
-    //    @When("user enters data in fraud stub and Click on submit data and generate auth code")
-    //    public void userEntersDataInFraudStubAndClickOnSubmitDataAndGenerateAuthCode() {
-    //        Select select = new Select(new IpvCoreFrontPage().SelectfraudCRIData);
-    //        select.selectByValue("Kenneth Decerqueira (Valid Experian) Fraud");
-    //        new IpvCoreFrontPage().fraudscore.sendKeys("2");
-    //        new IpvCoreFrontPage().contraIndicators.sendKeys("A01");
-    //        new PassportPage().SelectCRIData.click();
-    //        BrowserUtils.waitForPageToLoad(10);
-    //        new PassportPage().submitdatagenerateauth.click();
-    //    }
-
-    //    @Then("User should be on KBV page and click continue")
-    //    public void userShouldBeOnKBVPageAndClickContinue() {
-    //        BrowserUtils.waitForPageToLoad(10);
-    //        Assert.assertEquals("Answer security questions",new
-    // IpvCoreFrontPage().Kbvheader.getText());
-    //        new PassportPage().Continue.click();
-    //    }
-
-    //    @When("user enters data in kbv stub and Click on submit data and generate auth code")
-    //    public void userEntersDataInKbvStubAndClickOnSubmitDataAndGenerateAuthCode() {
-    //        Select select = new Select(new IpvCoreFrontPage().SelectkbvCRIData);
-    //        select.selectByValue("Kenneth Decerqueira (Valid Experian) KBV");
-    //        new IpvCoreFrontPage().kbvscore.sendKeys("2");
-    //        new PassportPage().SelectCRIData.click();
-    //        BrowserUtils.waitForPageToLoad(10);
-    //        new PassportPage().submitdatagenerateauth.click();
-    //    }
-
-    //    @Then("user should be successful in proving identity")
-    //    public void userShouldBeSuccessfulInProvingIdentity() {
-    //        Assert.assertEquals("You’ve successfully proved your identity",new
-    // IpvCoreFrontPage().journeycomplete.getText());
-    //    }
-
     @Then("I should see validity score {string} and the Strength score {string} in JSON payload")
     public void iShouldSeeValidityScoreAndTheStrengthScoreInJSONPayload(
             String validityScore, String strengthScore) {
@@ -202,21 +120,4 @@ public class CommonSmokeSteps {
         boolean visibilityOfStrengthScore = payload.contains(strengthScore);
         Assert.assertTrue(visibilityOfStrengthScore);
     }
-
-    //    @And("I Select app user journey")
-    //    public void iSelectAppUserJourney() {
-    //        Select select = new Select(new MobileAppStubPage().SelectAppJourney);
-    //        Optional<WebElement> appJourneyUserOption = select
-    //                .getOptions()
-    //                .stream()
-    //                .filter(option -> option.getText().contains("App journey user"))
-    //                .findFirst();
-    //        if (!appJourneyUserOption.isPresent()) {
-    //            throw new NoSuchElementException("Cannot locate option containing text: " + "App
-    // journey user");
-    //        }
-    //        select.selectByVisibleText(appJourneyUserOption.get().getText());
-    //        new MobileAppStubPage().SelectAppJourney.click();
-    //        BrowserUtils.waitForPageToLoad(10);
-    //    }
 }

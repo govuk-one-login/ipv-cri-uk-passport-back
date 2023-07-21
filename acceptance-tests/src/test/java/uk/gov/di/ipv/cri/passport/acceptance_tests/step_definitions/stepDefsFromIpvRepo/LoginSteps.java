@@ -4,14 +4,13 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Assert;
 import org.openqa.selenium.By;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.DeviceSelectionPage;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.PassportDocCheckPage;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.ProveYourIdentityGovUkPage;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.driverLicenceDocCheckPage;
+import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.*;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.Driver;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.BrowserUtils;
+import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.ConfigurationReader;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
@@ -138,29 +137,6 @@ public class LoginSteps {
         proveYourIdentityGovUkPage.fullJourneyRoute();
     }
 
-    @And("the users account is deleted in SNS topic")
-    public void theUsersAccountIsDeletedInSNSTopic() {
-        proveYourIdentityGovUkPage.callSnsTopic();
-    }
-
-    @And(
-            "clicks continue on the signed into your GOV.UK One Login page and login to driving licence Cri")
-    public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageAndLoginToDrivingLicenceCri() {
-        proveYourIdentityGovUkPage.waitForPageToLoad();
-        proveYourIdentityGovUkPage.ContinueToEnterDrivngLicence();
-        try {
-            if (deviceSelectionPage.isDeviceSelectionScreenPresent()) {
-                deviceSelectionPage.selectNoMobileDeviceAndContinue();
-                deviceSelectionPage.selectNoIphoneOrAndroidAndContinue();
-            }
-        } catch (NullPointerException e) {
-            LOGGER.warning(
-                    "No environment variable specified, please specify a variable for runs in Integration");
-        }
-        driverLicenceDocCheckPage.waitForPageToLoad();
-        driverLicenceDocCheckPage.drivingLicenceDocCheck();
-    }
-
     @Given("User on Orchestrator Stub and click on full journey route for App User")
     public void userOnOrchestratorStubAndClickOnFullJourneyRouteForAppUser() {
         Driver.get().get(configurationService.getOrchestratorStubUrl());
@@ -180,5 +156,60 @@ public class LoginSteps {
         BrowserUtils.waitForPageToLoad(10);
         proveYourIdentityGovUkPage.selectAppUserId();
         proveYourIdentityGovUkPage.fullJourneyRoute();
+    }
+
+    @And("clicks continue on the signed into your GOV.UK One Login page in build stub")
+    public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageInBuildStub() {
+        proveYourIdentityGovUkPage.waitForPageToLoad();
+        proveYourIdentityGovUkPage.ContinueToEnterPassport();
+        //        passportDocCheckPage.waitForPageToLoad();
+        passportDocCheckPage.checkinAppStub();
+        passportDocCheckPage.generateOAuthError();
+        passportDocCheckPage.passportDocCheck();
+    }
+
+    @And("User clicks on Sign-out button")
+    public void userClicksOnSignOutButton() {
+        proveYourIdentityGovUkPage.clickSignOut();
+    }
+
+    @Then("Standard Sign-out page should be displayed")
+    public void standardSignOutPageShouldBeDisplayed() {
+        proveYourIdentityGovUkPage.signOutPage();
+    }
+
+    @And("clicks continue on the signed into your GOV.UK One Login page for Axe test")
+    public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageForAxeTest() {
+        proveYourIdentityGovUkPage.waitForPageToLoad();
+        try {
+            if (deviceSelectionPage.isDeviceSelectionScreenPresent()) {
+                deviceSelectionPage.selectNoMobileDeviceAndContinue();
+                deviceSelectionPage.selectNoIphoneOrAndroidAndContinue();
+            }
+        } catch (NullPointerException e) {
+            LOGGER.warning(
+                    "No environment variable specified, please specify a variable for runs in Integration");
+        }
+    }
+
+    @And("User lands on IPVCore identity start page")
+    public void userLandsOnIPVCoreIdentityStartPage() {
+        Assert.assertEquals(
+                "Start proving your identity with GOV.UK One Login",
+                new IpvCoreFrontPageArchive().journeycomplete.getText());
+    }
+
+    @Given("User on Orchestrator Stub and click on error journey route")
+    public void userOnOrchestratorStubAndClickOnErrorJourneyRoute() {
+        Driver.get().get(ConfigurationReader.getOrchestratorUrl());
+        BrowserUtils.waitForPageToLoad(10);
+        proveYourIdentityGovUkPage.errorJourneyRoute();
+    }
+
+    @When("unrecoverable error page should be displayed")
+    public void unrecoverableErrorPageShouldBeDisplayed() {
+        Assert.assertEquals(
+                "Sorry, there is a problem",
+                new IpvCoreFrontPageArchive().journeycomplete.getText());
     }
 }

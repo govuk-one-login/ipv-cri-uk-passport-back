@@ -100,10 +100,10 @@ Feature: Welsh Language Test
       |InvalidPassportSubject |
       |PassportSubjectInvalid |
 
-  @Build @PYIC-1981  # currently failing
+  @Build
   Scenario Outline: Passport IPV Success Page in Welsh lang
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK account page
+    And clicks continue on the signed into your GOV.UK One Login page in build stub
     And user enters the data in Passport stub as a <PassportSubject>
     When user enters data in address stub and Click on submit data and generate auth code
     Then user should be on Fraud Check (Stub)
@@ -118,27 +118,11 @@ Feature: Welsh Language Test
       | PassportSubject   |
       | PassportSubject   |
 
-  @Build @PYIC-1910
+  @Build
   Scenario: Passport IPV Technical Error Page in Welsh lang
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK account page
+    And clicks continue on the signed into your GOV.UK One Login page in build stub
     And user does not enters the data in Passport stub and click on submit
     And user updated cookies can see the stub content in Welsh
     Then technical error page should be displayed in Welsh
     Then The test is complete and I close the driver
-
-
-#  To be updated with New user with KBV questions enabled
-#  @Integration
-#  Scenario Outline: Passport IPV Success Page in Welsh
-#    Given user on build Orchestrator Stub and click on full journey route for mobile app
-#    And clicks continue on the signed into your GOV.UK account page
-#    And the "<userName>" successfully adds their Passport Details
-#    And the user "<userName>" "Successfully" adds their Address Details
-#    And the user completes the Fraud Cri Check
-#    And the user "<userName>" "Successfully" passes the KBV CRI Check
-#    When user updated cookies can see the stub content in Welsh
-#    Then the user should see that they have "<dbsCheckResult>" proved their identity
-#    Examples:
-#      | userName            | dbsCheckResult |
-#      | KennethDecerqueira  | Successfully   |

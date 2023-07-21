@@ -12,7 +12,7 @@ public class FindYourAddressPage extends GlobalPage {
     private static final By POSTCODE_FIELD = By.cssSelector("#addressSearch");
     private static final By FIND_ADDRESS_BUTTON = By.cssSelector("#continue");
 
-    private static final String USER_DATA_DIRECTORY = "src/test/resources/data/";
+    private static final String USER_DATA_DIRECTORY = "src/test/resources/Data/";
 
     public void waitForPageToLoad() {
         waitForElementVisible(ADDRESS_HDR, 30);

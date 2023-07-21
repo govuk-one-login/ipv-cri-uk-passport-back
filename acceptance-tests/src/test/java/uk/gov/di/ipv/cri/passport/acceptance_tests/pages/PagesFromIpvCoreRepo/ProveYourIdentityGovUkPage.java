@@ -1,12 +1,10 @@
 package uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo;
 
 import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 import org.junit.Assert;
 import org.openqa.selenium.By;
-import software.amazon.awssdk.regions.Region;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.BrowserUtils;
 import utilsFromIpvRepo.UiSupport;
 
@@ -22,6 +20,11 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
     private static final By USER_INFO = By.cssSelector(".govuk-heading-l");
     private static final By CONTINUE_BUTTON = By.cssSelector("#submitButton");
     private static final By USER_ID_FIELD = By.cssSelector("#userIdText");
+    private static final By SIGN_OUT = By.xpath("//*[@class='one-login-header__nav__link']");
+    private static final By SIGN_OUT_HDR =
+            By.xpath("//h1[@class='govuk-heading-l govuk-!-margin-top-0 govuk-!-margin-bottom-3']");
+    private static final By ERROR_JOURNEY_BUTTON = By.xpath("//*[@value='Error journey route']");
+
     public static String userId;
     public static String userId2 = "test703456";
     private static final By MOBILE_APP_USER_ID_OPTION =
@@ -82,27 +85,23 @@ public class ProveYourIdentityGovUkPage extends GlobalPage {
         populateField(USER_ID_FIELD, userId);
     }
 
-    public void callSnsTopic() {
-        String message = "{ \"user_id\": userId }";
-        String topicArn = "arn:aws:sns:eu-west-2:457601271792:IPVDeleteAccountSNSTopic-build";
-        AmazonSNS snsClient =
-                AmazonSNSClient.builder().withRegion(Region.EU_WEST_2.toString()).build();
-        pubTopic(snsClient, message, topicArn);
-    }
-
-    public void inputuserId2() {
-        populateField(USER_ID_FIELD, userId2);
-    }
-
-    public void ContinueToEnterDrivngLicence() {
-        clickElement(CONTINUE_BUTTON);
-    }
-
     public void selectAppUserId() {
         clickElement(MOBILE_APP_USER_ID_OPTION);
     }
 
     public void SignToAppJourney() {
         clickElement(CONTINUE_BUTTON);
+    }
+
+    public void clickSignOut() {
+        clickElement(SIGN_OUT);
+    }
+
+    public void signOutPage() {
+        Assert.assertEquals("You have signed out", getText(SIGN_OUT_HDR));
+    }
+
+    public void errorJourneyRoute() {
+        clickElement(ERROR_JOURNEY_BUTTON);
     }
 }

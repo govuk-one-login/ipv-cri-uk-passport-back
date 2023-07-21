@@ -7,15 +7,15 @@ import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.Driver;
 
 public class IpvCoreFrontPageArchive {
 
+    @FindBy(xpath = "//*[@class='govuk-heading-xl']")
+    public WebElement appStubHdr;
+
     public IpvCoreFrontPageArchive() {
         PageFactory.initElements(Driver.get(), this);
     }
 
     @FindBy(xpath = "//*[@id=\"main-content\"]/div[1]/h1")
     public WebElement Addresssstub;
-
-    @FindBy(id = "test_data")
-    public WebElement SelectaddCRIData;
 
     @FindBy(xpath = "//*[@id=\"main-content\"]/div[1]/h1")
     public WebElement FraudStub;
@@ -26,17 +26,11 @@ public class IpvCoreFrontPageArchive {
     @FindBy(xpath = "//*[@name=\"identityFraudScore\"]")
     public WebElement fraudscore;
 
-    @FindBy(xpath = "//*[@id='header']")
-    public WebElement KbvStubheader;
-
     @FindBy(id = "test_data")
     public WebElement SelectkbvCRIData;
 
     @FindBy(xpath = "//*[@name=\"verificationScore\"]")
     public WebElement kbvscore;
-
-    @FindBy(xpath = "//*[@id='ci']")
-    public WebElement contraIndicators;
 
     @FindBy(xpath = "//*[@id='header']")
     public WebElement journeycomplete;
@@ -44,10 +38,6 @@ public class IpvCoreFrontPageArchive {
     @FindBy(xpath = "//h1")
     public WebElement h1;
 
-    @FindBy(xpath = "//a[normalize-space()='KBV (Stub)']")
-    public WebElement KbvStub;
-
-    // @FindBy(xpath = "//a[normalize-space()='ukPassport']")
     @FindBy(xpath = "//*[@id='cri-link-ukPassport']")
     public WebElement UkPassport;
 
@@ -66,9 +56,9 @@ public class IpvCoreFrontPageArchive {
     @FindBy(xpath = "//*[@id='expHours']")
     public WebElement JWT_EXP_HR;
 
-    @FindBy(xpath = "//*[@id='.govuk-heading-l']")
-    public WebElement JSON_HDR;
-
     @FindBy(xpath = "//*[normalize-space()='Raw User Info Object']")
     public WebElement RAW_JSON;
+
+    @FindBy(xpath = "//textarea[@id='ci']")
+    public WebElement updateci;
 }
