@@ -5,8 +5,6 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.PageObjectSupport;
-import utilsFromIpvRepo.UiSupport;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -23,19 +21,6 @@ public class GlobalPage extends PageObjectSupport {
 
     public void clickContinue() {
         clickElement(CONTINUE_BUTTON);
-    }
-
-    public void waitForUrlToChange(String previousUrl, int waitMaxSeconds) {
-        for (int i = 0; i <= waitMaxSeconds; i++) {
-            if (!previousUrl.equals(getCurrentDriver().getCurrentUrl())) {
-                return;
-            }
-            UiSupport.mySleep(1);
-        }
-    }
-
-    public String getCurrentPageUrl() {
-        return getCurrentDriver().getCurrentUrl();
     }
 
     public void populateDetailsInFields(By detailsSelector, String fieldValue) {
@@ -72,9 +57,5 @@ public class GlobalPage extends PageObjectSupport {
                     "Json Payload Path is: " + jsonResourcePath + "JSON/" + fileName + ".json");
         }
         return jsonPayloadString;
-    }
-
-    public static Integer extractIntegerValueFromJsonString(String jsonString, String jsonPath) {
-        return com.jayway.jsonpath.JsonPath.read(jsonString, jsonPath);
     }
 }

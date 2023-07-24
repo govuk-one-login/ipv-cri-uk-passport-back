@@ -7,7 +7,7 @@ import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRep
 
 public class PassportDocCheckPage extends GlobalPage {
 
-    private static final By CONTINUE_CHECKBOX = By.cssSelector("#journey");
+    private static final By CONTINUE_CHECKBOX = By.cssSelector("#journey-2");
     private static final By CONTINUE_GOV_UK = By.cssSelector("#submitButton");
     private static final By QUESTION_LABEL = By.cssSelector(".govuk-label.govuk-radios__label");
     private static final By AUTHORIZATION = By.cssSelector("#endpoint");

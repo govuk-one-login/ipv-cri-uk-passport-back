@@ -8,8 +8,6 @@ public class VerifiableCredentialSteps {
 
     private final IpvCheckResultsPage ipvCheckResultsPage = new IpvCheckResultsPage();
     private final UserInfomationPage userInfomationPage = new UserInfomationPage();
-    private final String SUCCESSFULLY = "Successfully";
-
     @Then(
             "the user should see that they have {string} proved their identity using the Orchestrator Stub")
     public void theUserShouldSeeThatTheyHaveProvedTheirIdentityOrchestratorStub(

@@ -5,7 +5,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
-import org.openqa.selenium.By;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.*;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.service.ConfigurationService;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.Driver;
@@ -14,14 +13,7 @@ import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRep
 
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
-
-import static uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.PageObjectSupport.clickElement;
-
 public class LoginSteps {
-
-    private static final By SELECT_USER_ID = By.cssSelector("#userIdSelect");
-    private static final By MOBILE_APP_USER_ID_OPTION =
-            By.xpath("//*[@id=\"userIdSelect\"]/option[2]");
 
     private final ProveYourIdentityGovUkPage proveYourIdentityGovUkPage =
             new ProveYourIdentityGovUkPage();
@@ -29,9 +21,6 @@ public class LoginSteps {
     private final PassportDocCheckPage passportDocCheckPage = new PassportDocCheckPage();
     private final ConfigurationService configurationService =
             new ConfigurationService(System.getenv("ENVIRONMENT"));
-    private final uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo
-                    .driverLicenceDocCheckPage
-            driverLicenceDocCheckPage = new driverLicenceDocCheckPage();
     private static final Logger LOGGER = Logger.getLogger(LoginSteps.class.getName());
 
     @Given("User on Orchestrator Stub and click on full journey route")
@@ -41,43 +30,6 @@ public class LoginSteps {
         proveYourIdentityGovUkPage.generateRandomUserId();
         proveYourIdentityGovUkPage.inputuserId();
         proveYourIdentityGovUkPage.fullJourneyRoute();
-    }
-
-    @Given("User on Orchestrator Stub and click on Debug journey route")
-    public void userOnOrchestratorStubAndClickOnDebugJourneyRoute()
-            throws NoSuchAlgorithmException {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-        proveYourIdentityGovUkPage.generateRandomUserId();
-        proveYourIdentityGovUkPage.inputuserId();
-        proveYourIdentityGovUkPage.debugRoute();
-    }
-
-    @Then("user should be redirected to user information")
-    public void userShouldBeRedirectedToUserInformation() {
-        proveYourIdentityGovUkPage.userInfo();
-    }
-
-    @Given("User on Orchestrator Stub click on debug route and Doc checking Stub")
-    public void userOnOrchestratorStubClickOnDebugRouteAndDocCheckingStub() {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-        proveYourIdentityGovUkPage.debugRouteMobile();
-    }
-
-    @Given("User on build Orchestrator Stub and click on full journey route for mobile app")
-    public void userOnBuildOrchestratorStubAndClickOnFullJourneyRouteForMobileApp() {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-        clickElement(MOBILE_APP_USER_ID_OPTION);
-        proveYourIdentityGovUkPage.fullJourneyRouteBuild();
-    }
-
-    @Given("User on Orchestrator Stub and click on debug route and then click Passport CRI")
-    public void userOnOrchestratorStubAndClickOnDebugRouteAndThenClickPassportCRI() {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-        proveYourIdentityGovUkPage.debugRoute();
     }
 
     @And("clicks continue on the signed into your GOV.UK One Login page")
@@ -125,37 +77,6 @@ public class LoginSteps {
         proveYourIdentityGovUkPage.inputuserId();
         proveYourIdentityGovUkPage.fullJourneyRoute();
         proveYourIdentityGovUkPage.ContinueToEnterPassport();
-    }
-
-    @Given("User on Orchestrator Stub and click on full journey route for account deletion")
-    public void userOnOrchestratorStubAndClickOnFullJourneyRouteForAccountDeletion()
-            throws NoSuchAlgorithmException {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(30);
-        proveYourIdentityGovUkPage.generateRandomUserId();
-        proveYourIdentityGovUkPage.inputuserId();
-        proveYourIdentityGovUkPage.fullJourneyRoute();
-    }
-
-    @Given("User on Orchestrator Stub and click on full journey route for App User")
-    public void userOnOrchestratorStubAndClickOnFullJourneyRouteForAppUser() {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-        proveYourIdentityGovUkPage.selectAppUserId();
-        proveYourIdentityGovUkPage.fullJourneyRoute();
-    }
-
-    @And("clicks continue on the signed into your GOV.UK One Login page for App Journey")
-    public void clicksContinueOnTheSignedIntoYourGOVUKOneLoginPageForAppJourney() {
-        proveYourIdentityGovUkPage.SignToAppJourney();
-    }
-
-    @Given("User on Orchestrator and click on full journey route")
-    public void userOnOrchestratorAndClickOnFullJourneyRoute() {
-        Driver.get().get(configurationService.getOrchestratorStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-        proveYourIdentityGovUkPage.selectAppUserId();
-        proveYourIdentityGovUkPage.fullJourneyRoute();
     }
 
     @And("clicks continue on the signed into your GOV.UK One Login page in build stub")

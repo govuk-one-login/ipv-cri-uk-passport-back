@@ -53,10 +53,6 @@ public enum InvalidPassportSubject implements TestInput {
         return birthDay;
     }
 
-    public String getinvalidbirthMonth() {
-        return birthMonth;
-    }
-
     public String getinvalidbirthYear() {
         return birthYear;
     }
