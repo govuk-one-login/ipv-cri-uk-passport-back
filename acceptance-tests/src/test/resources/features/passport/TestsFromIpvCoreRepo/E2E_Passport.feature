@@ -1,5 +1,6 @@
 Feature: E2E
 
+#  Build
   Scenario Outline: Passport details page happy path
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -17,6 +18,7 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
+#  Build
   Scenario Outline: address cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -37,6 +39,7 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
+#  Build
   Scenario Outline: fraud cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -58,6 +61,7 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
+#  Build
   Scenario Outline: kbv cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub
@@ -79,6 +83,7 @@ Feature: E2E
       | PassportSubject   |
       | PassportSubject   |
 
+#  Build
   Scenario: Passport IPV Technical Error Page Rebranding Changes
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page in build stub

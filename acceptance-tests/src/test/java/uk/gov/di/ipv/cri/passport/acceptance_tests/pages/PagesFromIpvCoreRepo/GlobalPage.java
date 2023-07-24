@@ -5,7 +5,6 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.PageObjectSupport;
-import utilsFromIpvRepo.UiSupport;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,15 +22,6 @@ public class GlobalPage extends PageObjectSupport {
 
     public void clickContinue() {
         clickElement(CONTINUE_BUTTON);
-    }
-
-    public void waitForUrlToChange(String previousUrl, int waitMaxSeconds) {
-        for (int i = 0; i <= waitMaxSeconds; i++) {
-            if (!previousUrl.equals(getCurrentDriver().getCurrentUrl())) {
-                return;
-            }
-            UiSupport.mySleep(1);
-        }
     }
 
     public String getCurrentPageUrl() {

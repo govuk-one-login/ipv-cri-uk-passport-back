@@ -10,9 +10,6 @@ public class AnswerSecurityQuestionsPage {
         PageFactory.initElements(Driver.get(), this);
     }
 
-    @FindBy(xpath = "//a[@role='button']")
-    public WebElement Start;
-
     @FindBy(xpath = "//button[@class='govuk-button button']")
     public WebElement Continue;
 }

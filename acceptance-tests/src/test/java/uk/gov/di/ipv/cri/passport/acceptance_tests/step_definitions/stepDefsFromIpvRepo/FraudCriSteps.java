@@ -7,11 +7,8 @@ import org.junit.Assert;
 import org.openqa.selenium.By;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.CheckingYourDetailsPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.FraudCheckStubPage;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.IpvCheckResultsPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.IpvCoreFrontPageArchive;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.BrowserUtils;
-
-import java.io.IOException;
 
 import static uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.PageObjectSupport.clickElement;
 
@@ -28,11 +25,6 @@ public class FraudCriSteps {
     @And("user enters data in fraud stub and Click on submit data and generate auth code")
     public void userEntersDataInFraudStubAndClickOnSubmitDataAndGenerateAuthCode() {
         FraudCheckStubPage.enterFraudDetails();
-    }
-
-    @Then("user should be successfully validated in {string} full journey")
-    public void userShouldBeSuccessfullyValidatedInFullJourney(String jsonResp) throws IOException {
-        IpvCheckResultsPage.mobileStubSuccess(jsonResp);
     }
 
     @Then("user should be on Fraud Check \\(Stub)")

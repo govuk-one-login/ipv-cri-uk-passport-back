@@ -42,13 +42,6 @@ public class ChooseYourAddressPage extends GlobalPage {
         clickElement(SUBMIT_AUTH);
     }
 
-    public void selectStubUserAddressWithoutJwtExp() {
-        Select select = new Select(getCurrentDriver().findElement(SELECT_USER));
-        select.selectByValue("Kenneth Decerqueira (Valid Experian) Address");
-        clickElement(SELECT_USER);
-        clickElement(SUBMIT_AUTH);
-    }
-
     public void backButtonErrPage() {
         Assert.assertEquals("Sorry, you cannot go back", getText(ERROR_HDR));
     }
