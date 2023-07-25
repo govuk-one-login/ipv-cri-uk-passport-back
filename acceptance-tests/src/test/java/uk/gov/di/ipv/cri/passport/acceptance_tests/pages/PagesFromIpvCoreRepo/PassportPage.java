@@ -25,9 +25,6 @@ public class PassportPage {
     @FindBy(xpath = "//*[@id=\"firstName\"]")
     public WebElement FirstName;
 
-    @FindBy(id = "middleNames")
-    public WebElement MiddleNames;
-
     @FindBy(id = "dateOfBirth-day")
     public WebElement birthDay;
 

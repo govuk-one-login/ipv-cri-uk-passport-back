@@ -2,7 +2,6 @@ package uk.gov.di.ipv.cri.passport.acceptance_tests.step_definitions.stepDefsFro
 
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.CheckAndConfirmYourAddressPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.ChooseYourAddressPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.FindYourAddressPage;
@@ -33,13 +32,6 @@ public class AddressCriSteps {
     @And("user enters data in address stub and Click on submit data and generate auth code")
     public void userEntersDataInAddressStubAndClickOnSubmitDataAndGenerateAuthCode() {
         chooseYourAddressPage.selectStubUserAddress();
-    }
-
-    @When(
-            "user enters data in address stub without JWT Expiry and Click on submit data and generate auth code")
-    public void
-            userEntersDataInAddressStubWithoutJWTExpiryAndClickOnSubmitDataAndGenerateAuthCode() {
-        chooseYourAddressPage.selectStubUserAddressWithoutJwtExp();
     }
 
     @Then("User should see error recovery page")

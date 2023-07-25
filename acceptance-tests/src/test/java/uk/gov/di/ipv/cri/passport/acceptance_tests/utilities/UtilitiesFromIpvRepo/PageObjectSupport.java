@@ -64,30 +64,6 @@ public class PageObjectSupport {
         }
     }
 
-    protected void waitForElementNotVisible(By by, int seconds) {
-        WebDriverWait wait = new WebDriverWait(getCurrentDriver(), Duration.ofSeconds(seconds));
-        wait.until(ExpectedConditions.numberOfElementsToBeLessThan(by, 1));
-    }
-
-    protected void waitForElementNotVisible(By by) throws InterruptedException {
-        if (isElementPresent(by)) waitForElementNotVisible(by, 60);
-        else waitForPageToLoad();
-    }
-
-    protected WebElement waitForElementClickable(By by) {
-        return waitForElementClickable(by, 30);
-    }
-
-    protected WebElement waitForElementClickable(By by, int seconds) {
-        try {
-            WebDriverWait wait = new WebDriverWait(getCurrentDriver(), Duration.ofSeconds(seconds));
-            wait.until(ExpectedConditions.elementToBeClickable(by));
-        } catch (NoSuchElementException | TimeoutException e) {
-            fail("Element is not visible " + by.toString());
-        }
-        return getCurrentDriver().findElement(by);
-    }
-
     /**
      * Waits up to 1 minute for the page to load. This method should be updated as was created in
      * 2017 and catch block logis is useless

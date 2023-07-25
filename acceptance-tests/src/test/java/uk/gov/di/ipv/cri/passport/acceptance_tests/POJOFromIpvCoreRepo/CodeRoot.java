@@ -4,12 +4,6 @@ public class CodeRoot {
 
     private Code code;
 
-    public CodeRoot() {}
-
-    public CodeRoot(Code code) {
-        this.code = code;
-    }
-
     public Code getCode() {
         return code;
     }

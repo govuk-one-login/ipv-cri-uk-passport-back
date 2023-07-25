@@ -6,10 +6,6 @@ public class Code {
 
     private String value;
 
-    public Code(String value) {
-        this.value = value;
-    }
-
     public String getValue() {
         return value;
     }

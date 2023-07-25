@@ -15,9 +15,6 @@ public class IpvCoreFrontPageArchive {
     }
 
     @FindBy(xpath = "//*[@id=\"main-content\"]/div[1]/h1")
-    public WebElement Addresssstub;
-
-    @FindBy(xpath = "//*[@id=\"main-content\"]/div[1]/h1")
     public WebElement FraudStub;
 
     @FindBy(id = "test_data")
@@ -34,21 +31,6 @@ public class IpvCoreFrontPageArchive {
 
     @FindBy(xpath = "//*[@id='header']")
     public WebElement journeycomplete;
-
-    @FindBy(xpath = "//h1")
-    public WebElement h1;
-
-    @FindBy(xpath = "//*[@id='cri-link-ukPassport']")
-    public WebElement UkPassport;
-
-    @FindBy(xpath = "//span[@class='govuk-details__summary-text']")
-    public WebElement CredentialAttributes;
-
-    @FindBy(xpath = "//input[@value='Authorize and Return']")
-    public WebElement AuthorizeAndReturn;
-
-    @FindBy(xpath = "/html/body/div/main/div/div/dl[3]/div/dd/pre")
-    public WebElement GPG45Score;
 
     @FindBy(xpath = "//*[@id='header']")
     public WebElement Kbvheader;

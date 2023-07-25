@@ -3,15 +3,10 @@ package uk.gov.di.ipv.cri.passport.acceptance_tests.step_definitions.stepDefsFro
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.Archive.CoreStubCrisPage;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.Archive.CoreStubUserSearchPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.CoreStubVerifiableCredentialsPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.EnterPassportDetailsPage;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.IpvCoreFrontPageArchive;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.pages.PagesFromIpvCoreRepo.PassportPage;
 import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.Driver;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.BrowserUtils;
-import uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo.ConfigurationReader;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,38 +26,9 @@ public class PassportCriSmokeSteps {
     public static final String BIRTH_YEAR = "1965";
     public static final String EXPIRY_DAY = "01";
 
-    @When("I start at the core stub")
-    public void startCoreStub() {
-        Driver.get().get(ConfigurationReader.getCoreStubUrl());
-        BrowserUtils.waitForPageToLoad(10);
-    }
-
-    @When("I click on Build Passport")
-    public void clickOnBuildPassport() {
-        new CoreStubCrisPage().BuildPassportLink.click();
-        BrowserUtils.waitForPageToLoad(10);
-    }
-
-    @When("I enter '{}' in the Row Number box")
-    public void enterRowNumber(String rowNumber) {
-        new CoreStubUserSearchPage().rowNumberBox.sendKeys(rowNumber);
-    }
-
-    @When("I click on Go to Build Passport")
-    public void clickOnGoToBuildPassport() {
-        new CoreStubUserSearchPage().goToBuildPassportButton.click();
-        BrowserUtils.waitForPageToLoad(10);
-    }
-
     @Then("I should be on the passport details page")
     public void passportDetailsConfirm() {
         assertTrue(Driver.get().getCurrentUrl().endsWith("/passport/details"));
-    }
-
-    @When("I click on ukPassport")
-    public void clickOnUkPassport() {
-        new IpvCoreFrontPageArchive().UkPassport.click();
-        BrowserUtils.waitForPageToLoad(10);
     }
 
     @When("I fill in my details")

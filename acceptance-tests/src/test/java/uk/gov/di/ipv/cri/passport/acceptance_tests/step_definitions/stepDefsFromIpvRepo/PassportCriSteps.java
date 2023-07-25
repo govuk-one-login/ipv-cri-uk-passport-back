@@ -59,16 +59,6 @@ public class PassportCriSteps {
         enterPassportDetailsPage.cannotproveidentity();
     }
 
-    @When("User adds Invalid {string} and then adds Invalid {string}")
-    public void userAddsInvalidAndThenAddsInvalid(
-            String InvalidPassportSubject, String InvalidPassportSubject2) {
-        enterPassportDetailsPage.invalidpassportRetry(
-                uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo
-                        .InvalidPassportSubject.valueOf(InvalidPassportSubject),
-                uk.gov.di.ipv.cri.passport.acceptance_tests.utilities.UtilitiesFromIpvRepo
-                        .InvalidPassportSubject.valueOf(InvalidPassportSubject));
-    }
-
     @When("User adds Invalid {string}")
     public void userAddsInvalid(String InvalidPassportSubject) {
         enterPassportDetailsPage.invalidPassportRetryFirst(
@@ -103,16 +93,6 @@ public class PassportCriSteps {
                         .PassportSubject.valueOf(PassportSubject));
     }
 
-    @Then("Appropriate {string} response should be displayed")
-    public void appropriateResponseShouldBeDisplayed(String jsonResp) throws IOException {
-        enterPassportDetailsPage.jsonResp(jsonResp);
-    }
-
-    @Then("Appropriate Error {string} response should be displayed")
-    public void appropriateErrorResponseShouldBeDisplayed(String jsonResp) throws IOException {
-        enterPassportDetailsPage.errorjsonResp(jsonResp);
-    }
-
     @When("user updated cookies can see the stub content in Welsh")
     public void userUpdatedCookiesCanSeeTheStubContentInWelsh() {
         enterPassportDetailsPage.cookieupdatecy();
@@ -121,11 +101,6 @@ public class PassportCriSteps {
     @When("user updated cookies can see the non CRI content in Welsh")
     public void userUpdatedCookiesCanSeeTheNonCRIContentInWelsh() {
         enterPassportDetailsPage.updateLanguageCookiesDirect("cy");
-    }
-
-    @Then("the content is displayed in Welsh language in GOVUK account page")
-    public void theContentIsDisplayedInWelshLanguageInGOVUKAccountPage() {
-        enterPassportDetailsPage.welshLngGOVUKPage();
     }
 
     @Then("the content is displayed in Welsh language in Passport CRI Page")
@@ -161,11 +136,6 @@ public class PassportCriSteps {
     @Then("we cannot prove your identity right now error page is displayed in Welsh")
     public void weCannotProveYourIdentityRightNowErrorPageIsDisplayedInWelsh() {
         enterPassportDetailsPage.weleshErrorcannotprove();
-    }
-
-    @And("the {string} successfully adds their Passport Details")
-    public void theSuccessfullyAddsTheirPassportDetails(String PassportSubject) throws IOException {
-        enterPassportDetailsPage.enterPassportDetails(PassportSubject);
     }
 
     @And("user enters the data in Passport stub as a {}")
@@ -207,23 +177,6 @@ public class PassportCriSteps {
     @Then("Branding changes for GOV.UK One login displayed")
     public void brandingChangesForGOVUKOneLoginDisplayed() {
         enterPassportDetailsPage.oneLoginBrandingChanges();
-    }
-
-    @And("user enters the data in Passport stub without JWT Expiry as a {}")
-    public void userEntersTheDataInPassportStubWithoutJWTExpiryAsAPassportSubject(
-            String PassportSubject) throws IOException {
-        enterPassportDetailsPage.enterStubNoExpPassportDetails(PassportSubject);
-    }
-
-    @And("user enters the data in Passport stub JWT expired as a {}")
-    public void userEntersTheDataInPassportStubJWTExpiredAsAPassportSubject(String PassportSubject)
-            throws IOException {
-        enterPassportDetailsPage.enterStubExpPassportDetails(PassportSubject);
-    }
-
-    @Then("the user should be taken to Passport CRI Page")
-    public void theUserShouldBeTakenToPassportCRIPage() {
-        enterPassportDetailsPage.userOnPasspoirtCriPage();
     }
 
     @And("Prove your identity in another way is displayed")
