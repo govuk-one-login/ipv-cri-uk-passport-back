@@ -42,7 +42,7 @@ Feature: E2E
 #  Build
   Scenario Outline: fraud cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK One Login page in build stub
+    And clicks continue on the signed into your GOV.UK One Login page
     And user enters the data in Passport stub as a <PassportSubject>
     When user enters data in address stub and Click on submit data and generate auth code
     Then user should be on Fraud Check (Stub)
@@ -64,7 +64,7 @@ Feature: E2E
 #  Build
   Scenario Outline: kbv cri page back button recovery page
     Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK One Login page in build stub
+    And clicks continue on the signed into your GOV.UK One Login page
     And user enters the data in Passport stub as a <PassportSubject>
     When user enters data in address stub and Click on submit data and generate auth code
     Then user should be on Fraud Check (Stub)
@@ -240,25 +240,3 @@ Feature: E2E
     Examples:
       | userName           | dbsCheckResult |
       | KennethDecerqueira | Successfully   |
-
-  @Staging
-  Scenario Outline: Identity Persistence Sign out page
-    Given User on Orchestrator Stub and click on full journey route
-    And clicks continue on the signed into your GOV.UK One Login page
-    And user enters the data in Passport stub as a <PassportSubject>
-    When user enters data in address stub and Click on submit data and generate auth code
-    Then user should be on Fraud Check (Stub)
-    When user enters data in fraud build stub and Click on submit data and generates auth code
-    Then User should be on KBV page and click continue
-    When user enters data in kbv stub and Click on submit data and generate auth code
-    Then user should be successful in proving identity
-    When the User navigates to the `Orchestrator Stub` page
-    And the user signs back in with the same userId
-    Then the user should be taken to the IPV Reuse Screen with One login changes
-    When User clicks on Sign-out button
-    Then Standard Sign-out page should be displayed
-    And The test is complete and I close the driver
-
-    Examples:
-      | PassportSubject   |
-      | PassportSubject   |

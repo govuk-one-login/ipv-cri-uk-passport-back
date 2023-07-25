@@ -5,6 +5,7 @@ public class PassportCheckResult {
     private String resourceId;
     private Attributes attributes;
     private Gpg45Score gpg45Score;
+
     @Override
     public String toString() {
         return "Root{"

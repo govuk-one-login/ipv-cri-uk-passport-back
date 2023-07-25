@@ -32,6 +32,7 @@ public class ConfigurationReader {
     public static String getOrchestratorUrl() {
         return getEnvironmentVariableOrError("ORCHESTRATOR_STUB_URL");
     }
+
     private static String getEnvironmentVariableOrError(String variable) {
         String value = System.getenv(variable);
         if (value == null) {

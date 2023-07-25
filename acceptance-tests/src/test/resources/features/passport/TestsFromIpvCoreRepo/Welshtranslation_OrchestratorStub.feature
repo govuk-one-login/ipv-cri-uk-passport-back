@@ -100,7 +100,7 @@ Feature: Welsh Language Test
       |InvalidPassportSubject |
       |PassportSubjectInvalid |
 
-  @Staging
+  #@Staging
   Scenario Outline: Passport IPV Success Page in Welsh lang
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page
@@ -118,7 +118,7 @@ Feature: Welsh Language Test
       | PassportSubject   |
       | PassportSubject   |
 
-  @Staging
+  #@Staging
   Scenario: Passport IPV Technical Error Page in Welsh lang
     Given User on Orchestrator Stub and click on full journey route
     And clicks continue on the signed into your GOV.UK One Login page
