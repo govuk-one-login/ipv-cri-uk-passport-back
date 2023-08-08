@@ -59,6 +59,12 @@ public class PassportAPIStepDefs extends PassportAPIPage {
         postRequestToPassportVCEndpoint();
     }
 
+    @Then("User requests Passport CRI VC with new credential issue endpoint")
+    public void user_requests_passport_vc_with_alternate_ending()
+            throws IOException, InterruptedException, ParseException {
+        postRequestToPassportVCCommonEndpoint();
+    }
+
     @And("Passport VC should contain validityScore (.*) and strengthScore (.*)$")
     public void passport_vc_should_contain_validity_score_and_strength_score(
             String validityScore, String strengthScore)

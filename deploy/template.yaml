@@ -328,6 +328,12 @@ Resources:
             RestApiId: !Ref IPVCriUKPassportAPI
             Path: /credentials/issue
             Method: POST
+        IPVCriUKPassportAPICommon:
+          Type: Api
+          Properties:
+            RestApiId: !Ref IPVCriUKPassportAPI
+            Path: /credential/issue
+            Method: POST
       AutoPublishAlias: live
       ProvisionedConcurrencyConfig:
         !If
