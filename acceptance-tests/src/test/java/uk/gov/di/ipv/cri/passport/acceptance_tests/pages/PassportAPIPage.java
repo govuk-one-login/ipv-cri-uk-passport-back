@@ -72,7 +72,7 @@ public class PassportAPIPage extends PassportPageObject {
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
                         .setHeader("X-Forwarded-For", "123456789")
-                        .setHeader("client_id", "ipv-core-stub")
+                        .setHeader("client_id", "ipv-core-stub-aws-prod")
                         .POST(HttpRequest.BodyPublishers.ofString(requestString))
                         .build();
         String sessionResponse = sendHttpRequest(request).body();
@@ -175,6 +175,25 @@ public class PassportAPIPage extends PassportPageObject {
         HttpRequest request =
                 HttpRequest.newBuilder()
                         .uri(URI.create(publicApiGatewayUrl + "/credentials/issue"))
+                        .setHeader("Accept", "application/json")
+                        .setHeader("Content-Type", "application/json")
+                        .setHeader("Authorization", "Bearer " + ACCESS_TOKEN)
+                        .setHeader("x-api-key", configurationService.getPublicApiGatewayKey())
+                        .POST(HttpRequest.BodyPublishers.ofString(""))
+                        .build();
+        String requestPassportVCResponse = sendHttpRequest(request).body();
+        LOGGER.info("requestPassportVCResponse = " + requestPassportVCResponse);
+        SignedJWT signedJWT = SignedJWT.parse(requestPassportVCResponse);
+        VC = signedJWT.getJWTClaimsSet().toString();
+        return signedJWT.getJWTClaimsSet().toString();
+    }
+
+    public String postRequestToPassportVCCommonEndpoint()
+            throws IOException, InterruptedException, ParseException {
+        String publicApiGatewayUrl = configurationService.getPublicAPIEndpoint();
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(publicApiGatewayUrl + "/credential/issue"))
                         .setHeader("Accept", "application/json")
                         .setHeader("Content-Type", "application/json")
                         .setHeader("Authorization", "Bearer " + ACCESS_TOKEN)
